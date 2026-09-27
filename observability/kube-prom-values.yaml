@@ -1,0 +1,45 @@
+grafana:
+  adminPassword: admin
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+alertmanager:
+  config:
+    route:
+      receiver: "null"
+      group_by:
+        - alertname
+        - service
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      routes:
+        - receiver: telegram
+          matchers:
+            - service = "checkout"
+          group_wait: 10s
+          repeat_interval: 30m
+        - receiver: "null"
+          matchers:
+            - alertname = "Watchdog"
+    receivers:
+      - name: "null"
+      - name: telegram
+        telegram_configs:
+          # Вставь токен бота и id чата вместо этих двух значений.
+          - bot_token: "PASTE_BOT_TOKEN"
+            chat_id: 0
+            send_resolved: true
+            parse_mode: HTML
+            message: |
+              {{ range .Alerts }}
+              <b>{{ .Status | toUpper }}</b> {{ .Labels.alertname }}
+              service={{ .Labels.service }} action={{ .Labels.action }}
+              {{ .Annotations.summary }}
+              runbook: {{ .Annotations.runbook_url }}
+              {{ end }}
+        webhook_configs:
+          - url: http://healer.heal.svc:8080/webhook
+            send_resolved: false

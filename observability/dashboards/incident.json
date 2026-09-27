@@ -1,0 +1,122 @@
+{
+  "uid": "mtc-incident",
+  "title": "Инцидент",
+  "tags": ["mtc", "incident"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "options": {
+        "mode": "markdown",
+        "content": "Healer читает метку `action`.\n\n- `CheckoutHighErrorRate` → `restart`\n- `CheckoutSlow` → `scale` (5 реплик)\n- запасной `rollback` — откат Deployment checkout\n\nRunbook: `docs/runbooks/checkout-high-error-rate.md`, `docs/runbooks/checkout-slow.md`."
+      }
+    },
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Горящие алерты checkout",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "expr": "sum(ALERTS{service=\"checkout\",alertstate=\"firing\"}) or vector(0)",
+          "legendFormat": "firing"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Алерт и действие",
+      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "expr": "ALERTS{service=\"checkout\"}",
+          "legendFormat": "{{alertname}} {{alertstate}} action={{action}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "p99 на фоне инцидента",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {"thresholdsStyle": {"mode": "dashed"}},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 0.3}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Доля 5xx на фоне инцидента",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {"thresholdsStyle": {"mode": "dashed"}},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 0.01}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "expr": "sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m]))",
+          "legendFormat": "5xx"
+        }
+      ]
+    }
+  ]
+}

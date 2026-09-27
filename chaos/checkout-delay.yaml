@@ -1,0 +1,20 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: checkout-delay
+  namespace: demo
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces:
+      - demo
+    labelSelectors:
+      app: checkout
+  # All egress. A target on the Redis pod IP misses traffic to the Service ClusterIP.
+  direction: to
+  delay:
+    latency: 2s
+    correlation: "0"
+    jitter: 0ms
+  duration: 10m

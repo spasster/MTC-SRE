@@ -1,0 +1,42 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: checkout
+  namespace: obs
+  labels:
+    release: kube-prom
+spec:
+  groups:
+    - name: checkout.slo
+      rules:
+        - alert: CheckoutHighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{job="checkout",path="/work",status=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_total{job="checkout",path="/work"}[5m]))
+            ) > 0.01
+          for: 2m
+          labels:
+            service: checkout
+            action: restart
+            severity: warning
+          annotations:
+            summary: Checkout отдаёт больше 1% ответов 5xx за последние 5 минут.
+            runbook_url: docs/runbooks/checkout-high-error-rate.md
+        - alert: CheckoutSlow
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum by (le) (
+                rate(http_request_duration_seconds_bucket{job="checkout",path="/work"}[5m])
+              )
+            ) > 0.3
+          for: 2m
+          labels:
+            service: checkout
+            action: scale
+            severity: warning
+          annotations:
+            summary: p99 ручки /work у checkout медленнее 300 мс уже 5 минут.
+            runbook_url: docs/runbooks/checkout-slow.md
