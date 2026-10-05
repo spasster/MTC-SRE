@@ -1,0 +1,22 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+positions:
+  filename: /tmp/positions.yaml
+clients:
+  - url: http://127.0.0.1:31000/loki/api/v1/push
+scrape_configs:
+  - job_name: syslog
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: syslog
+          host: colima
+          __path__: /var/log/syslog
+  - job_name: audit
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: audit
+          host: colima
+          __path__: /var/log/audit/audit.log

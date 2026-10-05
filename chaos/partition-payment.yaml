@@ -1,0 +1,22 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: partition-payment
+  namespace: demo
+spec:
+  action: partition
+  mode: all
+  selector:
+    namespaces:
+      - demo
+    labelSelectors:
+      app: checkout
+  direction: both
+  target:
+    mode: all
+    selector:
+      namespaces:
+        - demo
+      labelSelectors:
+        app: payment
+  duration: 15m

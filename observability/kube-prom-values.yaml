@@ -1,7 +1,17 @@
 grafana:
   adminPassword: admin
+  sidecar:
+    datasources:
+      exemplarTraceIdDestinations:
+        datasourceUid: tempo
+        traceIdLabelName: trace_id
+        urlDisplayLabel: Трейс
 prometheus:
   prometheusSpec:
+    enableFeatures:
+      - exemplar-storage
+    exemplars:
+      maxSize: 100000
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
@@ -21,25 +31,31 @@ alertmanager:
             - service = "checkout"
           group_wait: 10s
           repeat_interval: 30m
+          continue: true
+        - receiver: healer
+          matchers:
+            - service = "checkout"
+          group_wait: 10s
+          repeat_interval: 1m
         - receiver: "null"
           matchers:
             - alertname = "Watchdog"
     receivers:
       - name: "null"
+      - name: healer
+        webhook_configs:
+          - url: http://healer.heal.svc:8080/webhook
+            send_resolved: true
       - name: telegram
         telegram_configs:
-          # Вставь токен бота и id чата вместо этих двух значений.
+          # токен бота и id чата.
           - bot_token: "PASTE_BOT_TOKEN"
             chat_id: 0
             send_resolved: true
             parse_mode: HTML
             message: |
               {{ range .Alerts }}
-              <b>{{ .Status | toUpper }}</b> {{ .Labels.alertname }}
-              service={{ .Labels.service }} action={{ .Labels.action }}
-              {{ .Annotations.summary }}
-              runbook: {{ .Annotations.runbook_url }}
+              {{ if eq .Status "resolved" }}✅ {{ .Annotations.resolved }}{{ else }}⚠️ {{ .Annotations.summary }}
+
+              {{ .Annotations.description }}{{ end }}
               {{ end }}
-        webhook_configs:
-          - url: http://healer.heal.svc:8080/webhook
-            send_resolved: false

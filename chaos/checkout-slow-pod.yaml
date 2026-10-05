@@ -1,0 +1,24 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: checkout-slow-pod
+  namespace: demo
+spec:
+  action: delay
+  mode: all
+  selector:
+    pods:
+      demo:
+        - POD_NAME
+  # Checkout calls http://payment, so the packet dest is the Service ClusterIP.
+  # Matching the payment pod IP misses that path. 2s each way makes /work about 4s
+  # and still HTTP 200: the client read timeout is 3s, and only the reply is delayed 2s.
+  # Probe replies go to the node, so the pod stays Ready.
+  direction: to
+  externalTargets:
+    - payment.demo.svc.cluster.local
+  delay:
+    latency: 2s
+    correlation: "0"
+    jitter: 0ms
+  duration: 15m

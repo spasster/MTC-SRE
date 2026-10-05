@@ -1,0 +1,4 @@
+-D
+-b 8192
+-f 1
+-w /etc/mtc-sre-audit-marker -p wa -k mtc-marker

@@ -1,0 +1,10 @@
+revision_window_seconds: 600
+error_ratio: 0.005
+dependency_ratio: 0.2
+slow_seconds: 0.3
+slow_ratio: 3
+cpu_throttle: 0.4
+scale_to: 5
+scale_from: 2
+max_actions: 2
+cooldown_seconds: 120

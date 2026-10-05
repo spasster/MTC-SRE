@@ -4,10 +4,11 @@ metadata:
   name: checkout
   namespace: demo
 data:
-  ERROR: "0"
-  DELAY: "0"
-  DEGRADED_MODE: "0"
   REDIS_URL: "redis://redis:6379/0"
+  REDIS_SOCKET_TIMEOUT: "3"
+  PAYMENT_URL: "http://payment/pay"
+  PAYMENT_TIMEOUT: "3"
+  CPU_ITERS: "40000"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,6 +33,17 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+          env:
+            - name: FAIL_RATE
+              value: "0"
+            - name: EXTRA_LATENCY_MS
+              value: "0"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://tempo.obs.svc.cluster.local:4318
+            - name: OTEL_SERVICE_NAMESPACE
+              value: demo
+            - name: OTEL_BSP_SCHEDULE_DELAY
+              value: "2000"
           envFrom:
             - configMapRef:
                 name: checkout
@@ -41,18 +53,23 @@ spec:
               port: 8080
             initialDelaySeconds: 2
             periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /health
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
           resources:
             requests:
               cpu: 50m
               memory: 64Mi
             limits:
-              memory: 128Mi
+              cpu: 200m
+              memory: 256Mi
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,5 @@
+- name: System logs on the Colima VM
+  hosts: colima
+  become: true
+  roles:
+    - node-logs

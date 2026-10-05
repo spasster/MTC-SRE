@@ -1,0 +1,29 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: redis-slow
+  namespace: demo
+spec:
+  action: delay
+  mode: all
+  selector:
+    pods:
+      demo:
+        - POD_NAME
+  # Delay the reply from this Redis pod back to checkout. Checkout's socket
+  # timeout is 3s, so GET /work becomes redis_timeout. The rule lives in this
+  # pod's network namespace: a restart removes it, the new pod is not in the
+  # selector. Kubelet probes come from the node, so the pod stays Ready.
+  direction: to
+  target:
+    mode: all
+    selector:
+      namespaces:
+        - demo
+      labelSelectors:
+        app: checkout
+  delay:
+    latency: 5s
+    correlation: "0"
+    jitter: 0ms
+  duration: 15m

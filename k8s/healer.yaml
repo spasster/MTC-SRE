@@ -21,6 +21,12 @@ rules:
   - apiGroups: ["apps"]
     resources: ["replicasets"]
     verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -63,8 +69,20 @@ spec:
           env:
             - name: TARGET_NAMESPACE
               value: demo
-            - name: COOLDOWN_SECONDS
-              value: "300"
+            - name: PROMETHEUS_URL
+              value: http://kube-prom-kube-prometheus-prometheus.obs.svc:9090
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: telegram
+                  key: token
+                  optional: true
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: telegram
+                  key: chat_id
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health

@@ -1,7 +1,7 @@
 apiVersion: chaos-mesh.org/v1alpha1
 kind: PodChaos
 metadata:
-  name: redis-kill
+  name: checkout-kill
   namespace: demo
 spec:
   action: pod-kill
@@ -10,4 +10,4 @@ spec:
     namespaces:
       - demo
     labelSelectors:
-      app: redis
+      app: checkout

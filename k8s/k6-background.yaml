@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k6-background
+  namespace: demo
+  labels:
+    app: k6-background
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k6-background
+  template:
+    metadata:
+      labels:
+        app: k6-background
+    spec:
+      containers:
+        - name: k6
+          image: grafana/k6:0.57.0
+          imagePullPolicy: IfNotPresent
+          args: ["run", "/scripts/background.js"]
+          env:
+            - name: BASE_URL
+              value: http://checkout/work
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: scripts
+          configMap:
+            name: k6-scripts

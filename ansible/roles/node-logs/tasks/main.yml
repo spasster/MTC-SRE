@@ -1,0 +1,40 @@
+- name: Install rsyslog and auditd
+  ansible.builtin.apt:
+    name:
+      - rsyslog
+      - auditd
+    state: present
+    update_cache: true
+
+- name: Enable and start rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: started
+    enabled: true
+
+- name: Install audit rules
+  ansible.builtin.copy:
+    src: audit.rules
+    dest: /etc/audit/rules.d/mtc.rules
+    mode: "0640"
+
+- name: Enable and start auditd
+  ansible.builtin.service:
+    name: auditd
+    state: started
+    enabled: true
+
+- name: Load audit rules
+  ansible.builtin.command: augenrules --load
+  changed_when: false
+
+- name: Write a marker so syslog is not empty
+  ansible.builtin.command: logger -t mtc-sre "node log pipeline ready"
+  changed_when: false
+
+- name: Touch a watched file so auditd records an event
+  ansible.builtin.lineinfile:
+    path: /etc/mtc-sre-audit-marker
+    line: "mtc-sre"
+    create: true
+    mode: "0644"

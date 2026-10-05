@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  namespace: demo
+  labels:
+    app: payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+        - name: payment
+          image: payment:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: FAIL_RATE
+              value: "0"
+            - name: EXTRA_LATENCY_MS
+              value: "0"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://tempo.obs.svc.cluster.local:4318
+            - name: OTEL_SERVICE_NAMESPACE
+              value: demo
+            - name: OTEL_BSP_SCHEDULE_DELAY
+              value: "2000"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment
+  namespace: demo
+  labels:
+    app: payment
+spec:
+  selector:
+    app: payment
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: payment
+  namespace: demo
+  labels:
+    release: kube-prom
+spec:
+  selector:
+    matchLabels:
+      app: payment
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

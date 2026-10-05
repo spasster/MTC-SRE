@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-datasource
+  namespace: obs
+  labels:
+    grafana_datasource: "1"
+data:
+  loki-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        uid: loki
+        url: http://loki.obs.svc.cluster.local:3100
+        jsonData:
+          timeout: 60
+          derivedFields:
+            - name: TraceID
+              matcherRegex: "\"trace_id\": \"([0-9a-f]{32})\""
+              url: "$${__value.raw}"
+              datasourceUid: tempo
+              urlDisplayLabel: Трейс

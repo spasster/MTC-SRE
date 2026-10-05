@@ -14,7 +14,7 @@
       "gridPos": {"h": 3, "w": 24, "x": 0, "y": 0},
       "options": {
         "mode": "markdown",
-        "content": "Цель checkout: **99.9%** успешных `GET /work` и **p99 быстрее 300 мс**. Окно графиков — 5 минут, как у алертов."
+        "content": "Цель checkout: **99.5%** успешных `GET /work`, **p95 быстрее 300 мс**, доля 5xx ниже **0.5%**. Окно графиков — 5 минут, как у алертов."
       }
     },
     {
@@ -32,7 +32,7 @@
             "mode": "absolute",
             "steps": [
               {"color": "red", "value": null},
-              {"color": "green", "value": 0.999}
+              {"color": "green", "value": 0.995}
             ]
           }
         }
@@ -50,7 +50,7 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "p99 /work",
+      "title": "p95 /work",
       "gridPos": {"h": 6, "w": 8, "x": 8, "y": 3},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {
@@ -70,8 +70,8 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
-          "legendFormat": "p99"
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "legendFormat": "p95"
         }
       ]
     },
@@ -79,7 +79,7 @@
       "id": 3,
       "type": "stat",
       "title": "Запас бюджета за 5 минут",
-      "description": "1 значит весь бюджет 0.1% ошибок ещё цел. 0 значит бюджет выбран. Ниже нуля — SLO уже нарушен.",
+      "description": "1 значит весь бюджет 0.5% ошибок ещё цел. 0 значит бюджет выбран. Ниже нуля — SLO уже нарушен.",
       "gridPos": {"h": 6, "w": 8, "x": 16, "y": 3},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {
@@ -100,7 +100,7 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "1 - ((1 - (sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m])))) / 0.001)",
+          "expr": "1 - ((1 - (sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m])))) / 0.005)",
           "legendFormat": "budget"
         }
       ]
@@ -121,7 +121,7 @@
             "mode": "absolute",
             "steps": [
               {"color": "red", "value": null},
-              {"color": "green", "value": 0.999}
+              {"color": "green", "value": 0.995}
             ]
           }
         }
@@ -138,7 +138,7 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "p99 /work",
+      "title": "p95 /work",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 9},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {
@@ -158,8 +158,8 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
-          "legendFormat": "p99"
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "legendFormat": "p95"
         }
       ]
     }

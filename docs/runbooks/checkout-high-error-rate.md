@@ -1,9 +1,9 @@
 # CheckoutHighErrorRate
 
-Доля ответов 5xx на `GET /work` за 5 минут выше 1% и держится 2 минуты.
+Доля ответов 5xx на `GET /work` за 1 минуту выше 0.5% и держится 30 секунд.
 
-Healer делает `action=restart`: rollout restart Deployment `checkout` в namespace `demo`.
+Правило только поднимает тревогу. Healer смотрит, откуда 500. Свежая ревизия без ошибок зависимостей — кнопки Approve / Reject на откат. Таймаут до Ready payment — сообщение без кнопок, кластер не меняется. Redis Ready, но checkout его не дожидается — те же кнопки на рестарт, в тексте написано, что корзина в памяти сотрётся.
 
-Запасное действие, если рестарт не помог: `action=rollback`, rollout undo того же Deployment.
+Ручная имитация плохого релиза: env `FAIL_RATE` на Deployment `checkout`, доля от 0 до 1. Это поле шаблона пода, не ConfigMap. `1` отвечает 500 на каждый `/work` и не ходит в Redis и payment. После проверки вернуть `0`.
 
-Ручная проверка: ConfigMap `checkout`, ключ `ERROR`. Значение `1` включает 500. После проверки вернуть `0` и перезапустить Deployment, иначе алерт не погаснет.
+Причина 500 лежит в поле `reason` ответа и лога: `fail_rate`, `redis_timeout`, `redis_error`, `payment_timeout`, `payment_error`, `payment_http`.

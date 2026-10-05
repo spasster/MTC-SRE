@@ -1,0 +1,79 @@
+CLUSTER := mtc
+TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
+
+.PHONY: up cluster images apps repos observability dashboards logs node-logs promtail-host chaos
+
+up: cluster images apps observability dashboards logs chaos
+
+cluster:
+	colima status >/dev/null 2>&1 || colima start --cpu 4 --memory 8 --disk 40
+	docker context use colima
+	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
+		k3d cluster create $(CLUSTER) --agents 0; \
+	fi
+	kubectl config use-context k3d-$(CLUSTER)
+
+images:
+	docker build -t checkout:dev apps/checkout
+	docker build -t payment:dev apps/payment
+	docker build -t healer:dev healer
+	k3d image import checkout:dev payment:dev healer:dev -c $(CLUSTER)
+
+apps:
+	kubectl apply -f k8s/namespace.yaml -f k8s/redis.yaml -f k8s/payment.yaml -f k8s/checkout.yaml
+	kubectl create configmap k6-scripts -n demo \
+		--from-file=k6/ \
+		--dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -f k8s/k6-background.yaml
+
+repos:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+	helm repo add grafana https://grafana.github.io/helm-charts --force-update
+	helm repo add chaos-mesh https://charts.chaos-mesh.org --force-update
+	helm repo update
+
+observability: repos
+	helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
+		-n obs --create-namespace \
+		-f observability/kube-prom-values.yaml \
+		$(if $(TELEGRAM_VALUES),-f $(TELEGRAM_VALUES),)
+	kubectl apply -f k8s/checkout-servicemonitor.yaml -f observability/rules.yaml -f k8s/healer.yaml
+	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
+	@if [ -n "$$TELEGRAM_BOT_TOKEN" ] && [ -n "$$TELEGRAM_CHAT_ID" ]; then \
+		kubectl create secret generic telegram -n heal \
+			--from-literal=token="$$TELEGRAM_BOT_TOKEN" \
+			--from-literal=chat_id="$$TELEGRAM_CHAT_ID" \
+			--dry-run=client -o yaml | kubectl apply -f -; \
+		kubectl rollout restart deployment/healer -n heal; \
+	fi
+
+dashboards:
+	kubectl create configmap mtc-dashboards -n obs \
+		--from-file=observability/dashboards/ \
+		--dry-run=client -o yaml | kubectl apply -f -
+	kubectl label configmap mtc-dashboards -n obs grafana_dashboard=1 --overwrite
+
+logs: repos
+	helm upgrade --install loki grafana/loki -n obs -f observability/loki-values.yaml
+	helm upgrade --install promtail grafana/promtail -n obs -f observability/promtail-values.yaml
+	kubectl apply -f k8s/loki-nodeport.yaml -f observability/loki-datasource.yaml
+	$(MAKE) node-logs
+	$(MAKE) promtail-host
+
+node-logs:
+	sh ansible/colima-inventory.sh
+	cd ansible && ansible-playbook playbooks/node-logs.yaml
+
+promtail-host:
+	-docker rm -f promtail-host
+	docker run -d --name promtail-host --restart unless-stopped --user 0 \
+		--network container:k3d-$(CLUSTER)-server-0 \
+		-v /var/log:/var/log:ro \
+		-v "$(CURDIR)/observability/promtail-host.yaml":/etc/promtail/config.yml:ro \
+		grafana/promtail:3.5.1 -config.file=/etc/promtail/config.yml
+
+chaos: repos
+	helm upgrade --install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh --create-namespace \
+		--set chaosDaemon.runtime=containerd \
+		--set chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock \
+		--set dashboard.securityMode=false
