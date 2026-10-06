@@ -30,7 +30,7 @@ class FakeActuator:
         self.calls = []
         self.spike = False
 
-    def scale(self, namespace, name, replicas, dry_run=False):
+    def scale(self, namespace, name, replicas, dry_run=False, expected_replicas=None):
         self.calls.append(("scale", namespace, name, replicas, dry_run))
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}scale replicas={replicas}"
@@ -333,6 +333,15 @@ def test_resolved_preserves_replicas_changed_by_the_operator(monkeypatch):
         replicas=5, pods=list(HEALTHY)))
     assert main.handle_resolved()["result"] == "resolved"
     assert main.actuator.calls == []
+
+
+def test_operator_scaling_after_healer_is_preserved(monkeypatch):
+    main._scaled_by_healer = True
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
+        replicas=7, pods=list(HEALTHY)))
+    assert main.handle_resolved()["result"] == "ignored: operator changed replicas"
+    assert main.actuator.calls == []
+    assert main._scaled_by_healer is False
 
 
 def test_failed_scale_down_is_retried_by_the_worker(monkeypatch):

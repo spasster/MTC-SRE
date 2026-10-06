@@ -43,6 +43,23 @@ def test_restart_checks_resource_version_at_the_api():
     assert patch.kwargs == {"dry_run": "All"}
 
 
+@pytest.mark.parametrize("expected", [None, 5])
+def test_scale_does_not_reduce_operator_replicas(expected):
+    instance = actor(3)
+    instance.apps.read_namespaced_deployment.return_value.spec = SimpleNamespace(replicas=7)
+    with pytest.raises(ActionSkipped):
+        instance.scale("demo", "checkout", 2 if expected else 5, expected_replicas=expected)
+    instance.apps.patch_namespaced_deployment.assert_not_called()
+
+
+def test_scale_checks_resource_version_at_the_api():
+    instance = actor(3)
+    instance.apps.read_namespaced_deployment.return_value.spec = SimpleNamespace(replicas=5)
+    instance.scale("demo", "checkout", 2, expected_replicas=5)
+    body = instance.apps.patch_namespaced_deployment.call_args.args[2]
+    assert body == {"metadata": {"uid": "checkout-uid", "resourceVersion": "42"}, "spec": {"replicas": 2}}
+
+
 def test_rollback_without_previous_replicaset_is_skipped():
     instance = actor(3)
     instance.apps.list_namespaced_replica_set.return_value = SimpleNamespace(items=[])

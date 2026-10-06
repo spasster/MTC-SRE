@@ -18,12 +18,21 @@ class K8sActuator:
         self.core = client.CoreV1Api()
         self.batch = client.BatchV1Api()
 
-    def scale(self, namespace: str, name: str, replicas: int, dry_run: bool = False) -> str:
+    def scale(self, namespace: str, name: str, replicas: int, dry_run: bool = False, expected_replicas=None) -> str:
         kwargs = {"dry_run": "All"} if dry_run else {}
+        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        current = int(deployment.spec.replicas or 0)
+        if expected_replicas is not None and current != expected_replicas:
+            raise ActionSkipped("Число реплик изменено после измерения")
+        if replicas < current and expected_replicas is None:
+            raise ActionSkipped("Уменьшение чужого масштабирования запрещено")
+        if current == replicas:
+            raise ActionSkipped("Требуемое число реплик уже установлено")
         self.apps.patch_namespaced_deployment(
             name,
             namespace,
-            {"spec": {"replicas": replicas}},
+            {"metadata": {"uid": deployment.metadata.uid, "resourceVersion": deployment.metadata.resource_version},
+             "spec": {"replicas": replicas}},
             **kwargs,
         )
         prefix = "dry-run " if dry_run else ""

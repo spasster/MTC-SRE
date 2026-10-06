@@ -725,9 +725,18 @@ def _scale_to_baseline(evidence, limits) -> dict:
         _scaled_by_healer = False
         _scale_down_pending = False
         return {"result": "resolved"}
+    if replicas != limits["scale_to"]:
+        _scaled_by_healer = False
+        _scale_down_pending = False
+        return {"result": "ignored: operator changed replicas"}
     actor = get_actuator()
-    preview = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=True)
-    applied = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=False)
+    try:
+        preview = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=True, expected_replicas=limits["scale_to"])
+        applied = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=False, expected_replicas=limits["scale_to"])
+    except ActionSkipped as exc:
+        _scaled_by_healer = False
+        _scale_down_pending = False
+        return {"result": "ignored: operator changed replicas", "detail": str(exc)}
     _scaled_by_healer = False
     _scale_down_pending = False
     log.info("scaled down", extra={"action": "scale", "result": applied})
