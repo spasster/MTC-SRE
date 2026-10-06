@@ -1,3 +1,5 @@
+import pytest
+
 from app.diagnose import decide
 
 RULES = {
@@ -16,6 +18,7 @@ RULES = {
 def evidence(**overrides):
     base = {
         "replicas": 2,
+        "request_rate": 3.0,
         "revision_age_seconds": 5000,
         "error_ratio": 0.0,
         "application_error_ratio": 0.0,
@@ -254,4 +257,12 @@ def test_mixed_application_and_dependency_errors_do_not_roll_back():
 def test_unattributed_errors_are_not_a_bad_release_or_recovery():
     found = decide(evidence(revision_age_seconds=30, error_ratio=0.8), RULES)
     assert found.diagnosis == "unknown"
+    assert found.mode == "escalate"
+
+
+@pytest.mark.parametrize("field,value", [("request_rate", None), ("request_rate", 0),
+                                         ("error_ratio", None), ("error_ratio", float("nan"))])
+def test_incomplete_metrics_cannot_trigger_an_automatic_action(field, value):
+    found = decide(evidence(**{field: value}), RULES)
+    assert found.action == "none"
     assert found.mode == "escalate"

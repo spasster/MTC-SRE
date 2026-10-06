@@ -1,3 +1,6 @@
+import math
+
+
 class Decision:
     def __init__(self, diagnosis, mode, action, target, detail):
         self.diagnosis = diagnosis
@@ -41,6 +44,13 @@ def _live(pods):
 def decide(evidence, rules):
     if not evidence or evidence.get("error"):
         return Decision("unknown", "escalate", "none", None, "Не смог собрать данные и ничего не менял.")
+
+    requests, errors = evidence.get("request_rate"), evidence.get("error_ratio")
+    if (
+        not isinstance(requests, (int, float)) or not math.isfinite(requests) or requests <= 0
+        or not isinstance(errors, (int, float)) or not math.isfinite(errors) or not 0 <= errors <= 1
+    ):
+        return Decision("unknown", "escalate", "none", None, "Нет достоверных метрик запросов и ошибок. Кластер не изменён.")
 
     quiet = rules["dependency_ratio"]
     revision_age = evidence.get("revision_age_seconds")
