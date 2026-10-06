@@ -50,6 +50,8 @@ jobs:
           set -euo pipefail
           sh scripts/verify-mtls.sh
           mkdir -p .runtime/proof
+          kubectl exec -i -n heal deployment/healer -c healer -- python < scripts/verify-scale.py > .runtime/proof/scale-guard.json
+          kubectl rollout status deployment/checkout -n demo --timeout=180s
           kubectl port-forward -n obs svc/kube-prom-kube-prometheus-prometheus 19090:9090 >.runtime/prometheus-forward.log 2>&1 &
           kubectl port-forward -n obs svc/loki 13100:3100 >.runtime/loki-forward.log 2>&1 &
           kubectl port-forward -n obs svc/tempo 13200:3200 >.runtime/tempo-forward.log 2>&1 &
