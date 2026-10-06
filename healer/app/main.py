@@ -822,7 +822,7 @@ def handle_alert(alert: dict) -> dict:
         evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
         decision = decide(evidence, limits)
         remember_title(decision)
-        cooling = _acted_alert == alertname and time.time() < _cooldown_until
+        cooling = _acted_alert is not None and time.time() < _cooldown_until
         if cooling and decision.mode != "approval" and decision.diagnosis != "partition":
             log.info(
                 "уже лечил, жду окно",

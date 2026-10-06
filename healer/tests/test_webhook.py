@@ -135,6 +135,14 @@ def test_cpu_scales_after_dry_run(monkeypatch):
     ]
 
 
+def test_different_alerts_share_the_action_cooldown(monkeypatch):
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence())
+    client.post("/webhook", json={"alerts": [alert("CheckoutSlow")]})
+    response = client.post("/webhook", json={"alerts": [alert("CheckoutSyntheticFailed")]})
+    assert response.json()["results"][0]["result"] == "ignored: cooling down"
+    assert len(main.actuator.calls) == 2
+
+
 def test_bad_release_does_not_change_the_cluster(monkeypatch):
     monkeypatch.setattr(
         main,
