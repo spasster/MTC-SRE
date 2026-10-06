@@ -13,11 +13,11 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 PROMQL = {
-    "p95": 'histogram_quantile(0.95,sum by(le)(rate(http_request_duration_seconds_bucket{job="checkout",path="/work"}[1m])))',
-    "request_rate": 'sum(rate(http_requests_total{job="checkout",path="/work"}[1m]))',
-    "error_ratio": '(sum(rate(http_requests_total{job="checkout",path="/work",status=~"5.."}[1m])) or vector(0)) / sum(rate(http_requests_total{job="checkout",path="/work"}[1m]))',
-    "synthetic_success": 'min(probe_success{service="checkout"})',
-    "synthetic_time": 'max(timestamp(probe_success{service="checkout"}))',
+    "p95": 'histogram_quantile(0.95,sum by(le)(rate(http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work"}[1m])))',
+    "request_rate": 'sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[1m]))',
+    "error_ratio": '(sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[1m])) or vector(0)) / sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[1m]))',
+    "synthetic_success": 'min(probe_success{service="checkout",target_namespace="demo"})',
+    "synthetic_time": 'max(timestamp(probe_success{service="checkout",target_namespace="demo"}))',
     "alerts_firing": 'count(ALERTS{service="checkout",alertstate="firing"}) or vector(0)',
     "alerts_active": 'count(ALERTS{service="checkout"}) or vector(0)',
     "cpu_throttle": 'max(rate(container_cpu_cfs_throttled_periods_total{namespace="demo",container="checkout"}[1m]) / rate(container_cpu_cfs_periods_total{namespace="demo",container="checkout"}[1m]))',

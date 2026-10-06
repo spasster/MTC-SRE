@@ -83,7 +83,7 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m])))",
           "legendFormat": "p95"
         }
       ]
@@ -113,7 +113,7 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m]))",
           "legendFormat": "5xx"
         }
       ]
@@ -129,7 +129,7 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "sum by (dependency, reason) (rate(dependency_errors_total{job=\"checkout\"}[5m]))",
+          "expr": "sum by (dependency, reason) (rate(dependency_errors_total{namespace=\"demo\",job=\"checkout\"}[5m]))",
           "legendFormat": "{{dependency}} {{reason}}"
         }
       ]
@@ -157,7 +157,7 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "histogram_quantile(0.95, sum by (le, pod) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, pod) (rate(http_request_duration_seconds_bucket{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m])))",
           "legendFormat": "{{pod}}"
         }
       ]
@@ -196,7 +196,7 @@
         {
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "expr": "http_requests_total{job=\"checkout\",path=\"/work\"}",
+          "expr": "http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\"}",
           "legendFormat": "{{status}} {{pod}}",
           "exemplar": true
         }

@@ -91,6 +91,24 @@ class K8sActuator:
                 return True
         return False
 
+    def telemetry_pods(self, namespace: str, name: str):
+        """Рабочие поды текущей ревизии, принадлежащие указанному Deployment."""
+        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        revision = (deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
+        owners = set()
+        for replica_set in self.apps.list_namespaced_replica_set(namespace).items:
+            if ((replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision") == revision
+                and any(owner.kind == "Deployment" and owner.uid == deployment.metadata.uid
+                        for owner in replica_set.metadata.owner_references or [])):
+                owners.add(replica_set.metadata.uid)
+        selected = self.core.list_namespaced_pod(namespace, label_selector=f"app={name}")
+        return {
+            pod.metadata.name: pod.metadata.uid for pod in selected.items
+            if not pod.metadata.deletion_timestamp and pod.status.phase == "Running"
+            and any(owner.kind == "ReplicaSet" and owner.uid in owners
+                    for owner in pod.metadata.owner_references or [])
+        }
+
     def revision_age_seconds(self, namespace: str, name: str):
         newest = None
         newest_rev = -1

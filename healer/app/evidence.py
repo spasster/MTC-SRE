@@ -1,6 +1,7 @@
 import os
+import json
 import math
-import time
+import re
 
 import httpx
 
@@ -64,7 +65,7 @@ def _by_label(rows, label):
 
 
 def _ratio(part, whole):
-    if whole is None or whole <= 0:
+    if part is None or whole is None or whole <= 0:
         return None
     return part / whole
 
@@ -73,71 +74,77 @@ def gather(namespace, actuator=None, query=None):
     actor = actuator or K8sActuator()
     ask = query or query_prometheus
     try:
+        current = actor.telemetry_pods(namespace, "checkout")
+        if not current:
+            raise EvidenceError("Нет рабочих подов текущей ревизии checkout")
+        selector = (f'namespace={json.dumps(namespace)},job="checkout",'
+                    f'pod=~{json.dumps("|".join(re.escape(name) for name in sorted(current)))}')
+
+        def per_pod(expression):
+            values = _by_label(ask(expression), "pod")
+            if set(values) != set(current):
+                raise EvidenceError("Неполные метрики текущих подов checkout")
+            return values
+
+        up = per_pod(f'up{{{selector},endpoint="metrics"}}')
+        ages = per_pod(f'max by(pod)(time() - timestamp(http_requests_total{{{selector},path="/work"}}))')
+        if any(value != 1 for value in up.values()) or any(not 0 <= age <= 45 for age in ages.values()):
+            raise EvidenceError("Метрики checkout недоступны или устарели")
         p95 = _by_label(
             ask(
                 "histogram_quantile(0.95, sum by (le, pod) "
-                '(rate(http_request_duration_seconds_bucket{job="checkout",path="/work"}[1m])))'
+                f'(rate(http_request_duration_seconds_bucket{{{selector},path="/work"}}[1m])))'
             ),
             "pod",
         )
         p95_recent = _by_label(
             ask(
                 "histogram_quantile(0.95, sum by (le, pod) "
-                '(rate(http_request_duration_seconds_bucket{job="checkout",path="/work"}[30s])))'
+                f'(rate(http_request_duration_seconds_bucket{{{selector},path="/work"}}[30s])))'
             ),
             "pod",
         )
         p95_all = _scalar(
             ask(
                 "histogram_quantile(0.95, sum by (le) "
-                '(rate(http_request_duration_seconds_bucket{job="checkout",path="/work"}[1m])))'
+                f'(rate(http_request_duration_seconds_bucket{{{selector},path="/work"}}[1m])))'
             )
         )
         throttle = _by_label(
             ask(
                 "sum by (pod) (rate(container_cpu_cfs_throttled_periods_total"
-                f'{{namespace="{namespace}",container="checkout"}}[1m])) / '
+                f'{{namespace={json.dumps(namespace)},container="checkout",pod=~{json.dumps("|".join(re.escape(name) for name in sorted(current)))}}}[1m])) / '
                 "sum by (pod) (rate(container_cpu_cfs_periods_total"
-                f'{{namespace="{namespace}",container="checkout"}}[1m]))'
+                f'{{namespace={json.dumps(namespace)},container="checkout",pod=~{json.dumps("|".join(re.escape(name) for name in sorted(current)))}}}[1m]))'
             ),
             "pod",
         )
-        requests = _scalar(
-            ask('sum(rate(http_requests_total{job="checkout",path="/work"}[1m]))')
-        )
-        errors = _scalar(
-            ask(
-                'sum(rate(http_requests_total{job="checkout",path="/work",status=~"5.."}[1m]))'
-            )
-        )
-        redis_errors = _scalar(
-            ask(
-                'sum(rate(dependency_errors_total{job="checkout",dependency="redis"}[1m]))'
-            )
-        )
-        payment_timeouts = _scalar(
-            ask(
-                'sum(rate(dependency_errors_total{job="checkout",dependency="payment",reason="timeout"}[1m]))'
-            )
-        )
-        payment_errors = _scalar(
-            ask('sum(rate(dependency_errors_total{job="checkout",dependency="payment"}[1m]))')
-        )
-        application_errors = _scalar(
-            ask('sum(rate(application_errors_total{job="checkout"}[1m]))')
-        )
-        synthetic_success = _scalar(ask('min(probe_success{service="checkout"})'))
-        synthetic_time = _scalar(ask('max(timestamp(probe_success{service="checkout"}))'))
+        def rate_sum(metric, labels=""):
+            return sum(per_pod(f'sum by(pod)(rate({metric}{{{selector}{labels}}}[1m]))').values())
+
+        requests = rate_sum("http_requests_total", ',path="/work"')
+        errors = rate_sum("http_requests_total", ',path="/work",status=~"5.."')
+        redis_errors = rate_sum("dependency_errors_total", ',dependency="redis"')
+        payment_timeouts = rate_sum("dependency_errors_total", ',dependency="payment",reason="timeout"')
+        payment_errors = rate_sum("dependency_errors_total", ',dependency="payment"')
+        application_errors = rate_sum("application_errors_total")
+        if set(p95) != set(current) or set(p95_recent) != set(current):
+            raise EvidenceError("Не хватает измерений задержки текущих подов")
+        probe = f'service="checkout",target_namespace={json.dumps(namespace)}'
+        synthetic_success = _scalar(ask(f'min(probe_success{{{probe}}})'))
+        synthetic_age = _scalar(ask(f'max(time() - timestamp(probe_success{{{probe}}}))'))
         revision_age = actor.revision_age_seconds(namespace, "checkout")
         replicas = actor.replicas(namespace, "checkout")
         redis_ready = actor.ready(namespace, "redis")
         payment_ready = actor.ready(namespace, "payment")
     except Exception as exc:
-        return {"error": str(exc)}
+        return {"error": str(exc), "telemetry_complete": False, "request_rate": None,
+                "error_ratio": None, "p95": None, "pods": []}
     pods = []
     for name, latency in p95.items():
         pods.append({
             "pod": name,
+            "uid": current[name],
             "p95": latency,
             "p95_recent": p95_recent.get(name),
             "throttle": throttle.get(name),
@@ -147,13 +154,15 @@ def gather(namespace, actuator=None, query=None):
         "request_rate": requests,
         "p95": p95_all,
         "revision_age_seconds": revision_age,
-        "error_ratio": _ratio(errors or 0.0, requests),
-        "redis_error_ratio": _ratio(redis_errors or 0.0, requests),
-        "payment_timeout_ratio": _ratio(payment_timeouts or 0.0, requests),
-        "payment_error_ratio": _ratio(payment_errors or 0.0, requests),
-        "application_error_ratio": _ratio(application_errors or 0.0, requests),
+        "error_ratio": _ratio(errors, requests),
+        "redis_error_ratio": _ratio(redis_errors, requests),
+        "payment_timeout_ratio": _ratio(payment_timeouts, requests),
+        "payment_error_ratio": _ratio(payment_errors, requests),
+        "application_error_ratio": _ratio(application_errors, requests),
         "synthetic_success": synthetic_success,
-        "synthetic_age_seconds": time.time() - synthetic_time if synthetic_time is not None else None,
+        "synthetic_age_seconds": synthetic_age,
+        "telemetry_complete": True,
+        "telemetry_age_seconds": max(ages.values()),
         "redis_ready": redis_ready,
         "payment_ready": payment_ready,
         "pods": pods,

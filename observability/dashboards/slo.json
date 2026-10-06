@@ -78,7 +78,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m]))",
           "legendFormat": "success"
         }
       ]
@@ -131,7 +131,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m])))",
           "legendFormat": "p95"
         }
       ]
@@ -189,7 +189,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "1 - ((1 - (sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m])))) / 0.005)",
+          "expr": "1 - ((1 - (sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m])))) / 0.005)",
           "legendFormat": "budget"
         }
       ]
@@ -240,7 +240,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_requests_total{job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"checkout\",path=\"/work\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m]))",
           "legendFormat": "success"
         }
       ]
@@ -289,7 +289,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"checkout\",path=\"/work\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m])))",
           "legendFormat": "p95"
         }
       ]
@@ -339,7 +339,7 @@
       },
       "targets": [
         {
-          "expr": "avg_over_time(probe_success{service=\"checkout\"}[5m])",
+          "expr": "avg_over_time(probe_success{service=\"checkout\",target_namespace=\"demo\"}[5m])",
           "refId": "A",
           "legendFormat": "checkout"
         }
@@ -390,7 +390,7 @@
       },
       "targets": [
         {
-          "expr": "probe_success{service=\"checkout\"}",
+          "expr": "probe_success{service=\"checkout\",target_namespace=\"demo\"}",
           "refId": "A",
           "legendFormat": "checkout"
         }

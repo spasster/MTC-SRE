@@ -41,6 +41,8 @@ serviceMonitor:
     additionalRelabeling:
       - targetLabel: service
         replacement: checkout
+      - targetLabel: target_namespace
+        replacement: demo
   targets:
     - name: checkout-work
       url: http://checkout.demo.svc/work

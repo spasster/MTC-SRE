@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
     now = time.time()
     result = get(args.prometheus + "/api/v1/query_exemplars", {
-        "query": 'http_request_duration_seconds_bucket{job="checkout",path="/work"}',
+        "query": 'http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work"}',
         "start": now - 120, "end": now - 5,
     })
     traces = set()

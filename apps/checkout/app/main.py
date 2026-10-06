@@ -50,6 +50,15 @@ DEPENDENCY_LATENCY = Histogram(
     buckets=BUCKETS,
 )
 
+# Нулевые ошибки экспортируются явно: отсутствие серии означает потерю телеметрии.
+for status in ("200", "500"):
+    REQUESTS.labels("GET", "/work", status)
+LATENCY.labels("GET", "/work")
+for dependency, reasons in (("redis", ("timeout", "error")), ("payment", ("timeout", "error", "http"))):
+    for reason in reasons:
+        DEPENDENCY_ERRORS.labels(dependency, reason)
+APPLICATION_ERRORS.labels("fail_rate")
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
