@@ -8,3 +8,4 @@ scale_to: 5
 scale_from: 2
 max_actions: 2
 cooldown_seconds: 120
+approval_ttl_seconds: 300

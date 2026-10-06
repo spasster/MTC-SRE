@@ -4,6 +4,7 @@ import os
 import socket
 import threading
 import time
+import uuid
 from datetime import datetime, timezone
 
 import yaml
@@ -343,16 +344,25 @@ def request_approval(decision) -> str:
     if decision.diagnosis in _closed:
         return "ignored: already answered"
     if _pending is not None:
-        return "ignored: waiting approval"
+        if time.time() < _pending.approval_expires_at:
+            return "ignored: waiting approval"
+        _pending = None
     if decision.action == "restart_redis":
         decision.cart_seq = read_cart_seq()
     bot = get_notifier()
     if not bot.enabled():
         return f"needs approval: {decision.action}"
+    decision.approval_id = uuid.uuid4().hex
+    approval_ttl = get_rules().get("approval_ttl_seconds", 300)
+    decision.approval_expires_at = time.time() + approval_ttl
     _pending = decision
     start_poller()
     try:
-        bot.send(approval_text(decision), buttons=True)
+        bot.send(
+            approval_text(decision) + f"\n\nПодтверждение действует {format_duration(approval_ttl)}.",
+            buttons=True,
+            approval_id=decision.approval_id,
+        )
     except Exception:
         _pending = None
         raise
@@ -429,14 +439,24 @@ def apply_confirmed(decision) -> str:
 
 def apply_callback(data: str) -> str:
     global _pending, _actions
+    if not isinstance(data, str):
+        return "ignored: invalid callback"
+    action, separator, approval_id = data.partition(":")
+    if not separator or action not in {"approve", "reject"}:
+        return "ignored: invalid callback"
     with _lock:
         decision = _pending
         if decision is None:
             return "ignored: nothing pending"
+        if approval_id != decision.approval_id:
+            return "ignored: stale approval"
+        if time.time() >= decision.approval_expires_at:
+            _pending = None
+            return "ignored: expired approval"
         _pending = None
         _closed.add(decision.diagnosis)
     bot = get_notifier()
-    if data == "reject":
+    if action == "reject":
         if bot.enabled():
             bot.send("\n".join([
                 "🚫 Отказ принят",

@@ -1,4 +1,5 @@
 import os
+import re
 
 import httpx
 
@@ -12,7 +13,11 @@ def parse_updates(body, chat_id):
         message = query.get("message") or {}
         chat = (message.get("chat") or {}).get("id")
         data = query.get("data")
-        if str(chat) == str(chat_id) and data in {"approve", "reject"}:
+        if (
+            str(chat) == str(chat_id)
+            and isinstance(data, str)
+            and re.fullmatch(r"(?:approve|reject):[0-9a-f]{32}", data)
+        ):
             found.append((query.get("id"), data))
     return offset, found
 
@@ -30,13 +35,15 @@ class Telegram:
     def _url(self, method: str) -> str:
         return f"https://api.telegram.org/bot{self.token}/{method}"
 
-    def send(self, text: str, buttons: bool = False) -> None:
+    def send(self, text: str, buttons: bool = False, approval_id: str = "") -> None:
         payload = {"chat_id": self.chat_id, "text": text}
         if buttons:
+            if not re.fullmatch(r"[0-9a-f]{32}", approval_id):
+                raise ValueError("Для кнопок требуется идентификатор запроса подтверждения")
             payload["reply_markup"] = {
                 "inline_keyboard": [[
-                    {"text": "✅ Разрешить", "callback_data": "approve"},
-                    {"text": "🚫 Отклонить", "callback_data": "reject"},
+                    {"text": "✅ Разрешить", "callback_data": f"approve:{approval_id}"},
+                    {"text": "🚫 Отклонить", "callback_data": f"reject:{approval_id}"},
                 ]]
             }
         response = self.http.post(self._url("sendMessage"), json=payload)

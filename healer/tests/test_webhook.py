@@ -291,7 +291,7 @@ class FakeTelegram:
     def enabled(self):
         return True
 
-    def send(self, text, buttons=False):
+    def send(self, text, buttons=False, approval_id=""):
         self.messages.append((text, buttons))
 
 
@@ -312,7 +312,7 @@ def test_approval_waits_for_a_button(monkeypatch):
     assert again["result"] == "ignored: waiting approval"
     assert len(main.notifier.messages) == 1
 
-    result = main.apply_callback("approve")
+    result = main.apply_callback(f"approve:{main._pending.approval_id}")
     assert result.startswith("dry-run rollback")
     assert main.actuator.calls == [
         ("rollback", "demo", "checkout", True),
@@ -328,7 +328,7 @@ def test_reject_does_not_change_redis(monkeypatch):
     assert body["result"] == "waiting approval"
     assert "корзину" in main.notifier.messages[0][0]
     assert "173377" in main.notifier.messages[0][0]
-    assert main.apply_callback("reject") == "rejected"
+    assert main.apply_callback(f"reject:{main._pending.approval_id}") == "rejected"
     assert main.actuator.calls == []
     later = client.post("/webhook", json={"alerts": [alert("CheckoutHighErrorRate")]}).json()["results"][0]
     assert later["result"] == "ignored: already answered"
@@ -339,7 +339,7 @@ def test_redis_restart_reports_the_wiped_number(monkeypatch):
     monkeypatch.setattr(main, "read_cart_seq", lambda: 173377)
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(redis_error_ratio=0.9))
     client.post("/webhook", json={"alerts": [alert("CheckoutHighErrorRate")]})
-    assert main.apply_callback("approve").startswith("dry-run restart")
+    assert main.apply_callback(f"approve:{main._pending.approval_id}").startswith("dry-run restart")
     assert "Было 173377" in main.notifier.messages[-1][0]
 
 
@@ -477,3 +477,44 @@ def test_log_line(monkeypatch, caplog):
     payload = json.loads(JsonFormatter().format(record))
     assert payload["action"] == "delete_pod"
     assert "delete pod slow" in payload["result"]
+
+
+def test_old_button_does_not_confirm_a_new_incident(monkeypatch):
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Первый инцидент"))
+    old_id = main._pending.approval_id
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
+    main.handle_resolved()
+    monkeypatch.setattr(main, "read_cart_seq", lambda: None)
+    main.request_approval(Decision("redis", "approval", "restart_redis", "redis", "Второй инцидент"))
+    current_id = main._pending.approval_id
+
+    assert main.apply_callback(f"approve:{old_id}") == "ignored: stale approval"
+    assert main._pending.approval_id == current_id
+    assert main.actuator.calls == []
+    assert main.apply_callback(f"approve:{current_id}").startswith("dry-run restart")
+
+
+def test_expired_button_does_not_change_the_cluster(monkeypatch):
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Истёкший запрос"))
+    pending = main._pending
+    monkeypatch.setattr(main.time, "time", lambda: pending.approval_expires_at + 1)
+
+    assert main.apply_callback(f"approve:{pending.approval_id}") == "ignored: expired approval"
+    assert main.actuator.calls == []
+    assert main._pending is None
+
+
+def test_callback_without_request_id_is_not_an_approval():
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Текущий запрос"))
+    assert main.apply_callback("approve") == "ignored: invalid callback"
+    assert main._pending is not None
+    assert main.actuator.calls == []
