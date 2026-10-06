@@ -1,0 +1,213 @@
+{
+  "cases": [
+    {
+      "id": "cpu",
+      "expected_group": "cpu",
+      "proof_source": "docs/results/iteration-1/postmortem-cpu.json",
+      "proof_sha256": "034a5edb23cd02bcfd0c8fa4cf4f68ee1063b9c0b965cfbd6ea49a6dfe00bfba",
+      "evidence": {
+        "collection_failed": false,
+        "replicas": 2,
+        "request_rate": 3.1111111111111107,
+        "p95": 0.23999999999999985,
+        "revision_age_seconds": 7559.393492,
+        "error_ratio": 0.0,
+        "application_error_ratio": 0.0,
+        "redis_error_ratio": 0.0,
+        "payment_error_ratio": 0.0,
+        "payment_timeout_ratio": 0.0,
+        "synthetic_success": 1.0,
+        "synthetic_age_seconds": 2.240999937057495,
+        "redis_ready": true,
+        "payment_ready": true,
+        "pods": [
+          {
+            "pod": "checkout-7fc5f76f9b-wlv2v",
+            "p95": 0.19685714285714284,
+            "p95_recent": 0.2524999999999999,
+            "throttle": 0.26480836236933797
+          },
+          {
+            "pod": "checkout-7fc5f76f9b-f7zkz",
+            "p95": 0.30666666666666703,
+            "p95_recent": 0.27999999999999986,
+            "throttle": 0.3056768558951965
+          }
+        ]
+      },
+      "incident_facts": {
+        "scope": "latest_completed",
+        "status": "completed",
+        "started_at": 1791326272.709,
+        "slo_restored_at": 1791326521.928078,
+        "api_accepted_at": 1791326419.7337747,
+        "resolved_received_at": 1791326538.9636798,
+        "mttr_seconds": 249.21907782554626,
+        "api_delay_seconds": 147.0247745513916,
+        "operations": [
+          {
+            "action": "scale",
+            "status": "applied",
+            "prepared_at": 1791326419.6605463,
+            "api_accepted_at": 1791326419.7337027
+          }
+        ],
+        "timeline": [
+          {
+            "time": 1791326283.8122172,
+            "event": "decision",
+            "action": "none",
+            "diagnosis": "settling",
+            "mode": "ignore"
+          },
+          {
+            "time": 1791326419.6304352,
+            "event": "decision",
+            "action": "scale",
+            "diagnosis": "cpu",
+            "mode": "auto"
+          },
+          {
+            "time": 1791326493.7316086,
+            "event": "decision",
+            "action": "none",
+            "diagnosis": "cpu",
+            "mode": "escalate"
+          }
+        ],
+        "current_unknown_operation": false,
+        "timeline_truncated": false,
+        "unknown_operation_in_selected_incident": false,
+        "operations_truncated": false
+      }
+    },
+    {
+      "id": "unknown",
+      "expected_group": "data",
+      "proof_source": "docs/results/iteration-1/postmortem.json",
+      "proof_sha256": "ae8c51648caa312c68f7b8800ca08978c320bc130e58c43da04509aef57e3ef5",
+      "evidence": {
+        "collection_failed": false,
+        "replicas": 2,
+        "request_rate": 3.0888888888888886,
+        "p95": 0.2504999999999999,
+        "revision_age_seconds": 8383.699895,
+        "error_ratio": 0.0,
+        "application_error_ratio": 0.0,
+        "redis_error_ratio": 0.0,
+        "payment_error_ratio": 0.0,
+        "payment_timeout_ratio": 0.0,
+        "synthetic_success": 1.0,
+        "synthetic_age_seconds": 1.3409998416900635,
+        "redis_ready": true,
+        "payment_ready": true,
+        "pods": [
+          {
+            "pod": "checkout-7fc5f76f9b-f7zkz",
+            "p95": 0.2316666666666663,
+            "p95_recent": 0.188125,
+            "throttle": 0.2972136222910217
+          },
+          {
+            "pod": "checkout-7fc5f76f9b-wlv2v",
+            "p95": 0.2585714285714286,
+            "p95_recent": 0.1965,
+            "throttle": 0.3373860182370821
+          }
+        ]
+      },
+      "incident_facts": {
+        "scope": "latest_completed",
+        "status": "completed",
+        "started_at": 1791326791.137996,
+        "slo_restored_at": null,
+        "api_accepted_at": null,
+        "resolved_received_at": 1791327043.6278415,
+        "mttr_seconds": null,
+        "api_delay_seconds": null,
+        "operations": [],
+        "timeline": [
+          {
+            "time": 1791326791.8159928,
+            "event": "decision",
+            "action": "none",
+            "diagnosis": "unknown",
+            "mode": "escalate"
+          }
+        ],
+        "current_unknown_operation": false,
+        "timeline_truncated": false,
+        "unknown_operation_in_selected_incident": false,
+        "operations_truncated": false
+      }
+    },
+    {
+      "id": "pod",
+      "expected_group": "pod",
+      "proof_source": "docs/results/iteration-2/llm-pod-facts.json",
+      "proof_sha256": "5cf3f110431906ae222fbbaa1c2b558e28404f0965eeafb0f8bd3acf202d9759",
+      "evidence": {
+        "collection_failed": false,
+        "replicas": 2,
+        "request_rate": 2.0444444444444443,
+        "p95": 0.19884615384615387,
+        "revision_age_seconds": 10223.950755,
+        "error_ratio": 0.0,
+        "application_error_ratio": 0.0,
+        "redis_error_ratio": 0.0,
+        "payment_error_ratio": 0.0,
+        "payment_timeout_ratio": 0.0,
+        "synthetic_success": 1.0,
+        "synthetic_age_seconds": 12.080999851226807,
+        "redis_ready": true,
+        "payment_ready": true,
+        "pods": [
+          {
+            "pod": "checkout-7fc5f76f9b-wlv2v",
+            "p95": 0.15749999999999992,
+            "p95_recent": 0.09607142857142857,
+            "throttle": 0.16595744680851063
+          },
+          {
+            "pod": "checkout-7fc5f76f9b-sbcn6",
+            "p95": 0.20833333333333331,
+            "p95_recent": 0.19973684210526316,
+            "throttle": 0.24776119402985075
+          }
+        ]
+      },
+      "incident_facts": {
+        "scope": "latest_completed",
+        "status": "completed",
+        "started_at": 1791328522.709,
+        "slo_restored_at": 1791328574.6538298,
+        "api_accepted_at": 1791328533.7435503,
+        "resolved_received_at": 1791328593.7761595,
+        "mttr_seconds": 51.94482970237732,
+        "api_delay_seconds": 11.034550189971924,
+        "operations": [
+          {
+            "action": "delete_pod",
+            "status": "applied",
+            "prepared_at": 1791328533.6962156,
+            "api_accepted_at": 1791328533.7435045
+          }
+        ],
+        "timeline": [
+          {
+            "time": 1791328533.6524327,
+            "event": "decision",
+            "action": "delete_pod",
+            "diagnosis": "slow_pod",
+            "mode": "auto"
+          }
+        ],
+        "current_unknown_operation": false,
+        "timeline_truncated": false,
+        "unknown_operation_in_selected_incident": false,
+        "operations_truncated": false
+      }
+    }
+  ],
+  "note": "Сохраненные реальные факты. Два старых ответа модели служат только источником структурированных измерений, а не эталоном рекомендаций."
+}

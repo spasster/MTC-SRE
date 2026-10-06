@@ -1,0 +1,65 @@
+{
+  "snapshot": {
+    "collection_failed": false,
+    "replicas": 2,
+    "request_rate": 2.0444444444444443,
+    "p95": 0.19884615384615387,
+    "revision_age_seconds": 10223.950755,
+    "error_ratio": 0.0,
+    "application_error_ratio": 0.0,
+    "redis_error_ratio": 0.0,
+    "payment_error_ratio": 0.0,
+    "payment_timeout_ratio": 0.0,
+    "synthetic_success": 1.0,
+    "synthetic_age_seconds": 12.080999851226807,
+    "redis_ready": true,
+    "payment_ready": true,
+    "pods": [
+      {
+        "pod": "checkout-7fc5f76f9b-wlv2v",
+        "p95": 0.15749999999999992,
+        "p95_recent": 0.09607142857142857,
+        "throttle": 0.16595744680851063
+      },
+      {
+        "pod": "checkout-7fc5f76f9b-sbcn6",
+        "p95": 0.20833333333333331,
+        "p95_recent": 0.19973684210526316,
+        "throttle": 0.24776119402985075
+      }
+    ]
+  },
+  "incident_facts": {
+    "scope": "latest_completed",
+    "status": "completed",
+    "started_at": 1791328522.709,
+    "slo_restored_at": 1791328574.6538298,
+    "api_accepted_at": 1791328533.7435503,
+    "resolved_received_at": 1791328593.7761595,
+    "mttr_seconds": 51.94482970237732,
+    "api_delay_seconds": 11.034550189971924,
+    "operations": [
+      {
+        "action": "delete_pod",
+        "status": "applied",
+        "prepared_at": 1791328533.6962156,
+        "api_accepted_at": 1791328533.7435045
+      }
+    ],
+    "timeline": [
+      {
+        "time": 1791328533.6524327,
+        "event": "decision",
+        "action": "delete_pod",
+        "diagnosis": "slow_pod",
+        "mode": "auto"
+      }
+    ],
+    "current_unknown_operation": false,
+    "timeline_truncated": false,
+    "unknown_operation_in_selected_incident": false,
+    "operations_truncated": false
+  },
+  "captured_at": "2026-10-06T23:28:35.833769+00:00",
+  "note": "Текущий снимок снят после закрытого инцидента с медленным подом. Факты выбранного инцидента прочитаны из настоящего журнала; модель в этой записи не запускалась."
+}

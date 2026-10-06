@@ -1,0 +1,151 @@
+{
+  "checked_at": "2026-10-06T23:41:31.454001+00:00",
+  "passed": true,
+  "duration_seconds": 37.37981605529785,
+  "rbac": {
+    "get deployments": "yes",
+    "patch deployments": "no",
+    "delete pods": "no",
+    "get secrets": "no",
+    "get heal/configmap/healer-state": "yes",
+    "patch heal/configmap/healer-state": "no",
+    "get heal/secrets": "no",
+    "patch heal/lease/healer-leader": "no"
+  },
+  "response": {
+    "source": "local_llm",
+    "model": "qwen2.5:1.5b",
+    "snapshot": {
+      "collection_failed": false,
+      "replicas": 2,
+      "request_rate": 3.0666666666666664,
+      "p95": 0.19366666666666668,
+      "revision_age_seconds": 10964.412076,
+      "error_ratio": 0.0,
+      "application_error_ratio": 0.0,
+      "redis_error_ratio": 0.0,
+      "payment_error_ratio": 0.0,
+      "payment_timeout_ratio": 0.0,
+      "synthetic_success": 1.0,
+      "synthetic_age_seconds": 1.9589998722076416,
+      "redis_ready": true,
+      "payment_ready": true,
+      "pods": [
+        {
+          "pod": "checkout-7fc5f76f9b-wlv2v",
+          "p95": 0.19270833333333331,
+          "p95_recent": 0.1838888888888889,
+          "throttle": 0.2806539509536785
+        },
+        {
+          "pod": "checkout-7fc5f76f9b-sbcn6",
+          "p95": 0.19749999999999995,
+          "p95_recent": 0.21500000000000002,
+          "throttle": 0.21825396825396828
+        }
+      ]
+    },
+    "slo_assessment": {
+      "state": "healthy",
+      "p95_limit_seconds": 0.3,
+      "error_ratio_limit": 0.005,
+      "source": "measured_metrics"
+    },
+    "incident_facts": {
+      "scope": "latest_completed",
+      "status": "completed",
+      "started_at": 1791328522.709,
+      "slo_restored_at": 1791328574.6538298,
+      "api_accepted_at": 1791328533.7435503,
+      "resolved_received_at": 1791328593.7761595,
+      "mttr_seconds": 51.94482970237732,
+      "api_delay_seconds": 11.034550189971924,
+      "operations": [
+        {
+          "action": "delete_pod",
+          "status": "applied",
+          "prepared_at": 1791328533.6962156,
+          "api_accepted_at": 1791328533.7435045
+        }
+      ],
+      "timeline": [
+        {
+          "time": 1791328533.6524327,
+          "event": "decision",
+          "action": "delete_pod",
+          "diagnosis": "slow_pod",
+          "mode": "auto"
+        }
+      ],
+      "current_unknown_operation": false,
+      "timeline_truncated": false,
+      "unknown_operation_in_selected_incident": false,
+      "operations_truncated": false
+    },
+    "report_sections": {
+      "symptoms": "Сейчас SLO в норме; этот снимок описывает момент запроса, а не начало выбранного инцидента.",
+      "actions": "удаление пода: команда принята API",
+      "recovery": "По журналу восстановление SLO подтверждено; MTTR 51.9 с.",
+      "next_checks": "Сверить UID удаленного и заменяющего подов checkout с журналом операции."
+    },
+    "selected_recommendation": {
+      "id": "pod1",
+      "group": "pod",
+      "text": "Сверить UID удаленного и заменяющего подов checkout с журналом операции.",
+      "basis": {
+        "source": "selected_incident",
+        "diagnoses": [
+          "slow_pod"
+        ],
+        "operations": [
+          "delete_pod"
+        ],
+        "mttr_seconds": 51.94482970237732
+      }
+    },
+    "recommendation_candidates": [
+      {
+        "id": "pod1",
+        "group": "pod",
+        "text": "Сверить UID удаленного и заменяющего подов checkout с журналом операции.",
+        "basis": {
+          "source": "selected_incident",
+          "diagnoses": [
+            "slow_pod"
+          ],
+          "operations": [
+            "delete_pod"
+          ],
+          "mttr_seconds": 51.94482970237732
+        }
+      },
+      {
+        "id": "pod2",
+        "group": "pod",
+        "text": "Сопоставить p95 по подам checkout до удаления медленного пода и после готовности замены.",
+        "basis": {
+          "source": "selected_incident",
+          "diagnoses": [
+            "slow_pod"
+          ],
+          "operations": [
+            "delete_pod"
+          ],
+          "mttr_seconds": 51.94482970237732
+        }
+      }
+    ],
+    "human_review_required": true,
+    "rule_decision": {
+      "diagnosis": "settling",
+      "mode": "ignore",
+      "action": "none",
+      "target": null,
+      "detail": "за последние 30 секунд поды уже быстрые"
+    },
+    "report": "Симптомы: Сейчас SLO в норме; этот снимок описывает момент запроса, а не начало выбранного инцидента.\n\nДействия и подтверждения: удаление пода: команда принята API\n\nВосстановление и время: По журналу восстановление SLO подтверждено; MTTR 51.9 с.\n\nЧто еще проверить: Сверить UID удаленного и заменяющего подов checkout с журналом операции.",
+    "actions_applied": [],
+    "notice": "Факты вычислены кодом; модель выбирает одну обоснованную проверку из явных кандидатов. Это черновик для человека, без изменения кластера."
+  },
+  "runtime_provenance": "llm-runtime.json"
+}

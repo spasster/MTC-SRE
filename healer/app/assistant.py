@@ -42,14 +42,80 @@ def factual_sections(assessment, incident):
     statuses = {"prepared": "намерение записано", "applied": "команда принята API", "failed": "ошибка команды",
                 "unknown": "результат неизвестен", "observed_after_restart": "результат наблюдался после замены healer"}
     performed = [f"{actions.get(row.get('action'), 'неизвестное действие')}: {statuses.get(row.get('status'), 'неизвестный результат')}"
-                 for row in incident.get("operations", [])]
-    duration = incident.get("mttr_seconds")
+                 for row in (incident or {}).get("operations", [])]
+    duration = (incident or {}).get("mttr_seconds")
     return {
         "symptoms": f"Сейчас SLO {states[assessment['state']]}; этот снимок описывает момент запроса, а не начало выбранного инцидента.",
         "actions": "; ".join(performed) if performed else "Операции Kubernetes в выбранном инциденте не зафиксированы.",
         "recovery": (f"По журналу восстановление SLO подтверждено; MTTR {duration:.1f} с."
                      if duration is not None else "Время восстановления SLO не подтверждено; MTTR не определен."),
     }
+
+
+CHECKS = {
+    "unknown_operation": (
+        "Сопоставить намерение в журнале с UID пода или аннотацией mtc-sre/healer-operation перед повтором команды.",
+        "Проверить неопределенную операцию и владельца Lease; до независимого подтверждения сохранить запрет повторного действия.",
+    ),
+    "cpu": (
+        "Сопоставить p95 и CPU throttle по подам checkout до и после масштабирования.",
+        "Проверить готовность реплик checkout и сохраненный момент подтверждения SLO после масштабирования.",
+    ),
+    "pod": (
+        "Сверить UID удаленного и заменяющего подов checkout с журналом операции.",
+        "Сопоставить p95 по подам checkout до удаления медленного пода и после готовности замены.",
+    ),
+    "redis": (
+        "Сопоставить redis_error_ratio, готовность Redis и трейс ошибки во время инцидента.",
+        "Сверить подтверждение оператора и журналы Redis перед выводом о последствиях рестарта для корзины.",
+    ),
+    "revision": (
+        "Сверить UID Deployment checkout, текущую ревизию и журнал подтвержденного отката.",
+        "Сопоставить application_error_ratio и p95 checkout до и после изменения ревизии.",
+    ),
+    "payment": (
+        "Сопоставить payment_timeout_ratio и трейс checkout -> payment во время инцидента.",
+        "Проверить доступность сети checkout -> payment и готовность payment перед изменением приложения.",
+    ),
+    "data": (
+        "Сверить отказ от вмешательства с полнотой и свежестью метрик checkout в Prometheus в момент инцидента.",
+        "Проверить up и метрики запросов checkout; отсутствие подтверждения восстановления сохранить как неизвестное время.",
+    ),
+    "slo": (
+        "Сопоставить p95, долю ошибок и успешную синтетику checkout в одном временном окне.",
+        "Проверить покрытие истории и бюджет SLO; короткий здоровый снимок не подтверждает месячный результат.",
+    ),
+}
+
+
+def grounded_checks(snapshot, assessment, decision, incident):
+    """Модель выбирает проверку только из кандидатов, связанных с входными фактами."""
+    if incident is None:
+        diagnoses, actions = {decision["diagnosis"]}, {decision["action"]}
+        basis = {"source": "current_rules_and_metrics", "diagnosis": decision["diagnosis"], "slo_state": assessment["state"]}
+    else:
+        diagnoses = {row["diagnosis"] for row in incident.get("timeline", []) if row.get("diagnosis")}
+        actions = {row["action"] for row in incident.get("operations", []) if row.get("action")}
+        basis = {"source": "selected_incident", "diagnoses": sorted(diagnoses), "operations": sorted(actions),
+                 "mttr_seconds": incident.get("mttr_seconds")}
+    if incident and incident.get("unknown_operation_in_selected_incident"):
+        group = "unknown_operation"
+    elif "cpu" in diagnoses or actions & {"scale", "scale_down"}:
+        group = "cpu"
+    elif "slow_pod" in diagnoses or "delete_pod" in actions:
+        group = "pod"
+    elif "redis" in diagnoses or "restart_redis" in actions:
+        group = "redis"
+    elif "bad_release" in diagnoses or "rollback" in actions:
+        group = "revision"
+    elif diagnoses & {"partition", "payment"}:
+        group = "payment"
+    elif "unknown" in diagnoses or assessment["state"] == "unknown" or snapshot["collection_failed"]:
+        group = "data"
+    else:
+        group = "slo"
+    return [{"id": group + str(index), "group": group, "text": text, "basis": basis}
+            for index, text in enumerate(CHECKS[group], 1)]
 
 
 def safe_snapshot(evidence):
@@ -90,16 +156,19 @@ def build_report(evidence, client=None, incident=None):
         "prompt": json.dumps({"оценка_SLO_сейчас": assessment, "метрики_сейчас": snapshot, "решение_правил_сейчас": decision,
                               **({"факты_инцидента": incident} if incident is not None else {})}, ensure_ascii=False),
         "stream": False,
-        "options": {"num_predict": 384, "num_ctx": 4096 if incident is not None else 2048, "num_thread": 2, "temperature": 0.1},
+        "options": {"num_predict": 384, "num_ctx": 4096, "num_thread": 2, "temperature": 0.1},
         "keep_alive": "5m",
     }
-    fixed_sections = None
-    if incident is not None:
-        fixed_sections = factual_sections(assessment, incident)
-        payload["format"] = {**POSTMORTEM_SCHEMA, "properties": {
-            key: {"type": "string", "enum": [fixed_sections[key]]} if key in fixed_sections else value
-            for key, value in POSTMORTEM_SCHEMA["properties"].items()}}
-        payload["prompt"] += "\nСхема ответа с неизменяемыми фактами: " + json.dumps(payload["format"], ensure_ascii=False)
+    fixed_sections = factual_sections(assessment, incident)
+    if incident is None:
+        fixed_sections["actions"] = f"Решение правил по текущему снимку: {decision['diagnosis']}, {decision['mode']}; это гипотеза, а не история примененных действий."
+        fixed_sections["recovery"] = "Текущий снимок не подтверждает время восстановления предыдущего инцидента; MTTR не определен."
+    candidates = grounded_checks(snapshot, assessment, decision, incident)
+    payload["format"] = {**POSTMORTEM_SCHEMA, "properties": {
+        key: {"type": "string", "enum": [fixed_sections[key]] if key in fixed_sections else [row["text"] for row in candidates]}
+        for key in POSTMORTEM_SECTIONS}}
+    payload["prompt"] += "\nОбоснованные кандидаты следующей проверки: " + json.dumps(candidates, ensure_ascii=False)
+    payload["prompt"] += "\nСхема ответа с неизменяемыми фактами: " + json.dumps(payload["format"], ensure_ascii=False)
     own_client = client is None
     http = client or httpx.Client(timeout=120)
     try:
@@ -110,16 +179,16 @@ def build_report(evidence, client=None, incident=None):
         answer = body.get("response") if isinstance(body, dict) else None
         if not isinstance(answer, str) or not answer.strip() or body.get("done") is not True:
             raise ValueError("Неполный ответ модели")
-        sections = None
-        if incident is not None:
-            sections = json.loads(answer)
-            if (not isinstance(sections, dict) or set(sections) != set(POSTMORTEM_SECTIONS)
-                or any(not isinstance(value, str) or not value.strip() or len(value) > 600
-                       for value in sections.values())):
-                raise ValueError("Неверный формат отчета об инциденте")
-            if any(sections[key] != value for key, value in fixed_sections.items()):
-                raise ValueError("Текст модели изменил факты инцидента")
-            answer = "\n\n".join(f"{title}: {sections[key]}" for key, title in POSTMORTEM_SECTIONS.items())
+        sections = json.loads(answer)
+        if (not isinstance(sections, dict) or set(sections) != set(POSTMORTEM_SECTIONS)
+            or any(not isinstance(value, str) or not value.strip() or len(value) > 600 for value in sections.values())):
+            raise ValueError("Неверный формат отчета об инциденте")
+        if any(sections[key] != value for key, value in fixed_sections.items()):
+            raise ValueError("Текст модели изменил факты инцидента")
+        selected = next((row for row in candidates if row["text"] == sections["next_checks"]), None)
+        if selected is None:
+            raise ValueError("Рекомендация не обоснована выбранными фактами")
+        answer = "\n\n".join(f"{title}: {sections[key]}" for key, title in POSTMORTEM_SECTIONS.items())
     except (httpx.HTTPError, ValueError):
         raise HTTPException(status_code=503, detail="Локальная модель недоступна или ответ не завершён") from None
     finally:
@@ -128,8 +197,9 @@ def build_report(evidence, client=None, incident=None):
     return {"source": "local_llm", "model": payload["model"], "snapshot": snapshot, "slo_assessment": assessment,
             **({"incident_facts": incident} if incident is not None else {}),
             **({"report_sections": sections} if sections is not None else {}),
+            "selected_recommendation": selected, "recommendation_candidates": candidates, "human_review_required": True,
             "rule_decision": decision, "report": answer[:16000], "actions_applied": [],
-            "notice": "Оценка SLO вычислена по метрикам. Текст модели не проверен и может противоречить данным. Ассистент не меняет кластер."}
+            "notice": "Факты вычислены кодом; модель выбирает одну обоснованную проверку из явных кандидатов. Это черновик для человека, без изменения кластера."}
 
 
 @app.get("/health")

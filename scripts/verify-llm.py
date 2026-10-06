@@ -7,6 +7,7 @@ import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from experiment import cmd
@@ -40,16 +41,33 @@ def main():
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         time.sleep(2)
+        authentication = {}
+        for endpoint in ("report", "postmortem"):
+            for mode, headers in (("absent", {}), ("invalid", {"Authorization": "Bearer invalid-not-a-secret"})):
+                request = Request("http://127.0.0.1:18084/" + endpoint, data=b"", headers=headers)
+                try:
+                    with urlopen(request, timeout=10) as response:
+                        code = response.status
+                except HTTPError as error:
+                    code = error.code
+                authentication[endpoint + ":" + mode] = code
+                if code not in (401, 403):
+                    raise SystemExit("Отчет доступен без действующего подтверждения доступа")
         started = time.time()
         request = Request("http://127.0.0.1:18084/" + args.kind, data=b"", headers={"Authorization": "Bearer " + token})
         with urlopen(request, timeout=150) as response:
             result = json.load(response)
-        if result.get("actions_applied") != [] or not result.get("report"):
+        selected = result.get("selected_recommendation")
+        if (result.get("actions_applied") != [] or not result.get("report")
+            or selected not in result.get("recommendation_candidates", [])
+            or not result.get("human_review_required")
+            or result.get("report_sections", {}).get("next_checks") != (selected or {}).get("text")):
             raise SystemExit("Отчёт ассистента не соответствует контракту")
         if args.kind == "postmortem" and not result.get("incident_facts", {}).get("started_at"):
             raise SystemExit("В журнале нет подтвержденного времени начала инцидента")
         report = {"checked_at": datetime.now(timezone.utc).isoformat(), "passed": True,
-                  "duration_seconds": time.time() - started, "rbac": permissions, "response": result}
+                  "duration_seconds": time.time() - started, "rbac": permissions,
+                  "authentication": authentication, "response": result}
         target = Path(args.output)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
