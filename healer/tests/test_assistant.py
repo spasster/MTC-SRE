@@ -30,10 +30,41 @@ def test_postmortem_uses_proven_timings_and_excludes_untrusted_journal_fields():
     def generate(request):
         payload = json.loads(request.content)
         assert "факты_инцидента" in payload["prompt"]
-        return httpx.Response(200, json={"done": True, "response": "Неверный текст модели: MTTR 500 секунд."})
+        assert payload["format"]["required"] == ["symptoms", "actions", "recovery", "next_checks"]
+        sections = {key: payload["format"]["properties"][key]["enum"][0] for key in ("symptoms", "actions", "recovery")}
+        sections["next_checks"] = "Проверить журнал."
+        return httpx.Response(200, json={"done": True, "response": json.dumps(sections)})
     result = assistant.build_report({}, client=httpx.Client(transport=httpx.MockTransport(generate)), incident=facts)
     assert result["incident_facts"]["mttr_seconds"] == 40
     assert result["actions_applied"] == []
+    assert "40.0 с" in result["report_sections"]["recovery"]
+
+
+@pytest.mark.parametrize("answer", [
+    "Повторяющиеся вложенные списки вместо отчета.",
+    json.dumps({"symptoms": "Нет данных"}),
+    json.dumps({"symptoms": ["Нет данных"], "actions": "Нет", "recovery": "Не подтверждено", "next_checks": "Проверить"}),
+    json.dumps({"symptoms": "x" * 601, "actions": "Нет", "recovery": "Не подтверждено", "next_checks": "Проверить"}),
+])
+def test_invalid_postmortem_text_is_not_returned_as_a_report(answer):
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(
+        200, json={"done": True, "response": answer})))
+    with pytest.raises(HTTPException) as caught:
+        assistant.build_report({}, client=client, incident={"started_at": 100})
+    assert caught.value.status_code == 503
+
+
+def test_model_cannot_invent_recovery_time_in_the_postmortem():
+    def generate(request):
+        payload = json.loads(request.content)
+        sections = {key: payload["format"]["properties"][key]["enum"][0] for key in ("symptoms", "actions", "recovery")}
+        sections["recovery"] = "Восстановление будет через 24 часа."
+        sections["next_checks"] = "Проверить журнал."
+        return httpx.Response(200, json={"done": True, "response": json.dumps(sections)})
+    with pytest.raises(HTTPException) as caught:
+        assistant.build_report({}, client=httpx.Client(transport=httpx.MockTransport(generate)),
+                               incident={"mttr_seconds": None})
+    assert caught.value.status_code == 503
 
 
 def test_postmortem_requires_authentication_before_reading_the_journal(monkeypatch):

@@ -1,0 +1,83 @@
+{
+  "checked_at": "2026-10-06T22:27:22.670964+00:00",
+  "passed": true,
+  "duration_seconds": 93.20484352111816,
+  "rbac": {
+    "get deployments": "yes",
+    "patch deployments": "no",
+    "delete pods": "no",
+    "get secrets": "no",
+    "get heal/configmap/healer-state": "yes",
+    "patch heal/configmap/healer-state": "no",
+    "get heal/secrets": "no",
+    "patch heal/lease/healer-leader": "no"
+  },
+  "response": {
+    "source": "local_llm",
+    "model": "qwen2.5:1.5b",
+    "snapshot": {
+      "collection_failed": true,
+      "replicas": null,
+      "request_rate": null,
+      "p95": null,
+      "revision_age_seconds": null,
+      "error_ratio": null,
+      "application_error_ratio": null,
+      "redis_error_ratio": null,
+      "payment_error_ratio": null,
+      "payment_timeout_ratio": null,
+      "synthetic_success": null,
+      "synthetic_age_seconds": null,
+      "redis_ready": false,
+      "payment_ready": false,
+      "pods": []
+    },
+    "slo_assessment": {
+      "state": "unknown",
+      "p95_limit_seconds": 0.3,
+      "error_ratio_limit": 0.005,
+      "source": "measured_metrics"
+    },
+    "incident_facts": {
+      "scope": "latest_completed",
+      "status": "completed",
+      "started_at": 1791325237.709,
+      "slo_restored_at": 1791325371.7314334,
+      "api_accepted_at": 1791325331.971088,
+      "resolved_received_at": 1791325383.8980205,
+      "mttr_seconds": 134.02243328094482,
+      "api_delay_seconds": 94.26208782196045,
+      "operations": [
+        {
+          "action": "scale",
+          "status": "applied",
+          "prepared_at": 1791325331.9075189,
+          "api_accepted_at": 1791325331.971026
+        }
+      ],
+      "timeline": [
+        {
+          "time": 1791325331.879045,
+          "event": "decision",
+          "action": "scale",
+          "diagnosis": "cpu",
+          "mode": "auto"
+        }
+      ],
+      "current_unknown_operation": false,
+      "timeline_truncated": false,
+      "unknown_operation_in_selected_incident": false,
+      "operations_truncated": false
+    },
+    "rule_decision": {
+      "diagnosis": "unknown",
+      "mode": "escalate",
+      "action": "none",
+      "target": null,
+      "detail": "Не удалось собрать данные. Кластер не изменён."
+    },
+    "report": "**Наблюдаемые симптомы:**\n\n- **Сбор данных:** Не удалось собрать данные из кластера. Кластер не был изменён.\n- **Состояние метрик:** \n  - **Сбор данных:** Сбор данных не удалось (сбор данных не был успешен).\n  - **Состояние метрик:** \n    - **Приборы:** Нет приборов.\n    - **Приборы:** \n      - **Приборы:** \n        - **Приборы:** \n          - **Приборы:** \n            - **Приборы:** \n              - **Приборы:** \n                - **Приборы:** \n                  - **Приборы:** \n                    - **Приборы:** \n                      - **Приборы:** \n                        - **Приборы:** \n                          - **Приборы:** \n                            - **Приборы:** \n                              - **Приборы:** \n                                - **Приборы:** \n                                  - **Приборы:** \n                                    - **Приборы:** \n                                      - **Приборы:** \n                                        - **Приборы:** \n                                          - **Приборы:** \n                                            - **Приборы:** \n                                              - **Приборы:** \n                                                - **Приборы:** \n                                                  - **Приборы:** \n                                                    - **Приборы:** \n                                                      - **Приборы:** \n                                                        - **Приборы:** \n                                                          - **Приборы:** \n                                                            - **Приборы:** \n                                                              - **Приборы:** \n                                                                - **Приборы:** \n                                                                  - **Приборы:** \n                                                                    -",
+    "actions_applied": [],
+    "notice": "Оценка SLO вычислена по метрикам. Текст модели не проверен и может противоречить данным. Ассистент не меняет кластер."
+  }
+}

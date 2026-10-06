@@ -19,6 +19,37 @@ NUMERIC_FIELDS = (
     "application_error_ratio", "redis_error_ratio", "payment_error_ratio",
     "payment_timeout_ratio", "synthetic_success", "synthetic_age_seconds",
 )
+POSTMORTEM_SECTIONS = {
+    "symptoms": "Симптомы",
+    "actions": "Действия и подтверждения",
+    "recovery": "Восстановление и время",
+    "next_checks": "Что еще проверить",
+}
+POSTMORTEM_SCHEMA = {
+    "type": "object",
+    "properties": {key: {"type": "string", "minLength": 1, "maxLength": 600}
+                   for key in POSTMORTEM_SECTIONS},
+    "required": list(POSTMORTEM_SECTIONS),
+    "additionalProperties": False,
+}
+
+
+def factual_sections(assessment, incident):
+    """Факты отчета формируются кодом; модель предлагает только следующую проверку."""
+    states = {"healthy": "в норме", "violated": "нарушен", "unknown": "не подтвержден из-за отсутствия данных"}
+    actions = {"scale": "масштабирование", "scale_down": "возврат масштаба", "delete_pod": "удаление пода",
+               "restart_redis": "перезапуск Redis", "rollback": "откат", "none": "без вмешательства"}
+    statuses = {"prepared": "намерение записано", "applied": "команда принята API", "failed": "ошибка команды",
+                "unknown": "результат неизвестен", "observed_after_restart": "результат наблюдался после замены healer"}
+    performed = [f"{actions.get(row.get('action'), 'неизвестное действие')}: {statuses.get(row.get('status'), 'неизвестный результат')}"
+                 for row in incident.get("operations", [])]
+    duration = incident.get("mttr_seconds")
+    return {
+        "symptoms": f"Сейчас SLO {states[assessment['state']]}; этот снимок описывает момент запроса, а не начало выбранного инцидента.",
+        "actions": "; ".join(performed) if performed else "Операции Kubernetes в выбранном инциденте не зафиксированы.",
+        "recovery": (f"По журналу восстановление SLO подтверждено; MTTR {duration:.1f} с."
+                     if duration is not None else "Время восстановления SLO не подтверждено; MTTR не определен."),
+    }
 
 
 def safe_snapshot(evidence):
@@ -62,6 +93,13 @@ def build_report(evidence, client=None, incident=None):
         "options": {"num_predict": 384, "num_ctx": 4096 if incident is not None else 2048, "num_thread": 2, "temperature": 0.1},
         "keep_alive": "5m",
     }
+    fixed_sections = None
+    if incident is not None:
+        fixed_sections = factual_sections(assessment, incident)
+        payload["format"] = {**POSTMORTEM_SCHEMA, "properties": {
+            key: {"type": "string", "enum": [fixed_sections[key]]} if key in fixed_sections else value
+            for key, value in POSTMORTEM_SCHEMA["properties"].items()}}
+        payload["prompt"] += "\nСхема ответа с неизменяемыми фактами: " + json.dumps(payload["format"], ensure_ascii=False)
     own_client = client is None
     http = client or httpx.Client(timeout=120)
     try:
@@ -72,6 +110,16 @@ def build_report(evidence, client=None, incident=None):
         answer = body.get("response") if isinstance(body, dict) else None
         if not isinstance(answer, str) or not answer.strip() or body.get("done") is not True:
             raise ValueError("Неполный ответ модели")
+        sections = None
+        if incident is not None:
+            sections = json.loads(answer)
+            if (not isinstance(sections, dict) or set(sections) != set(POSTMORTEM_SECTIONS)
+                or any(not isinstance(value, str) or not value.strip() or len(value) > 600
+                       for value in sections.values())):
+                raise ValueError("Неверный формат отчета об инциденте")
+            if any(sections[key] != value for key, value in fixed_sections.items()):
+                raise ValueError("Текст модели изменил факты инцидента")
+            answer = "\n\n".join(f"{title}: {sections[key]}" for key, title in POSTMORTEM_SECTIONS.items())
     except (httpx.HTTPError, ValueError):
         raise HTTPException(status_code=503, detail="Локальная модель недоступна или ответ не завершён") from None
     finally:
@@ -79,6 +127,7 @@ def build_report(evidence, client=None, incident=None):
             http.close()
     return {"source": "local_llm", "model": payload["model"], "snapshot": snapshot, "slo_assessment": assessment,
             **({"incident_facts": incident} if incident is not None else {}),
+            **({"report_sections": sections} if sections is not None else {}),
             "rule_decision": decision, "report": answer[:16000], "actions_applied": [],
             "notice": "Оценка SLO вычислена по метрикам. Текст модели не проверен и может противоречить данным. Ассистент не меняет кластер."}
 
