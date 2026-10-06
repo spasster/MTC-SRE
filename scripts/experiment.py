@@ -91,6 +91,28 @@ def wait_healthy(base, timeout=180):
     raise RuntimeError("Начальный SLO не восстановлен; эксперимент не начат")
 
 
+def closed_incident(state):
+    """Готовность метрик не заменяет закрытый журнал предыдущего инцидента."""
+    flags = ("_recovery_pending", "_resolved_pending", "_scaled_by_healer", "_scale_down_pending", "_uncertain")
+    return (isinstance(state, dict) and type(state.get("_actions")) is int and state["_actions"] == 0
+            and all(key in state and state[key] is None for key in ("_broke_at", "_fixed_at", "_applied_at", "_action_intent", "_pending"))
+            and all(state.get(key) is False for key in flags)
+            and state.get("_closed") == [] and state.get("_recovery_targets") == [])
+
+
+def wait_incident_closed(timeout=300):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        obj = json.loads(cmd("kubectl", "get", "configmap", "healer-state", "-n", "heal", "-o", "json"))
+        document = json.loads(obj.get("data", {}).get("state.json", "null"))
+        state = document.get("state") if isinstance(document, dict) else None
+        if closed_incident(state):
+            return {"checked_at": time.time(), "started_at": None, "actions": 0, "operation_unknown": False,
+                    "recovery_pending": False, "approval_pending": False, "incident_closed": True}
+        time.sleep(5)
+    raise RuntimeError("Предыдущий инцидент healer не закрыт; новый эксперимент не начат")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
@@ -129,6 +151,8 @@ def main():
               "created_at": datetime.now(timezone.utc).isoformat(), "samples": [], "passed": False,
               "baseline_note": "Задержка оператора задаётся явно; это контролируемый baseline, не измерение работы человека."}
     try:
+        wait_healthy(args.prometheus)
+        report["healer_precondition_before_preparation"] = wait_incident_closed()
         if args.mode == "auto":
             # Временный импорт может исчезнуть после удаления всех подов baseline.
             # Исходный образ остается в Docker; подготовка заканчивается до внесения сбоя.
@@ -143,7 +167,9 @@ def main():
             forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18081:8080"],
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         wait_healthy(args.prometheus)
+        report["healer_precondition_before_injection"] = wait_incident_closed()
         selected = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"][0]["metadata"]["name"]
+        report["injected_at"] = time.time()
         if args.spike_duration or args.spike_rate:
             manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
             environment = manifest["spec"]["template"]["spec"]["containers"][0]["env"]
@@ -155,7 +181,7 @@ def main():
             subprocess.run(["kubectl", "apply", "-f", "-"], input=json.dumps(manifest), text=True, capture_output=True, check=True)
         else:
             cmd("sh", "chaos/inject.sh", args.scenario)
-        report["injected_at"] = time.time()
+        report["injection_api_accepted_at"] = time.time()
         if args.scenario == "spike":
             report["additional_rps"] = args.spike_rate or 3
         report["target_pod"] = selected if args.scenario == "slow-pod" else None
@@ -180,6 +206,10 @@ def main():
                     report["api_accepted_at"] = time.time()
             elif args.mode == "auto":
                 status = api("http://127.0.0.1:18081/status", token=token)
+                if status.get("started_at") is not None:
+                    if status["started_at"] < report["injected_at"]:
+                        raise RuntimeError("Журнал healer содержит начало предыдущего инцидента")
+                    report["healer_started_at"] = status["started_at"]
                 timing = status if (status.get("api_accepted_at") or 0) >= report["injected_at"] else (status.get("last_recovery") or {})
                 accepted = timing.get("api_accepted_at")
                 if accepted and accepted >= report["injected_at"]:
