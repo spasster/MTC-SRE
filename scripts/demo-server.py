@@ -14,6 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default="mtc")
     parser.add_argument("--port", type=int, default=18765)
+    parser.add_argument("--healer-port", type=int, default=18082)
     args = parser.parse_args()
     cmd("sh", "scripts/require-context.sh", args.cluster)
     secret = json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))
@@ -33,13 +34,13 @@ def main():
                 elif self.path == "/data":
                     data = metrics("http://127.0.0.1:19090")
                     try:
-                        data["healer"] = api("http://127.0.0.1:18082/status", token=token)
+                        data["healer"] = api(f"http://127.0.0.1:{args.healer_port}/status", token=token)
                     except Exception:
                         if forward is not None and forward.poll() is None:
                             forward.terminate()
                             forward.wait(timeout=5)
                         forward = subprocess.Popen(
-                            ["kubectl", "port-forward", "-n", "heal", "svc/healer", "18082:8080"],
+                            ["kubectl", "port-forward", "-n", "heal", "svc/healer", f"{args.healer_port}:8080"],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                         )
                         data["healer"] = None
