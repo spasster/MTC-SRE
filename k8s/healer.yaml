@@ -58,16 +58,22 @@ metadata:
 rules:
   - apiGroups: ["apps"]
     resources: ["deployments"]
-    verbs: ["get", "list", "patch", "update"]
+    resourceNames: ["checkout", "redis", "payment"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["checkout", "redis"]
+    verbs: ["patch"]
   - apiGroups: ["apps"]
     resources: ["replicasets"]
-    verbs: ["get", "list"]
+    verbs: ["list"]
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "delete"]
   - apiGroups: ["batch"]
     resources: ["jobs"]
-    verbs: ["get", "list"]
+    resourceNames: ["k6-spike"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

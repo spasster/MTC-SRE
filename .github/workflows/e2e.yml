@@ -84,6 +84,7 @@ jobs:
           python scripts/verify-node-logs.py --output .runtime/proof/node-logs.json
           python scripts/verify-observability.py --output .runtime/proof/observability.json
           python scripts/verify-rules.py --output .runtime/proof/rules.json
+          python scripts/verify-healer-rbac.py --cluster "$CLUSTER" --output .runtime/proof/healer-rbac.json
       - name: Проверить наблюдаемость и отказ вмешательства при потере данных
         run: python scripts/verify-healer-observability.py --cluster "$CLUSTER" --output .runtime/proof/healer-observability.json
       - name: Проверить реальные отказы и сохранение состояния healer
