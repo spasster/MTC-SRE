@@ -115,9 +115,10 @@ def decide(evidence, rules):
         best = min(pods, key=lambda pod: pod["p95"])
         baseline = best["p95"] if best["p95"] > 0 else 0.001
         slower = worst["p95"] >= baseline * rules["slow_ratio"]
-        throttle = worst.get("throttle") or 0.0
+        throttle = worst.get("throttle")
         recent = _recent(worst)
-        if slower and throttle < rules["cpu_throttle"] and recent is not None and recent >= rules["slow_seconds"]:
+        valid_throttle = isinstance(throttle, (int, float)) and math.isfinite(throttle) and 0 <= throttle <= 1
+        if slower and valid_throttle and throttle < rules["cpu_throttle"] and recent is not None and recent >= rules["slow_seconds"]:
             return Decision(
                 "slow_pod",
                 "auto",
@@ -150,7 +151,8 @@ def decide(evidence, rules):
             "Реплик checkout уже 5, а p95 GET /work всё ещё выше 300 мс.",
         )
 
-    throttled = [pod for pod in pods if (pod.get("throttle") or 0.0) >= rules["cpu_throttle"]]
+    throttled = [pod for pod in pods if isinstance(pod.get("throttle"), (int, float))
+                 and math.isfinite(pod["throttle"]) and rules["cpu_throttle"] <= pod["throttle"] <= 1]
     slow = [pod for pod in pods if pod["p95"] >= rules["slow_seconds"]]
     if pods and len(throttled) == len(pods) and slow:
         if replicas >= rules["scale_to"]:

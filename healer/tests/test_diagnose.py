@@ -59,6 +59,14 @@ def test_redis_not_ready_is_not_a_restart():
     assert found.diagnosis != "redis"
 
 
+@pytest.mark.parametrize("throttle", [None, float("nan"), float("inf"), -1, 2])
+def test_unavailable_cpu_metrics_do_not_justify_pod_deletion(throttle):
+    found = decide(evidence(pods=[{"pod": "fast", "p95": .05, "throttle": .1},
+                                 {"pod": "slow", "p95": 2, "throttle": throttle}]), RULES)
+    assert found.mode != "auto"
+    assert found.action == "none"
+
+
 def test_partition_does_not_touch_the_cluster():
     found = decide(evidence(payment_timeout_ratio=1.0), RULES)
     assert found.diagnosis == "partition"

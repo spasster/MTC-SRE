@@ -140,7 +140,7 @@ def gather(namespace, actuator=None, query=None):
             "pod": name,
             "p95": latency,
             "p95_recent": p95_recent.get(name),
-            "throttle": throttle.get(name, 0.0),
+            "throttle": throttle.get(name),
         })
     return {
         "replicas": replicas,
