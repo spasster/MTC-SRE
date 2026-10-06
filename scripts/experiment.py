@@ -20,6 +20,7 @@ PROMQL = {
     "synthetic_time": 'max(timestamp(probe_success{service="checkout"}))',
     "alerts_firing": 'count(ALERTS{service="checkout",alertstate="firing"}) or vector(0)',
     "alerts_active": 'count(ALERTS{service="checkout"}) or vector(0)',
+    "cpu_throttle": 'max(rate(container_cpu_cfs_throttled_periods_total{namespace="demo",container="checkout"}[1m]) / rate(container_cpu_cfs_periods_total{namespace="demo",container="checkout"}[1m]))',
 }
 
 
@@ -157,6 +158,11 @@ def main():
             print(f"После внесения сбоя {sample['time'] - report['injected_at']:.0f} с: "
                   f"p95={sample['p95']}, доля ошибок={sample['error_ratio']}, реплик={sample['replicas']}", flush=True)
             if report.get("api_accepted_at") and healthy(sample):
+                if args.scenario == "spike":
+                    job = json.loads(cmd("kubectl", "get", "job", "k6-spike", "-n", "demo", "-o", "json"))
+                    if job.get("status", {}).get("succeeded"):
+                        report["error"] = "SLO восстановился после завершения нагрузки; результат scale не подтверждён"
+                        break
                 streak += 1
                 if streak >= 3:
                     report["slo_restored_at"] = sample["time"]
@@ -172,6 +178,8 @@ def main():
             report["error"] = "Восстановление не подтверждено до таймаута"
     except Exception as exc:
         report["error"] = str(exc)
+    except KeyboardInterrupt:
+        report["error"] = "Эксперимент остановлен оператором; восстановление не подтверждено"
     finally:
         if forward is not None:
             forward.terminate()
@@ -179,6 +187,22 @@ def main():
         if args.scenario == "slow-pod":
             cmd("kubectl", "delete", "networkchaos", "checkout-slow-pod", "-n", "demo", "--ignore-not-found")
         else:
+            try:
+                pods = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "job-name=k6-spike", "-o", "json"))["items"]
+                if pods:
+                    pod = pods[0]["metadata"]["name"]
+                    subprocess.run(["kubectl", "exec", "-n", "demo", pod, "-c", "k6", "--", "sh", "-c", "kill -INT 1"],
+                                   capture_output=True, timeout=10)
+                    for _ in range(10):
+                        logs = cmd("kubectl", "logs", "-n", "demo", pod, "-c", "k6")
+                        for line in logs.splitlines():
+                            if line.startswith("MTC_SUMMARY "):
+                                report["k6_summary"] = json.loads(line[len("MTC_SUMMARY "):])
+                        if "k6_summary" in report:
+                            break
+                        time.sleep(2)
+            except Exception:
+                report["k6_summary_error"] = "Итог клиента k6 не получен"
             cmd("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
         cmd("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(original_checkout))
         cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original_healer))
