@@ -33,6 +33,7 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+            - containerPort: 8081
           env:
             - name: FAIL_RATE
               value: "0"
@@ -85,3 +86,6 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+    - name: metrics
+      port: 8081
+      targetPort: 8081

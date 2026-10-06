@@ -10,6 +10,6 @@ spec:
     matchLabels:
       app: payment
   endpoints:
-    - port: http
+    - port: metrics
       path: /metrics
       interval: 15s

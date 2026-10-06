@@ -58,6 +58,7 @@ spec:
     metadata:
       labels:
         app: healer
+        sidecar.istio.io/inject: "true"
     spec:
       serviceAccountName: healer
       containers:

@@ -10,13 +10,14 @@ spec:
     pods:
       demo:
         - POD_NAME
-  # Checkout calls http://payment, so the packet dest is the Service ClusterIP.
-  # Matching the payment pod IP misses that path. 2s each way makes /work about 4s
-  # and still HTTP 200: the client read timeout is 3s, and only the reply is delayed 2s.
-  # Probe replies go to the node, so the pod stays Ready.
+  # Envoy обращается к IP подов payment. Пробы kubelet не попадают под задержку.
   direction: to
-  externalTargets:
-    - payment.demo.svc.cluster.local
+  target:
+    mode: all
+    selector:
+      namespaces: [demo]
+      labelSelectors:
+        app: payment
   delay:
     latency: 2s
     correlation: "0"

@@ -1,0 +1,21 @@
+pilot:
+  env:
+    ENABLE_NATIVE_SIDECARS: "true"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+meshConfig:
+  defaultConfig:
+    holdApplicationUntilProxyStarts: true
+global:
+  proxy:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi

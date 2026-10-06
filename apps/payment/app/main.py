@@ -3,12 +3,13 @@ import logging
 import os
 import random
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from opentelemetry import trace
 from opentelemetry.propagate import extract
 from opentelemetry.trace import SpanKind, Status, StatusCode
-from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, Counter, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, Counter, Histogram, generate_latest, start_http_server
 from prometheus_client.openmetrics.exposition import CONTENT_TYPE_LATEST as OPENMETRICS
 from prometheus_client.openmetrics.exposition import generate_latest as generate_openmetrics
 
@@ -58,7 +59,17 @@ def setup_logging() -> logging.Logger:
 
 log = setup_logging()
 setup(SERVICE)
-app = FastAPI(title=SERVICE)
+@asynccontextmanager
+async def lifespan(app):
+    server, _ = start_http_server(int(os.getenv("METRICS_PORT", "8081")))
+    try:
+        yield
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+app = FastAPI(title=SERVICE, lifespan=lifespan)
 TRACED_PATHS = {"/pay"}
 
 

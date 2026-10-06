@@ -3,7 +3,7 @@ CLUSTER ?= mtc
 NODE_LOG_HOST ?= colima
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up up-linux stack ready cluster cluster-linux images apps repos observability dashboards loki logs logs-linux node-logs node-logs-linux promtail-host chaos
+.PHONY: up up-linux stack ready cluster cluster-linux images apps repos mesh observability dashboards loki logs logs-linux node-logs node-logs-linux promtail-host chaos
 
 up: cluster
 	$(MAKE) stack
@@ -20,6 +20,7 @@ up-linux: cluster-linux
 # Этапы выполняются последовательно, в том числе при make -j.
 stack:
 	$(MAKE) images
+	$(MAKE) mesh
 	$(MAKE) apps
 	$(MAKE) observability
 	$(MAKE) dashboards
@@ -63,7 +64,15 @@ repos:
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 	helm repo add grafana https://grafana.github.io/helm-charts --force-update
 	helm repo add chaos-mesh https://charts.chaos-mesh.org --force-update
+	helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
 	helm repo update
+
+mesh: repos
+	helm upgrade --install istio-base istio/base -n istio-system --create-namespace \
+		--version $(ISTIO_VERSION) --wait --timeout 5m
+	helm upgrade --install istiod istio/istiod -n istio-system \
+		--version $(ISTIO_VERSION) -f observability/istio-values.yaml --wait --timeout 5m
+	kubectl apply -f k8s/namespace.yaml -f k8s/mtls.yaml
 
 observability: repos
 	sh scripts/configure-secrets.sh
