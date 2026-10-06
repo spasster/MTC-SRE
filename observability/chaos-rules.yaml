@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: checkout-chaos
+  namespace: obs
+  labels:
+    release: kube-prom
+spec:
+  groups:
+    - name: checkout.chaos
+      rules:
+        - alert: ChaosFaultObserved
+          expr: max by (fault) (healer_chaos_injection_observed{namespace="heal"}) == 1
+          labels:
+            service: platform
+            severity: info
+          annotations:
+            summary: Chaos Mesh подтвердил тестовое воздействие
+            description: "Инъекция {{ $labels.fault }} зафиксирована в статусе CRD. Сверить ее с клиентским SLO; сигнал не означает нарушение SLO и не запускает действие healer."
+            resolved: Подтверждение инъекции перестало поступать; проверить объект и сбор
+            runbook_url: docs/runbooks/chaos-limited.md

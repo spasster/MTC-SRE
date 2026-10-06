@@ -17,6 +17,7 @@ class K8sActuator:
         self.apps = client.AppsV1Api()
         self.core = client.CoreV1Api()
         self.batch = client.BatchV1Api()
+        self.custom = client.CustomObjectsApi()
 
     def _write_guard(self, dry_run):
         guard = getattr(self, "before_write", None)
@@ -163,6 +164,22 @@ class K8sActuator:
         if status.succeeded or status.failed:
             return False
         return True
+
+    def limited_chaos(self, namespace):
+        """Подтверждение инъекции из статуса трех разрешенных тестовых CRD."""
+        observed = {}
+        for fault, plural in (("pod", "podchaos"), ("network", "networkchaos"), ("cpu", "stresschaos")):
+            try:
+                obj = self.custom.get_namespaced_custom_object("chaos-mesh.org", "v1alpha1", namespace,
+                    plural, "checkout-limited-" + fault, _request_timeout=5)
+            except ApiException as exc:
+                if exc.status != 404:
+                    raise
+                observed[fault] = False
+                continue
+            conditions = obj.get("status", {}).get("conditions", [])
+            observed[fault] = any(row.get("type") == "AllInjected" and row.get("status") == "True" for row in conditions)
+        return observed
 
     def restart(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None, operation_id=None) -> str:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()

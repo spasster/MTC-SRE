@@ -66,6 +66,7 @@ images:
 
 apps:
 	kubectl apply -f k8s/namespace.yaml -f k8s/redis.yaml -f k8s/payment.yaml -f k8s/checkout.yaml
+	kubectl apply -f k8s/resilience.yaml
 	kubectl create configmap k6-scripts -n demo \
 		--from-file=k6/ \
 		--dry-run=client -o yaml | kubectl apply -f -
@@ -98,6 +99,7 @@ observability: repos
 		crd/servicemonitors.monitoring.coreos.com crd/prometheusrules.monitoring.coreos.com
 	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f observability/healer-rules.yaml -f k8s/healer.yaml
 	kubectl apply -f observability/slo-budget.yaml
+	kubectl apply -f observability/chaos-rules.yaml
 	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
 	$(MAKE) blackbox
 

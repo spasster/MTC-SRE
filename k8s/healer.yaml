@@ -74,6 +74,10 @@ rules:
     resources: ["jobs"]
     resourceNames: ["k6-spike"]
     verbs: ["get"]
+  - apiGroups: ["chaos-mesh.org"]
+    resources: ["podchaos", "networkchaos", "stresschaos"]
+    resourceNames: ["checkout-limited-pod", "checkout-limited-network", "checkout-limited-cpu"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

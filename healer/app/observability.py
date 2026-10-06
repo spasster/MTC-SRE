@@ -18,6 +18,7 @@ UNKNOWN = Gauge("healer_operation_unknown", "Есть команда с неоп
 APPROVAL = Gauge("healer_approval_pending", "Ожидается решение оператора", registry=REGISTRY)
 BUDGET = Gauge("healer_incident_actions", "Зарезервированные действия текущего инцидента", registry=REGISTRY)
 RECOVERY = Histogram("healer_recovery_seconds", "Время до подтвержденного восстановления SLO", buckets=(15, 30, 60, 120, 180, 300, 600), registry=REGISTRY)
+CHAOS_OBSERVED = Gauge("healer_chaos_injection_observed", "Chaos Mesh подтвердил инъекцию разрешенного теста", ["fault"], registry=REGISTRY)
 _server = None
 _last_evidence_at = 0
 
@@ -47,3 +48,8 @@ def state(snapshot):
     UNKNOWN.set(int(bool(snapshot.get("_uncertain"))))
     APPROVAL.set(int(bool(snapshot.get("_pending"))))
     BUDGET.set(snapshot.get("_actions", 0))
+
+
+def chaos(observed):
+    for fault in ("pod", "network", "cpu"):
+        CHAOS_OBSERVED.labels(fault).set(int(observed[fault]) if observed is not None else float("nan"))

@@ -828,6 +828,11 @@ def _recovery_loop() -> None:
 @state_transaction
 def observe_evidence():
     obs.evidence(gather(TARGET_NAMESPACE, actuator=get_actuator()))
+    try:
+        obs.chaos(get_actuator().limited_chaos(TARGET_NAMESPACE))
+    except Exception:
+        obs.chaos(None)
+        obs.FAILURES.labels("chaos_observer").inc()
 
 
 def start_recovery_worker() -> None:

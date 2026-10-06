@@ -1,0 +1,31 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: checkout
+  namespace: demo
+spec:
+  hosts: ["checkout", "checkout.demo.svc.cluster.local"]
+  http:
+    - match:
+        - method:
+            exact: GET
+      route:
+        - destination:
+            host: checkout.demo.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 2
+        # Повтор только до приема запроса приложением, без повторения 5xx и таймаутов.
+        retryOn: connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: checkout
+  namespace: demo
+spec:
+  host: checkout.demo.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST

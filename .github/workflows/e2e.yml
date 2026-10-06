@@ -40,7 +40,7 @@ jobs:
   stack:
     name: Чистая установка, mTLS и доставка журналов
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       CLUSTER: mtc-ci
     steps:
@@ -85,6 +85,8 @@ jobs:
           python scripts/verify-observability.py --output .runtime/proof/observability.json
           python scripts/verify-rules.py --output .runtime/proof/rules.json
           python scripts/verify-healer-rbac.py --cluster "$CLUSTER" --output .runtime/proof/healer-rbac.json
+      - name: Проверить удержание SLO при ограниченных отказах
+        run: python scripts/verify-limited-chaos.py --cluster "$CLUSTER" --output .runtime/proof/limited-chaos.json
       - name: Проверить наблюдаемость и отказ вмешательства при потере данных
         run: python scripts/verify-healer-observability.py --cluster "$CLUSTER" --output .runtime/proof/healer-observability.json
       - name: Проверить реальные отказы и сохранение состояния healer

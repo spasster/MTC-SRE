@@ -22,7 +22,7 @@ def main():
         directory = Path(temp)
         directory.chmod(0o755)
         names = []
-        for file in ("rules.yaml", "healer-rules.yaml", "slo-budget.yaml"):
+        for file in ("rules.yaml", "healer-rules.yaml", "slo-budget.yaml", "chaos-rules.yaml"):
             name = file.replace(".yaml", "-rules.yml")
             body = yaml.safe_load((Path("observability") / file).read_text(encoding="utf-8"))
             (directory / name).write_text(yaml.safe_dump(body["spec"], allow_unicode=True), encoding="utf-8")
