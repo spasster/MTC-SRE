@@ -35,7 +35,7 @@ def main():
         raise SystemExit("Каталог содержит предыдущую серию; выбрать новый каталог")
     nodes = json.loads(cmd("kubectl", "get", "nodes", "-o", "json"))["items"]
     pods = [pod for namespace in ("demo", "heal")
-            for pod in json.loads(cmd("kubectl", "get", "pods", "-n", namespace, "-o", "json"))["items"]
+            for pod in json.loads(cmd("kubectl", "get", "pods", "-n", namespace, "-o", "json"))["items"]]
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "source_commit": cmd("git", "rev-parse", "HEAD").strip(),
               "seed": args.seed, "planned_pairs": args.pairs, "pairs": [], "passed": False,
               "method": "Одинаковая инъекция задержки; порядок baseline/auto перемешан внутри каждой пары. Задержка оператора baseline равна 30 с после firing, не измерению работы человека.",
