@@ -9,6 +9,47 @@ metadata:
   name: healer
   namespace: heal
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healer-state
+  namespace: heal
+---
+apiVersion: coordination.k8s.io/v1
+kind: Lease
+metadata:
+  name: healer-leader
+  namespace: heal
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: healer-state
+  namespace: heal
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["healer-state"]
+    verbs: ["get", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    resourceNames: ["healer-leader"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: healer-state
+  namespace: heal
+subjects:
+  - kind: ServiceAccount
+    name: healer
+    namespace: heal
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: healer-state
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -68,6 +109,12 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: HEALER_STATE_BACKEND
+              value: kubernetes
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
             - name: TARGET_NAMESPACE
               value: demo
             - name: HEALER_WEBHOOK_TOKEN

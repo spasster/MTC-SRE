@@ -18,9 +18,15 @@ class K8sActuator:
         self.core = client.CoreV1Api()
         self.batch = client.BatchV1Api()
 
-    def scale(self, namespace: str, name: str, replicas: int, dry_run: bool = False, expected_replicas=None) -> str:
+    def _write_guard(self, dry_run):
+        guard = getattr(self, "before_write", None)
+        if guard and not dry_run:
+            guard()
+
+    def scale(self, namespace: str, name: str, replicas: int, dry_run: bool = False, expected_replicas=None,
+              expected_identity=None, operation_id=None) -> str:
         kwargs = {"dry_run": "All"} if dry_run else {}
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         current = int(deployment.spec.replicas or 0)
         if expected_replicas is not None and current != expected_replicas:
             raise ActionSkipped("Число реплик изменено после измерения")
@@ -28,19 +34,34 @@ class K8sActuator:
             raise ActionSkipped("Уменьшение чужого масштабирования запрещено")
         if current == replicas:
             raise ActionSkipped("Требуемое число реплик уже установлено")
+        self._guarded_metadata(deployment, expected_identity)
+        metadata = {"uid": deployment.metadata.uid, "resourceVersion": deployment.metadata.resource_version}
+        if operation_id:
+            metadata["annotations"] = {"mtc-sre/healer-operation": operation_id}
+        self._write_guard(dry_run)
         self.apps.patch_namespaced_deployment(
             name,
             namespace,
-            {"metadata": {"uid": deployment.metadata.uid, "resourceVersion": deployment.metadata.resource_version},
+            {"metadata": metadata,
              "spec": {"replicas": replicas}},
             **kwargs,
+            _request_timeout=5,
         )
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}scale replicas={replicas}"
 
-    def delete_pod(self, namespace: str, name: str, dry_run: bool = False) -> str:
+    def pod_uid(self, namespace, name):
+        return self.core.read_namespaced_pod(name, namespace, _request_timeout=5).metadata.uid
+
+    def delete_pod(self, namespace: str, name: str, dry_run: bool = False, expected_uid=None, operation_id=None) -> str:
         kwargs = {"dry_run": "All"} if dry_run else {}
-        self.core.delete_namespaced_pod(name, namespace, **kwargs)
+        uid = self.pod_uid(namespace, name)
+        if expected_uid is not None and uid != expected_uid:
+            raise ActionSkipped("Под заменен после диагностики")
+        self._write_guard(dry_run)
+        self.core.delete_namespaced_pod(name, namespace,
+                                       body=client.V1DeleteOptions(preconditions=client.V1Preconditions(uid=uid)),
+                                       _request_timeout=5, **kwargs)
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}delete pod {name}"
 
@@ -141,13 +162,16 @@ class K8sActuator:
             return False
         return True
 
-    def restart(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None) -> str:
+    def restart(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None, operation_id=None) -> str:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         kwargs = {"dry_run": "All"} if dry_run else {}
         metadata = {}
         if expected_identity is not None:
             deployment = self.apps.read_namespaced_deployment(name, namespace)
             metadata = self._guarded_metadata(deployment, expected_identity)
+        if operation_id:
+            metadata["annotations"] = {"mtc-sre/healer-operation": operation_id}
+        self._write_guard(dry_run)
         self.apps.patch_namespaced_deployment(
             name,
             namespace,
@@ -162,11 +186,12 @@ class K8sActuator:
                 }
             },
             **kwargs,
+            _request_timeout=5,
         )
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}restart {name}"
 
-    def rollback(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None) -> str:
+    def rollback(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None, operation_id=None) -> str:
         deployment = self.apps.read_namespaced_deployment(name, namespace)
         metadata = self._guarded_metadata(deployment, expected_identity)
         current = int((deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
@@ -177,12 +202,28 @@ class K8sActuator:
             raise ActionSkipped("ReplicaSet предыдущей ревизии не найден")
         template = client.ApiClient().sanitize_for_serialization(previous.spec.template)
         template.get("metadata", {}).get("labels", {}).pop("pod-template-hash", None)
+        if operation_id:
+            metadata["annotations"] = {"mtc-sre/healer-operation": operation_id}
         kwargs = {"dry_run": "All"} if dry_run else {}
+        self._write_guard(dry_run)
         self.apps.patch_namespaced_deployment(
-            name, namespace, {"metadata": metadata, "spec": {"template": template}}, **kwargs,
+            name, namespace, {"metadata": metadata, "spec": {"template": template}}, _request_timeout=5, **kwargs,
         )
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}rollback to revision {current - 1}"
+
+    def operation_observed(self, namespace, operation):
+        if operation["action"] == "delete_pod":
+            try:
+                return self.pod_uid(namespace, operation["target"]) != operation["before"]["uid"]
+            except ApiException as exc:
+                if exc.status == 404:
+                    return True
+                raise
+        name = "redis" if operation["action"] == "restart_redis" else "checkout"
+        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        return ((deployment.metadata.annotations or {}).get("mtc-sre/healer-operation") == operation["id"]
+                and deployment.metadata.uid == operation["before"]["uid"])
 
     def _previous_replicaset(self, namespace: str, name: str, revision: int):
         listed = self.apps.list_namespaced_replica_set(namespace)

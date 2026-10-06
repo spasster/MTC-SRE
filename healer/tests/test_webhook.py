@@ -29,23 +29,32 @@ class FakeActuator:
     def __init__(self):
         self.calls = []
         self.spike = False
+        self.generation = 1
 
-    def scale(self, namespace, name, replicas, dry_run=False, expected_replicas=None):
+    def scale(self, namespace, name, replicas, dry_run=False, expected_replicas=None, expected_identity=None, operation_id=None):
+        if expected_identity and expected_identity != self.deployment_identity(namespace, name):
+            from app.k8s import ActionSkipped
+            raise ActionSkipped("Deployment изменился")
         self.calls.append(("scale", namespace, name, replicas, dry_run))
+        if not dry_run:
+            self.generation += 1
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}scale replicas={replicas}"
 
-    def delete_pod(self, namespace, name, dry_run=False):
+    def pod_uid(self, namespace, name):
+        return name
+
+    def delete_pod(self, namespace, name, dry_run=False, expected_uid=None, operation_id=None):
         self.calls.append(("delete", namespace, name, dry_run))
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}delete pod {name}"
 
-    def rollback(self, namespace, name, dry_run=False, expected_identity=None):
+    def rollback(self, namespace, name, dry_run=False, expected_identity=None, operation_id=None):
         self.calls.append(("rollback", namespace, name, dry_run))
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}rollback {name}"
 
-    def restart(self, namespace, name, dry_run=False, expected_identity=None):
+    def restart(self, namespace, name, dry_run=False, expected_identity=None, operation_id=None):
         self.calls.append(("restart", namespace, name, dry_run))
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}restart {name}"
@@ -57,7 +66,10 @@ class FakeActuator:
         return True
 
     def deployment_identity(self, namespace, name):
-        return {"uid": name, "generation": 1, "revision": "2"}
+        return {"uid": name, "generation": self.generation, "revision": "2"}
+
+    def operation_observed(self, namespace, operation):
+        return False
 
 
 def evidence(**overrides):
@@ -214,6 +226,7 @@ def test_third_auto_action_escalates(monkeypatch):
 
 def test_resolved_scales_back(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     monkeypatch.setattr(
         main,
         "gather",
@@ -232,6 +245,7 @@ def test_resolved_scales_back(monkeypatch):
 
 def test_resolved_does_not_scale_down_during_spike(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     main.actuator.spike = True
     monkeypatch.setattr(
         main,
@@ -252,6 +266,7 @@ def test_resolved_does_not_scale_down_during_spike(monkeypatch):
 
 def test_scale_down_runs_after_the_spike_job_ends(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     main.notifier = FakeTelegram()
     main.actuator.spike = True
     monkeypatch.setattr(
@@ -277,6 +292,7 @@ def test_scale_down_runs_after_the_spike_job_ends(monkeypatch):
 
 def test_scale_down_waits_while_answers_are_still_slow(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     main.actuator.spike = True
     monkeypatch.setattr(
         main,
@@ -309,6 +325,7 @@ def test_scale_down_waits_while_answers_are_still_slow(monkeypatch):
 
 def test_scale_down_follows_the_aggregate(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     main.notifier = FakeTelegram()
     main._scale_down_pending = True
     monkeypatch.setattr(
@@ -337,6 +354,7 @@ def test_resolved_preserves_replicas_changed_by_the_operator(monkeypatch):
 
 def test_operator_scaling_after_healer_is_preserved(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
         replicas=7, pods=list(HEALTHY)))
     assert main.handle_resolved()["result"] == "ignored: operator changed replicas"
@@ -346,6 +364,7 @@ def test_operator_scaling_after_healer_is_preserved(monkeypatch):
 
 def test_failed_scale_down_is_retried_by_the_worker(monkeypatch):
     main._scaled_by_healer = True
+    main._scale_owner = main.actuator.deployment_identity("demo", "checkout")
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
         replicas=5, pods=list(HEALTHY)))
     original = main.actuator.scale
@@ -718,7 +737,9 @@ def test_empty_metrics_do_not_close_or_scale_down_an_incident(monkeypatch):
     from test_evidence import Actor
 
     main._actions = 1
-    main._pending = object()
+    main._pending = main.Decision("redis", "approval", "restart_redis", "redis", "Проверка")
+    main._pending.approval_id = "a" * 32
+    main._pending.approval_expires_at = main.time.time() + 300
     missing = gather("demo", actuator=Actor(), query=lambda query: [])
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: missing)
     assert main.handle_resolved()["result"] == "ignored: still unhealthy"

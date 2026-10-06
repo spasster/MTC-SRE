@@ -40,7 +40,7 @@ def test_restart_checks_resource_version_at_the_api():
     instance.restart("demo", "checkout", dry_run=True, expected_identity=expected)
     patch = instance.apps.patch_namespaced_deployment.call_args
     assert patch.args[2]["metadata"] == {"uid": "checkout-uid", "resourceVersion": "42"}
-    assert patch.kwargs == {"dry_run": "All"}
+    assert patch.kwargs == {"dry_run": "All", "_request_timeout": 5}
 
 
 @pytest.mark.parametrize("expected", [None, 5])
@@ -82,7 +82,7 @@ def test_rollback_removes_controller_label_and_uses_dry_run():
     instance.apps.list_namespaced_replica_set.return_value = SimpleNamespace(items=[previous])
     assert instance.rollback("demo", "checkout", dry_run=True) == "dry-run rollback to revision 2"
     call = instance.apps.patch_namespaced_deployment.call_args
-    assert call.kwargs == {"dry_run": "All"}
+    assert call.kwargs == {"dry_run": "All", "_request_timeout": 5}
     assert call.args[2]["spec"]["template"]["metadata"]["labels"] == {"app": "checkout"}
 
 

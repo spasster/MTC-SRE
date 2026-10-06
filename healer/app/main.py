@@ -7,21 +7,31 @@ import socket
 import threading
 import time
 import uuid
+from functools import wraps
 from datetime import datetime, timezone
 
 import yaml
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from kubernetes.client.rest import ApiException
 
-from app.diagnose import decide
+from app.diagnose import Decision, decide
 from app.evidence import gather
 from app.k8s import ActionSkipped, K8sActuator
 from app.telegram import Telegram
+from app.state import StateUnavailable, create_store
 
 SERVICE = "healer"
 WHITELIST = {"CheckoutSlow", "CheckoutHighErrorRate", "CheckoutSyntheticFailed"}
 TARGET_NAMESPACE = os.getenv("TARGET_NAMESPACE", "demo")
 
 _lock = threading.Lock()
+_transaction_lock = threading.RLock()
+_transaction_depth = threading.local()
+_state_store = None
+_scale_owner = None
+_action_intent = None
+_uncertain = False
 _busy = False
 _actions = 0
 _pending = None
@@ -77,6 +87,145 @@ def setup_logging() -> logging.Logger:
 log = setup_logging()
 app = FastAPI(title=SERVICE)
 
+_STATE_FIELDS = ("_actions", "_escalated", "_acted_alert", "_cooldown_until", "_scale_down_pending",
+                 "_scaled_by_healer", "_broke_at", "_fixed_at", "_applied_at", "_recovery_pending",
+                 "_resolved_pending", "_incident_name", "_mttr_sent", "_last_recovery",
+                 "_scale_owner", "_action_intent", "_uncertain")
+
+
+def get_store():
+    global _state_store
+    if _state_store is None:
+        _state_store = create_store()
+    return _state_store
+
+
+def state_snapshot():
+    snapshot = {name: globals()[name] for name in _STATE_FIELDS}
+    snapshot.update(_closed=sorted(_closed), _recovery_targets=sorted(_recovery_targets),
+                    _pending=vars(_pending).copy() if _pending else None)
+    return snapshot
+
+
+def restore_state(snapshot):
+    global _pending
+    if not snapshot:
+        return
+    for name in _STATE_FIELDS:
+        if name in snapshot:
+            globals()[name] = snapshot[name]
+    _closed.clear()
+    _closed.update(snapshot.get("_closed", []))
+    _recovery_targets.clear()
+    _recovery_targets.update(snapshot.get("_recovery_targets", []))
+    pending = snapshot.get("_pending")
+    _pending = Decision(*(pending[name] for name in ("diagnosis", "mode", "action", "target", "detail"))) if pending else None
+    if _pending:
+        vars(_pending).update(pending)
+        if time.time() >= _pending.approval_expires_at:
+            _pending = None
+
+
+def persist_state():
+    get_store().save(state_snapshot())
+
+
+def journal_event(event, **details):
+    get_store().document["events"].append({"time": time.time(), "event": event, **details})
+
+
+def reconcile_intent():
+    global _action_intent, _uncertain, _scale_owner, _scaled_by_healer, _recovery_pending
+    if not _action_intent:
+        return
+    observed = get_actuator().operation_observed(TARGET_NAMESPACE, _action_intent)
+    if observed:
+        journal_event("operation_observed", operation_id=_action_intent["id"])
+        _action_intent["status"] = "observed_after_restart"
+        _update_operation(_action_intent)
+        _recovery_pending = True
+        _recovery_targets.add("checkout")
+        if _action_intent["action"] == "restart_redis":
+            _recovery_targets.add("redis")
+        if _action_intent["action"] == "scale":
+            _scaled_by_healer = True
+            _scale_owner = _action_intent.get("owner_after")
+        _action_intent = None
+        _uncertain = False
+    else:
+        if not _uncertain:
+            journal_event("operation_unknown", operation_id=_action_intent["id"])
+        _uncertain = True
+
+
+def state_transaction(function):
+    @wraps(function)
+    def guarded(*args, **kwargs):
+        with _transaction_lock:
+            depth = getattr(_transaction_depth, "value", 0)
+            store = get_store()
+            if depth == 0:
+                if not store.acquire():
+                    raise StateUnavailable("Этот экземпляр healer находится в резерве")
+                if store.durable:
+                    restore_state(store.load())
+                    reconcile_intent()
+            _transaction_depth.value = depth + 1
+            try:
+                return function(*args, **kwargs)
+            finally:
+                _transaction_depth.value = depth
+                if depth == 0:
+                    persist_state()
+    return guarded
+
+
+@app.exception_handler(StateUnavailable)
+async def state_error(request, exc):
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
+def run_operation(action, target, apply, before, owner_after=None, count=True):
+    """Намерение сохраняется до записи; неопределенный результат не повторяется."""
+    global _action_intent, _actions, _uncertain, _acted_alert, _cooldown_until
+    if _uncertain or _action_intent:
+        raise ActionSkipped("Предыдущая операция имеет неопределенный результат")
+    if count and _actions >= get_rules()["max_actions"]:
+        raise ActionSkipped("Лимит действий инцидента достигнут")
+    operation = {"id": uuid.uuid4().hex, "action": action, "target": target,
+                 "before": before, "prepared_at": time.time(), "status": "prepared", "owner_after": owner_after}
+    _action_intent = operation
+    if count:
+        _actions += 1
+        arm_cooldown(action, get_rules())
+    get_store().document["operations"].append(operation.copy())
+    persist_state()
+    get_store().assert_leader()
+    try:
+        result = apply(operation["id"])
+    except Exception as exc:
+        definite = isinstance(exc, ActionSkipped) or isinstance(exc, ApiException) and exc.status in (400, 401, 403, 404, 409, 422)
+        operation["status"] = "failed" if definite else "unknown"
+        _uncertain = not definite
+        if definite:
+            _action_intent = None
+            if count:
+                _actions -= 1
+        _update_operation(operation)
+        persist_state()
+        raise
+    operation.update(status="applied", api_accepted_at=time.time())
+    _update_operation(operation)
+    _action_intent = None
+    _uncertain = False
+    return result
+
+
+def _update_operation(operation):
+    for item in get_store().document["operations"]:
+        if item["id"] == operation["id"]:
+            item.update(operation)
+
 
 def rules_path() -> str:
     override = os.getenv("RULES_PATH")
@@ -101,6 +250,7 @@ def get_actuator():
     global actuator
     if actuator is None:
         actuator = K8sActuator()
+        actuator.before_write = lambda: get_store().authorize_write()
     return actuator
 
 
@@ -109,6 +259,7 @@ def reset_state() -> None:
     global _broke_at, _fixed_at, _incident_name, _mttr_sent, _last_recovery
     global _applied_at, _recovery_pending, _resolved_pending
     global _scaled_by_healer
+    global _state_store, _scale_owner, _action_intent, _uncertain
     with _lock:
         _busy = False
         _actions = 0
@@ -119,6 +270,10 @@ def reset_state() -> None:
         _cooldown_until = 0.0
         _scale_down_pending = False
         _scaled_by_healer = False
+        _scale_owner = None
+        _action_intent = None
+        _uncertain = False
+        _state_store = None
         _broke_at = None
         _fixed_at = None
         _applied_at = None
@@ -408,6 +563,8 @@ def request_approval(decision) -> str:
     approval_ttl = get_rules().get("approval_ttl_seconds", 300)
     decision.approval_expires_at = time.time() + approval_ttl
     _pending = decision
+    journal_event("approval_requested", action=decision.action)
+    persist_state()
     start_poller()
     try:
         bot.send(
@@ -482,17 +639,22 @@ def apply_confirmed(decision) -> str:
     guard = {"expected_identity": decision.deployment_identity}
     if decision.action == "rollback":
         preview = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=True, **guard)
-        applied = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=False, **guard)
+        applied = run_operation("rollback", "checkout", lambda operation_id:
+                                actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=False, operation_id=operation_id, **guard),
+                                decision.deployment_identity)
         mark_action_applied("checkout")
         return f"{preview}; {applied}"
     if decision.action == "restart_redis":
         preview = actor.restart(TARGET_NAMESPACE, "redis", dry_run=True, **guard)
-        applied = actor.restart(TARGET_NAMESPACE, "redis", dry_run=False, **guard)
+        applied = run_operation("restart_redis", "redis", lambda operation_id:
+                                actor.restart(TARGET_NAMESPACE, "redis", dry_run=False, operation_id=operation_id, **guard),
+                                decision.deployment_identity)
         mark_action_applied("redis")
         return f"{preview}; {applied}"
     return "escalated"
 
 
+@state_transaction
 def apply_callback(data: str) -> str:
     global _busy
     with _lock:
@@ -545,7 +707,6 @@ def _apply_callback(data: str) -> str:
         done = f"⚠️ Действие не выполнено\n\n{_title(decision)}. Восстановление не подтверждено."
     else:
         with _lock:
-            _actions += 1
             _closed.add(decision.diagnosis)
         if decision.action == "rollback":
             done = "\n".join([
@@ -581,6 +742,9 @@ def _poll_loop() -> None:
     bot = get_notifier()
     while not _worker_stop.is_set():
         try:
+            if not get_store().acquire():
+                _worker_stop.wait(5)
+                continue
             updates = bot.poll(timeout=25)
         except Exception:
             log.warning("Не удалось получить обновления Telegram")
@@ -631,6 +795,7 @@ def recovery_ready(evidence, limits) -> bool:
     return all(actor.deployment_ready(TARGET_NAMESPACE, name) for name in _recovery_targets | {"checkout"})
 
 
+@state_transaction
 def check_recovery():
     global _busy
     with _lock:
@@ -641,7 +806,7 @@ def check_recovery():
         evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
         if not recovery_ready(evidence, get_rules()):
             return None
-        if _applied_at is not None:
+        if _recovery_pending:
             mark_fixed()
         if _resolved_pending:
             return _handle_resolved(evidence=evidence)
@@ -680,33 +845,42 @@ def notify_done(decision) -> None:
 
 
 def execute(decision) -> str:
-    global _scaled_by_healer
+    global _scaled_by_healer, _scale_owner
     if decision.mode == "ignore":
         return "ignored: recovering"
     if decision.mode == "approval":
         return request_approval(decision)
     if decision.mode != "auto":
         return notify_escalation(decision)
+    if _uncertain:
+        raise ActionSkipped("Есть незавершенная операция; требуется проверка оператором")
     actor = get_actuator()
     if decision.action == "scale":
         replicas = int(decision.target)
-        preview = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=True)
-        applied = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=False)
+        before = actor.deployment_identity(TARGET_NAMESPACE, "checkout")
+        owner = {**before, "generation": before["generation"] + 1}
+        preview = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=True, expected_identity=before)
+        applied = run_operation("scale", str(replicas), lambda operation_id:
+                                actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=False,
+                                            expected_identity=before, operation_id=operation_id), before, owner_after=owner)
         _scaled_by_healer = True
+        _scale_owner = owner
         mark_action_applied("checkout")
         return f"{preview}; {applied}"
     if decision.action == "delete_pod":
-        preview = actor.delete_pod(TARGET_NAMESPACE, decision.target, dry_run=True)
-        applied = actor.delete_pod(TARGET_NAMESPACE, decision.target, dry_run=False)
+        uid = actor.pod_uid(TARGET_NAMESPACE, decision.target)
+        preview = actor.delete_pod(TARGET_NAMESPACE, decision.target, dry_run=True, expected_uid=uid)
+        applied = run_operation("delete_pod", decision.target, lambda operation_id:
+                                actor.delete_pod(TARGET_NAMESPACE, decision.target, dry_run=False,
+                                                 expected_uid=uid, operation_id=operation_id), {"uid": uid})
         mark_action_applied("checkout")
         return f"{preview}; {applied}"
     return "escalated"
 
 
 def note_action(decision) -> None:
-    global _actions
-    if decision.mode == "auto":
-        _actions += 1
+    # Лимит резервируется вместе с намерением, до обращения к Kubernetes API.
+    return None
 
 
 def arm_cooldown(alertname, limits) -> None:
@@ -731,8 +905,14 @@ def _scale_to_baseline(evidence, limits) -> dict:
         return {"result": "ignored: operator changed replicas"}
     actor = get_actuator()
     try:
-        preview = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=True, expected_replicas=limits["scale_to"])
-        applied = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=False, expected_replicas=limits["scale_to"])
+        if not _scale_owner:
+            raise ActionSkipped("Нет сохраненного владельца масштабирования")
+        preview = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=True,
+                              expected_replicas=limits["scale_to"], expected_identity=_scale_owner)
+        applied = run_operation("scale_down", str(limits["scale_from"]), lambda operation_id:
+                                actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=False,
+                                            expected_replicas=limits["scale_to"], expected_identity=_scale_owner,
+                                            operation_id=operation_id), _scale_owner, count=False)
     except ActionSkipped as exc:
         _scaled_by_healer = False
         _scale_down_pending = False
@@ -751,6 +931,7 @@ def _scale_to_baseline(evidence, limits) -> dict:
     return {"action": "scale", "result": f"{preview}; {applied}"}
 
 
+@state_transaction
 def handle_resolved(evidence=None) -> dict:
     global _busy
     with _lock:
@@ -777,7 +958,7 @@ def _handle_resolved(evidence=None) -> dict:
         return {"result": "ignored: evidence failed", "detail": str(exc)}
     if not ready:
         return {"result": "ignored: still unhealthy"}
-    if _applied_at is not None:
+    if _recovery_pending:
         mark_fixed()
     notify_recovered()
     _applied_at = None
@@ -801,6 +982,7 @@ def _handle_resolved(evidence=None) -> dict:
     return _scale_to_baseline(evidence, limits)
 
 
+@state_transaction
 def finish_scale_down():
     global _scale_down_pending, _busy
     with _lock:
@@ -826,6 +1008,7 @@ def finish_scale_down():
             _busy = False
 
 
+@state_transaction
 def handle_alert(alert: dict) -> dict:
     global _busy
     labels = alert.get("labels") or {}
@@ -959,4 +1142,7 @@ def status():
             "recovery_pending": _recovery_pending,
             "actions": _actions,
             "last_recovery": _last_recovery,
+            "state_backend": "kubernetes" if get_store().durable else "memory",
+            "leader": get_store().leader,
+            "operation_unknown": _uncertain,
         }
