@@ -35,6 +35,8 @@ def plot_iteration(directory):
     if not capacity_file.exists():
         return
     report = json.loads(capacity_file.read_text(encoding="utf-8"))
+    if not report.get("finished_at"):
+        return
     fig, axes = plt.subplots(4, 1, figsize=(10, 10), sharex=True)
     for replicas, color in ((2, "#31688e"), (5, "#159947")):
         stages = [stage for stage in report["stages"] if stage["replicas"] == replicas and "client" in stage]
@@ -47,7 +49,7 @@ def plot_iteration(directory):
                 if not stage["passed"] and stage.get(field) is not None:
                     axis.scatter(stage["planned_rps"], stage[field] * factor, marker="x", s=100, color="#bb3333", zorder=4)
     axes[0].axhline(300, color="#bb3333", linestyle="--", label="SLO 300 мс")
-    axes[0].set_title("Ступени по 120 с: реальные запросы k6 и ресурсы checkout")
+    axes[0].set_title(f"Ступени по {report['duration_seconds']} с: реальные запросы k6 и ресурсы checkout")
     for axis, label in zip(axes, ("p95 клиента, мс", "Отправлено запросов/с", "Максимум CPU, ядра", "Максимум RAM, МиБ")):
         axis.set_ylabel(label)
         axis.grid(alpha=.2)
