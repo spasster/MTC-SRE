@@ -1,4 +1,4 @@
-name: ci
+name: Тесты и сборка сервисов
 
 on:
   push:
@@ -23,10 +23,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: test
+      - name: Проверить тесты
         working-directory: ${{ matrix.dir }}
         run: |
           pip install -r requirements.txt
           pytest -q
-      - name: image
+      - name: Собрать образ
         run: docker build -t ${{ matrix.name }}:ci ${{ matrix.dir }}

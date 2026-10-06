@@ -1,0 +1,62 @@
+name: Проверка полного контура Ubuntu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stack:
+    name: Чистая установка, mTLS и доставка журналов
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CLUSTER: mtc-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Установить инструменты
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install --quiet ansible-core==2.18.12
+          curl -fsSL --retry 3 https://github.com/k3d-io/k3d/releases/download/v5.9.0/k3d-linux-amd64 -o /tmp/k3d
+          chmod +x /tmp/k3d
+          sudo mv /tmp/k3d /usr/local/bin/k3d
+          curl -fsSL --retry 3 https://get.helm.sh/helm-v3.17.4-linux-amd64.tar.gz -o /tmp/helm.tgz
+          tar -xzf /tmp/helm.tgz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+      - name: Установить полный стек на чистом Ubuntu
+        run: make up-linux CLUSTER="$CLUSTER"
+      - name: Проверить mTLS и подготовить доступ к наблюдаемости
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/verify-mtls.sh
+          mkdir -p .runtime/proof
+          kubectl port-forward -n obs svc/kube-prom-kube-prometheus-prometheus 19090:9090 >.runtime/prometheus-forward.log 2>&1 &
+          kubectl port-forward -n obs svc/loki 13100:3100 >.runtime/loki-forward.log 2>&1 &
+          kubectl port-forward -n obs svc/tempo 13200:3200 >.runtime/tempo-forward.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:19090/-/ready >/dev/null && curl -fsS http://127.0.0.1:13100/ready >/dev/null; then break; fi
+            sleep 2
+          done
+          sudo auditctl -l | grep mtc-marker >/dev/null
+          logger -t mtc-sre 'Проверка доставки контрольного события'
+          sudo touch /etc/mtc-sre-audit-marker
+          python scripts/verify-node-logs.py --output .runtime/proof/node-logs.json
+          python scripts/verify-observability.py --output .runtime/proof/observability.json
+      - name: Сохранить обезличенные результаты
+        uses: actions/upload-artifact@v4
+        with:
+          name: sre-proof
+          path: .runtime/proof/*.json
+          if-no-files-found: error
+      - name: Удалить тестовый контур
+        if: always()
+        run: |
+          docker rm -f "${CLUSTER}-alloy-host" || true
+          k3d cluster delete "$CLUSTER" || true
