@@ -31,6 +31,12 @@ _cooldown_until = 0.0
 _scale_down_pending = False
 _broke_at = None
 _fixed_at = None
+_applied_at = None
+_recovery_pending = False
+_resolved_pending = False
+_recovery_targets = set()
+_recovery_worker = None
+_worker_stop = threading.Event()
 _incident_name = None
 _mttr_sent = False
 _poller_started = False
@@ -98,6 +104,7 @@ def get_actuator():
 def reset_state() -> None:
     global actuator, rules, notifier, _busy, _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
     global _broke_at, _fixed_at, _incident_name, _mttr_sent
+    global _applied_at, _recovery_pending, _resolved_pending
     with _lock:
         _busy = False
         _actions = 0
@@ -109,6 +116,10 @@ def reset_state() -> None:
         _scale_down_pending = False
         _broke_at = None
         _fixed_at = None
+        _applied_at = None
+        _recovery_pending = False
+        _resolved_pending = False
+        _recovery_targets.clear()
         _incident_name = None
         _mttr_sent = False
     actuator = None
@@ -238,6 +249,15 @@ def remember_title(decision) -> None:
     _incident_name = _title(decision)
 
 
+def mark_action_applied(deployment="checkout") -> None:
+    global _applied_at, _recovery_pending, _fixed_at
+    if _applied_at is None:
+        _applied_at = time.time()
+    _fixed_at = None
+    _recovery_targets.update({"checkout", deployment})
+    _recovery_pending = True
+
+
 def mark_fixed() -> None:
     global _fixed_at
     if _fixed_at is None:
@@ -253,10 +273,10 @@ def recovery_text(now=None) -> str:
     name = _incident_name or "Checkout"
     lines = ["✅ Поломка кончилась", "", f"{name}."]
     if _fixed_at is not None:
-        lag = moment - _fixed_at
-        lines.append(f"До починки {format_duration(_fixed_at - _broke_at)}.")
-        lines.append(f"Алерт погас через {format_duration(moment - _broke_at)}.")
-        lines.append(f"После починки ещё {format_duration(lag)}: минутное окно помнило старые точки.")
+        if _applied_at is not None:
+            lines.append(f"До принятия первой команды API {format_duration(_applied_at - _broke_at)}.")
+        lines.append(f"До подтверждённого восстановления SLO {format_duration(_fixed_at - _broke_at)}.")
+        lines.append(f"Сообщение resolved получено через {format_duration(moment - _broke_at)}.")
     else:
         lines.append("Сам не чинил.")
         lines.append(f"Алерт погас через {format_duration(moment - _broke_at)}.")
@@ -441,12 +461,12 @@ def apply_confirmed(decision) -> str:
     if decision.action == "rollback":
         preview = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=True)
         applied = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=False)
-        mark_fixed()
+        mark_action_applied("checkout")
         return f"{preview}; {applied}"
     if decision.action == "restart_redis":
         preview = actor.restart(TARGET_NAMESPACE, "redis", dry_run=True)
         applied = actor.restart(TARGET_NAMESPACE, "redis", dry_run=False)
-        mark_fixed()
+        mark_action_applied("redis")
         return f"{preview}; {applied}"
     return "escalated"
 
@@ -526,10 +546,6 @@ def _poll_loop() -> None:
     bot = get_notifier()
     while True:
         try:
-            finish_scale_down()
-        except Exception:
-            log.exception("scale down check failed")
-        try:
             updates = bot.poll(timeout=25)
         except Exception:
             log.exception("telegram poll failed")
@@ -550,6 +566,51 @@ def start_poller() -> None:
         return
     _poller_started = True
     threading.Thread(target=_poll_loop, name="telegram", daemon=True).start()
+
+
+def _recovery_loop() -> None:
+    while not _worker_stop.wait(float(get_rules().get("recovery_poll_seconds", 5))):
+        try:
+            check_recovery()
+            finish_scale_down()
+        except Exception:
+            log.exception("Не удалось проверить восстановление")
+
+
+def start_recovery_worker() -> None:
+    global _recovery_worker
+    if _recovery_worker is not None and _recovery_worker.is_alive():
+        return
+    _worker_stop.clear()
+    _recovery_worker = threading.Thread(target=_recovery_loop, name="recovery", daemon=True)
+    _recovery_worker.start()
+
+
+def recovery_ready(evidence, limits) -> bool:
+    if not _healthy(evidence, limits):
+        return False
+    actor = get_actuator()
+    return all(actor.deployment_ready(TARGET_NAMESPACE, name) for name in _recovery_targets | {"checkout"})
+
+
+def check_recovery():
+    global _busy
+    with _lock:
+        if _busy or not (_recovery_pending or _resolved_pending):
+            return None
+        _busy = True
+    try:
+        evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
+        if not recovery_ready(evidence, get_rules()):
+            return None
+        if _applied_at is not None:
+            mark_fixed()
+        if _resolved_pending:
+            return handle_resolved(evidence=evidence)
+        return {"result": "recovery confirmed"}
+    finally:
+        with _lock:
+            _busy = False
 
 
 def notify_done(decision) -> None:
@@ -592,12 +653,12 @@ def execute(decision) -> str:
         replicas = int(decision.target)
         preview = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=True)
         applied = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=False)
-        mark_fixed()
+        mark_action_applied("checkout")
         return f"{preview}; {applied}"
     if decision.action == "delete_pod":
         preview = actor.delete_pod(TARGET_NAMESPACE, decision.target, dry_run=True)
         applied = actor.delete_pod(TARGET_NAMESPACE, decision.target, dry_run=False)
-        mark_fixed()
+        mark_action_applied("checkout")
         return f"{preview}; {applied}"
     return "escalated"
 
@@ -633,16 +694,26 @@ def _scale_to_baseline(evidence, limits) -> dict:
     return {"action": "scale", "result": f"{preview}; {applied}"}
 
 
-def handle_resolved() -> dict:
+def handle_resolved(evidence=None) -> dict:
     global _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
+    global _applied_at, _recovery_pending, _resolved_pending
     limits = get_rules()
+    _resolved_pending = True
     try:
-        evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
+        if evidence is None:
+            evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
+        ready = recovery_ready(evidence, limits)
     except Exception as exc:
         return {"result": "ignored: evidence failed", "detail": str(exc)}
-    if not _healthy(evidence, limits):
+    if not ready:
         return {"result": "ignored: still unhealthy"}
+    if _applied_at is not None:
+        mark_fixed()
     notify_recovered()
+    _applied_at = None
+    _recovery_pending = False
+    _resolved_pending = False
+    _recovery_targets.clear()
     _actions = 0
     _pending = None
     _closed.clear()
@@ -675,7 +746,7 @@ def finish_scale_down():
         except Exception as exc:
             log.info("scale down check skipped", extra={"action": "scale", "result": str(exc)})
             return None
-        if not _healthy(evidence, limits):
+        if not recovery_ready(evidence, limits):
             return None
         result = _scale_to_baseline(evidence, limits)
         _scale_down_pending = False
@@ -774,7 +845,15 @@ def handle_alert(alert: dict) -> dict:
 
 @app.on_event("startup")
 def _startup():
+    start_recovery_worker()
     start_poller()
+
+
+@app.on_event("shutdown")
+def _shutdown():
+    _worker_stop.set()
+    if _recovery_worker is not None:
+        _recovery_worker.join(timeout=1)
 
 
 @app.get("/health")

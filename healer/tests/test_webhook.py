@@ -48,6 +48,9 @@ class FakeActuator:
     def spike_running(self, namespace):
         return self.spike
 
+    def deployment_ready(self, namespace, name):
+        return True
+
 
 def evidence(**overrides):
     base = {
@@ -357,9 +360,8 @@ def test_recovery_text_counts_from_the_break_to_the_fix():
     main._fixed_at = 1075
     main._incident_name = "Плохой релиз checkout"
     text = main.recovery_text(now=1150)
-    assert "До починки 1 мин 15 с." in text
-    assert "Алерт погас через 2 мин 30 с." in text
-    assert "ещё 1 мин 15 с" in text
+    assert "До подтверждённого восстановления SLO 1 мин 15 с." in text
+    assert "resolved получено через 2 мин 30 с." in text
 
 
 def test_resolved_tells_how_long_the_fix_took(monkeypatch):
@@ -368,15 +370,16 @@ def test_resolved_tells_how_long_the_fix_took(monkeypatch):
     firing = alert()
     firing["startsAt"] = "2026-10-05T10:25:28.419003119Z"
     client.post("/webhook", json={"alerts": [firing]})
-    assert main._fixed_at is not None
+    assert main._fixed_at is None
+    assert main._applied_at is not None
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
     resolved = alert(status="resolved")
     resolved["startsAt"] = firing["startsAt"]
     client.post("/webhook", json={"alerts": [resolved]})
     text = main.notifier.messages[-1][0]
     assert "Поломка кончилась" in text
-    assert "До починки" in text
-    assert "Алерт погас через" in text
+    assert "До подтверждённого восстановления SLO" in text
+    assert "resolved получено через" in text
     assert main.notifier.messages[-1][1] is False
     client.post("/webhook", json={"alerts": [resolved]})
     assert len([item for item in main.notifier.messages if "Поломка кончилась" in item[0]]) == 1
@@ -586,3 +589,58 @@ def test_empty_metrics_do_not_close_or_scale_down_an_incident(monkeypatch):
     assert main._pending is not None
     assert main._actions == 1
     assert main.actuator.calls == []
+
+
+def test_mttr_waits_for_metrics_and_rollout(monkeypatch):
+    from app.diagnose import Decision
+
+    monkeypatch.setattr(main.time, "time", lambda: 1005)
+    main._broke_at = 1000
+    main.execute(Decision("cpu", "auto", "scale", "5", "Нагрузка"))
+    assert main._applied_at == 1005
+    assert main._fixed_at is None
+
+    monkeypatch.setattr(main.time, "time", lambda: 1010)
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HOT)))
+    assert main.check_recovery() is None
+    assert main._fixed_at is None
+
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
+    monkeypatch.setattr(main.actuator, "deployment_ready", lambda namespace, name: False)
+    assert main.check_recovery() is None
+    assert main._fixed_at is None
+
+    monkeypatch.setattr(main.time, "time", lambda: 1025)
+    monkeypatch.setattr(main.actuator, "deployment_ready", lambda namespace, name: True)
+    assert main.check_recovery()["result"] == "recovery confirmed"
+    assert main._fixed_at == 1025
+    assert "До принятия первой команды API 5 с." in main.recovery_text(now=1030)
+    assert "До подтверждённого восстановления SLO 25 с." in main.recovery_text(now=1030)
+
+
+def test_resolved_before_rollout_is_rechecked_by_worker(monkeypatch):
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main._broke_at = main.time.time() - 10
+    main.execute(Decision("cpu", "auto", "scale", "5", "Нагрузка"))
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
+    monkeypatch.setattr(main.actuator, "deployment_ready", lambda namespace, name: False)
+    assert main.handle_resolved()["result"] == "ignored: still unhealthy"
+    assert main._fixed_at is None
+    monkeypatch.setattr(main.actuator, "deployment_ready", lambda namespace, name: True)
+    assert main.check_recovery()["result"] == "resolved"
+    assert main._resolved_pending is False
+    assert any("подтверждённого восстановления" in message for message, _ in main.notifier.messages)
+
+
+def test_recovery_worker_starts_without_telegram():
+    from app.telegram import Telegram
+
+    main.notifier = Telegram(token="", chat_id="")
+    try:
+        main._startup()
+        assert main._recovery_worker.is_alive()
+    finally:
+        main._shutdown()
+    assert not main._recovery_worker.is_alive()

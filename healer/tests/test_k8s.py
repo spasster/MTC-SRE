@@ -47,3 +47,20 @@ def test_rollback_removes_controller_label_and_uses_dry_run():
     call = instance.apps.patch_namespaced_deployment.call_args
     assert call.kwargs == {"dry_run": "All"}
     assert call.args[2]["spec"]["template"]["metadata"]["labels"] == {"app": "checkout"}
+
+
+@pytest.mark.parametrize("observed,updated,available,total,expected", [
+    (3, 2, 2, 2, True),
+    (2, 2, 2, 2, False),
+    (3, 1, 2, 2, False),
+    (3, 2, 1, 2, False),
+    (3, 2, 2, 3, False),
+])
+def test_recovery_requires_the_current_rollout(observed, updated, available, total, expected):
+    instance = actor(3)
+    instance.apps.read_namespaced_deployment.return_value = SimpleNamespace(
+        metadata=SimpleNamespace(generation=3),
+        spec=SimpleNamespace(replicas=2),
+        status=SimpleNamespace(observed_generation=observed, updated_replicas=updated, available_replicas=available, replicas=total),
+    )
+    assert instance.deployment_ready("demo", "checkout") is expected

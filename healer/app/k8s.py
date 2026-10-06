@@ -39,6 +39,19 @@ class K8sActuator:
         deployment = self.apps.read_namespaced_deployment(name, namespace)
         return int(deployment.spec.replicas or 0)
 
+    def deployment_ready(self, namespace: str, name: str) -> bool:
+        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        desired = int(deployment.spec.replicas or 0)
+        status = deployment.status
+        if desired <= 0 or status is None:
+            return False
+        return (
+            (status.observed_generation or 0) >= (deployment.metadata.generation or 0)
+            and (status.updated_replicas or 0) == desired
+            and (status.available_replicas or 0) >= desired
+            and (status.replicas or 0) == desired
+        )
+
     def ready(self, namespace: str, app: str) -> bool:
         listed = self.core.list_namespaced_pod(namespace, label_selector=f"app={app}")
         for pod in listed.items:
