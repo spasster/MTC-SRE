@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-06T22:24:00.504500+00:00",
+  "checked_at": "2026-10-06T22:46:01.511427+00:00",
   "passed": true,
   "healthy": {
     "leader": 1.0,
@@ -7,9 +7,9 @@
     "evidence_complete": 1.0,
     "operation_unknown": 0.0,
     "incident_actions": 0.0,
-    "state_checked_timestamp_seconds": 1791325432.9867947,
-    "evidence_checked_timestamp_seconds": 1791325427.9123876,
-    "evidence_age_seconds": 6.017999887466431,
+    "state_checked_timestamp_seconds": 1791326757.7245123,
+    "evidence_checked_timestamp_seconds": 1791326752.6513016,
+    "evidence_age_seconds": 10.176000118255615,
     "scrape_up": 1.0,
     "evidence_alert_firing": 0.0
   },
@@ -19,8 +19,8 @@
     "evidence_complete": 0.0,
     "operation_unknown": 0.0,
     "incident_actions": 0.0,
-    "state_checked_timestamp_seconds": 1791325459.7415385,
-    "evidence_checked_timestamp_seconds": 1791325459.7368402,
+    "state_checked_timestamp_seconds": 1791326785.7990851,
+    "evidence_checked_timestamp_seconds": 1791326785.7939231,
     "evidence_age_seconds": null,
     "scrape_up": 1.0,
     "evidence_alert_firing": 0.0
@@ -38,8 +38,8 @@
     "evidence_complete": 0.0,
     "operation_unknown": 0.0,
     "incident_actions": 0.0,
-    "state_checked_timestamp_seconds": 1791325581.148013,
-    "evidence_checked_timestamp_seconds": 1791325581.1367605,
+    "state_checked_timestamp_seconds": 1791326905.6422045,
+    "evidence_checked_timestamp_seconds": 1791326905.6378298,
     "evidence_age_seconds": null,
     "scrape_up": 1.0,
     "evidence_alert_firing": 1.0
@@ -51,10 +51,11 @@
     "evidence_complete": 1.0,
     "operation_unknown": 0.0,
     "incident_actions": 0.0,
-    "state_checked_timestamp_seconds": 1791325654.9572275,
-    "evidence_checked_timestamp_seconds": 1791325644.8354158,
-    "evidence_age_seconds": 12.993000030517578,
+    "state_checked_timestamp_seconds": 1791327027.9904935,
+    "evidence_checked_timestamp_seconds": 1791327017.8714535,
+    "evidence_age_seconds": 6.055999994277954,
     "scrape_up": 1.0,
     "evidence_alert_firing": 0.0
-  }
+  },
+  "test_incident_closed": true
 }
