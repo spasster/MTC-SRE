@@ -2,6 +2,8 @@ import os
 import json
 import math
 import re
+import time
+from functools import partial
 
 import httpx
 
@@ -31,12 +33,15 @@ def parse_vector(payload):
     return rows
 
 
-def query_prometheus(promql, base_url=None, client=None):
+def query_prometheus(promql, base_url=None, client=None, evaluation_time=None):
     url = (base_url or prometheus_url()) + "/api/v1/query"
     http = client or httpx.Client(timeout=5)
     own_client = client is None
     try:
-        response = http.get(url, params={"query": promql})
+        params = {"query": promql}
+        if evaluation_time is not None:
+            params["time"] = evaluation_time
+        response = http.get(url, params=params)
         response.raise_for_status()
         body = response.json()
     except (httpx.HTTPError, ValueError) as exc:
@@ -67,12 +72,13 @@ def _by_label(rows, label):
 def _ratio(part, whole):
     if part is None or whole is None or whole <= 0:
         return None
-    return part / whole
+    value = part / whole
+    return min(1.0, max(0.0, value)) if -1e-9 <= value <= 1 + 1e-9 else None
 
 
 def gather(namespace, actuator=None, query=None):
     actor = actuator or K8sActuator()
-    ask = query or query_prometheus
+    ask = query or partial(query_prometheus, evaluation_time=time.time())
     try:
         current = actor.telemetry_pods(namespace, "checkout")
         if not current:
@@ -128,6 +134,9 @@ def gather(namespace, actuator=None, query=None):
         payment_timeouts = rate_sum("dependency_errors_total", ',dependency="payment",reason="timeout"')
         payment_errors = rate_sum("dependency_errors_total", ',dependency="payment"')
         application_errors = rate_sum("application_errors_total")
+        if any(_ratio(part, requests) is None for part in
+               (errors, redis_errors, payment_timeouts, payment_errors, application_errors)):
+            raise EvidenceError("Доли ошибок не согласованы с числом запросов")
         if set(p95) != set(current) or set(p95_recent) != set(current):
             raise EvidenceError("Не хватает измерений задержки текущих подов")
         probe = f'service="checkout",target_namespace={json.dumps(namespace)}'

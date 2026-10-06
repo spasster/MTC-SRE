@@ -1,6 +1,7 @@
 import pytest
 
 from app.evidence import gather, parse_vector
+from app import evidence as module
 
 
 class Actor:
@@ -23,6 +24,22 @@ def test_empty_prometheus_results_are_not_zero_error_success():
     assert evidence["error_ratio"] is None
     assert evidence["p95"] is None
     assert evidence["pods"] == []
+
+
+def test_all_queries_in_a_snapshot_share_one_evaluation_time(monkeypatch):
+    moments = []
+    def query(expression, evaluation_time=None):
+        moments.append(evaluation_time)
+        return query_complete(expression)
+    monkeypatch.setattr(module, "query_prometheus", query)
+    assert gather("demo", Actor())["telemetry_complete"]
+    assert len(moments) > 10 and len(set(moments)) == 1
+
+
+def test_ratio_only_tolerates_float_roundoff():
+    assert module._ratio(3.0000000000000004, 3) == 1
+    assert module._ratio(3.1, 3) is None
+    assert module._ratio(None, 3) is None
 
 
 @pytest.mark.parametrize("value", ["NaN", "nan", "+Inf", "inf", "-Inf"])

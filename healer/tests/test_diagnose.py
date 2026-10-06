@@ -54,6 +54,13 @@ def test_redis_needs_approval():
     assert "корзину" in found.detail
 
 
+@pytest.mark.parametrize("value", [None, float("nan"), 1.1])
+def test_invalid_dependency_ratio_cannot_authorize_a_mutation(value):
+    found = decide(evidence(redis_error_ratio=value, revision_age_seconds=30,
+                            error_ratio=.8, application_error_ratio=.8), RULES)
+    assert found.mode == "escalate" and found.action == "none"
+
+
 def test_redis_not_ready_is_not_a_restart():
     found = decide(evidence(redis_error_ratio=0.9, redis_ready=False), RULES)
     assert found.diagnosis != "redis"

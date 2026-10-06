@@ -53,6 +53,10 @@ def decide(evidence, rules):
         return Decision("unknown", "escalate", "none", None, "Нет достоверных метрик запросов и ошибок. Кластер не изменён.")
 
     quiet = rules["dependency_ratio"]
+    ratios = [evidence.get(name) for name in ("redis_error_ratio", "payment_timeout_ratio", "payment_error_ratio", "application_error_ratio")]
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+           or not 0 <= value <= 1 for value in ratios):
+        return Decision("unknown", "escalate", "none", None, "Нет согласованных метрик зависимостей и приложения. Кластер не изменен.")
     revision_age = evidence.get("revision_age_seconds")
     error_ratio = _ratio(evidence.get("error_ratio"))
     redis_ratio = _ratio(evidence.get("redis_error_ratio"))
