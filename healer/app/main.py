@@ -20,7 +20,7 @@ from app.diagnose import Decision, decide
 from app.evidence import gather
 from app.k8s import ActionSkipped, K8sActuator
 from app.telegram import Telegram
-from app.state import StateUnavailable, create_store
+from app.state import StateUnavailable, create_store, validate_state
 from app import observability as obs
 
 SERVICE = "healer"
@@ -111,6 +111,7 @@ def state_snapshot():
 
 def restore_state(snapshot):
     global _pending
+    validate_state(snapshot)
     if not snapshot:
         return
     for name in _STATE_FIELDS:

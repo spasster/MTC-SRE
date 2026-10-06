@@ -10,7 +10,7 @@ import pytest
 from kubernetes.client.rest import ApiException
 
 from app import main
-from app.state import KubernetesStore, MemoryStore, StateUnavailable
+from app.state import KubernetesStore, MemoryStore, StateUnavailable, empty_document
 from test_webhook import FakeActuator, evidence, alert
 
 
@@ -31,6 +31,7 @@ class Backend:
             raise ApiException(status=409)
         self.map.metadata.resource_version = str(int(self.map.metadata.resource_version) + 1)
         self.map.data.update(body["data"])
+        self.map.metadata.annotations = body["metadata"].get("annotations", {})
         return copy.deepcopy(self.map)
 
     def patch_lease(self, name, namespace, body, **kwargs):
@@ -47,19 +48,26 @@ class Backend:
         return KubernetesStore(self.core, self.coordination, clock=lambda: self.now, owner=owner)
 
 
+def valid_snapshot(actions=0):
+    main.reset_state()
+    snapshot = main.state_snapshot()
+    snapshot["_actions"] = actions
+    return snapshot
+
+
 def test_only_one_holder_can_write_and_expired_holder_is_fenced():
     backend = Backend()
     first, second = backend.store("first"), backend.store("second")
     assert first.acquire()
     assert not second.acquire()
     first.load()
-    first.save({"actions": 1})
+    first.save(valid_snapshot(1))
     backend.now += 31
     assert second.acquire()
-    assert second.load() == {"actions": 1}
+    assert second.load()["_actions"] == 1
     with pytest.raises(StateUnavailable):
-        first.save({"actions": 0})
-    assert json.loads(backend.map.data["state.json"])["state"]["actions"] == 1
+        first.save(valid_snapshot())
+    assert json.loads(backend.map.data["state.json"])["state"]["_actions"] == 1
 
 
 def test_compare_and_swap_conflict_does_not_overwrite_newer_state():
@@ -69,8 +77,75 @@ def test_compare_and_swap_conflict_does_not_overwrite_newer_state():
     store.load()
     backend.map.metadata.resource_version = "9"
     with pytest.raises(StateUnavailable):
-        store.save({"actions": 0})
+        store.save(valid_snapshot())
     assert backend.map.data == {}
+    assert store.document["state"] == {}
+
+
+@pytest.mark.parametrize("key,value", [
+    ("_actions", -1), ("_actions", True), ("_actions", 1.5),
+    ("_cooldown_until", float("nan")), ("_broke_at", -10), ("_fixed_at", float("inf")),
+    ("_uncertain", "false"), ("_closed", "redis"), ("_recovery_targets", ["payment"]),
+    ("_pending", {"action": "rollback"}), ("_scale_owner", {"uid": "only-uid"}),
+])
+def test_invalid_restored_snapshot_cannot_change_live_state(key, value):
+    broken = valid_snapshot()
+    broken[key] = value
+    main._actions = 2
+    before = copy.deepcopy(main.state_snapshot())
+    with pytest.raises(StateUnavailable):
+        main.restore_state(broken)
+    assert main.state_snapshot() == before
+
+
+@pytest.mark.parametrize("encoded", ["null", "false", "[]", "{}"])
+def test_empty_or_false_json_is_not_a_fresh_installation(encoded):
+    backend = Backend()
+    backend.map.data = {"state.json": encoded}
+    store = backend.store("holder")
+    store.acquire()
+    with pytest.raises(StateUnavailable):
+        store.load()
+    backend.core.patch_namespaced_config_map.assert_not_called()
+
+
+def test_missing_initialized_data_cannot_reset_the_budget():
+    backend = Backend()
+    store = backend.store("holder")
+    store.acquire()
+    store.load()
+    store.save(valid_snapshot(2))
+    backend.map.data = {}
+    with pytest.raises(StateUnavailable):
+        store.load()
+
+
+def test_invalid_json_state_is_refused_on_read_and_before_write():
+    backend = Backend()
+    broken = empty_document()
+    broken["state"] = valid_snapshot(-1)
+    backend.map.data = {"state.json": json.dumps(broken)}
+    store = backend.store("holder")
+    store.acquire()
+    with pytest.raises(StateUnavailable):
+        store.load()
+    backend.core.patch_namespaced_config_map.assert_not_called()
+    backend.map.data = {}
+    store.load()
+    with pytest.raises(StateUnavailable):
+        store.save(broken["state"])
+    assert store.document["state"] == {}
+    backend.core.patch_namespaced_config_map.assert_not_called()
+
+
+def test_malformed_operation_does_not_reconcile_or_apply(controlled):
+    snapshot = main.state_snapshot()
+    snapshot["_action_intent"] = {"id": "operation", "action": "delete_pod", "target": "slow",
+                                  "before": {"uid": "slow"}, "status": "prepared"}
+    controlled.document["state"] = snapshot
+    with pytest.raises(StateUnavailable):
+        main.handle_alert(alert())
+    assert main.actuator.calls == []
 
 
 def test_missing_lease_or_broken_state_prevents_writes():
@@ -141,7 +216,8 @@ def test_uncertain_api_result_is_reserved_and_not_repeated_after_restart(control
 
 def test_observed_operation_reconciles_without_repeating_the_api(controlled, monkeypatch):
     main._actions = 1
-    main._action_intent = {"id": "operation", "action": "delete_pod", "target": "slow", "before": {"uid": "slow"}, "status": "prepared"}
+    main._action_intent = {"id": "operation", "action": "delete_pod", "target": "slow", "before": {"uid": "slow"},
+                           "prepared_at": 1000, "status": "prepared"}
     controlled.document["operations"].append(main._action_intent.copy())
     main.persist_state()
     monkeypatch.setattr(main.actuator, "operation_observed", lambda *args: True)
