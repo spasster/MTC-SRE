@@ -1,9 +1,15 @@
 include versions.mk
+.DEFAULT_GOAL := up-linux
 CLUSTER ?= mtc
 NODE_LOG_HOST ?= colima
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up up-linux stack ready cluster cluster-linux images apps repos mesh observability dashboards blackbox loki logs logs-linux node-logs node-logs-linux alloy-host chaos llm
+.PHONY: up up-linux stack ready context cluster cluster-linux images apps repos mesh observability dashboards blackbox loki logs logs-linux node-logs node-logs-linux alloy-host chaos llm
+
+context:
+	@sh scripts/require-context.sh $(CLUSTER)
+
+images apps mesh observability dashboards blackbox loki chaos llm: context
 
 up: cluster
 	$(MAKE) stack
@@ -31,6 +37,11 @@ ready:
 	kubectl rollout status deployment/redis -n demo --timeout=180s
 	kubectl rollout status deployment/healer -n heal --timeout=180s
 	kubectl rollout status deployment/tempo -n obs --timeout=180s
+	kubectl rollout status deployment/blackbox -n obs --timeout=180s
+	kubectl rollout status deployment/alloy -n obs --timeout=180s
+	kubectl rollout status statefulset/loki -n obs --timeout=180s
+	kubectl rollout status statefulset/prometheus-kube-prom-kube-prometheus-prometheus -n obs --timeout=180s
+	kubectl rollout status statefulset/alertmanager-kube-prom-kube-prometheus-alertmanager -n obs --timeout=180s
 
 cluster:
 	colima status >/dev/null 2>&1 || colima start --cpu 4 --memory 8 --disk 40
