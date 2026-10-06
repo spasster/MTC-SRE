@@ -102,9 +102,12 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--natural-end", action="store_true", help="Дождаться окончания spike и возврата масштаба самим healer")
     parser.add_argument("--incident-chain-output", help="Проверить exemplar, трейс и лог медленного запроса в этом инциденте")
+    parser.add_argument("--spike-duration", type=int, help="Длительность дополнительной нагрузки в секундах для короткой демонстрации")
     args = parser.parse_args()
     if args.natural_end and (args.scenario != "spike" or args.mode != "auto"):
         parser.error("--natural-end допустим только для auto spike")
+    if args.spike_duration is not None and (args.scenario != "spike" or args.spike_duration < 120):
+        parser.error("--spike-duration допустим для spike и должен быть не менее 120 с")
     os.environ["CLUSTER"] = args.cluster
     cmd("sh", "scripts/require-context.sh", args.cluster)
     existing = json.loads(cmd("kubectl", "get", "networkchaos,podchaos", "-n", "demo", "-o", "json"))
@@ -133,7 +136,14 @@ def main():
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         wait_healthy(args.prometheus)
         selected = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"][0]["metadata"]["name"]
-        cmd("sh", "chaos/inject.sh", args.scenario)
+        if args.spike_duration:
+            manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
+            manifest["spec"]["template"]["spec"]["containers"][0]["env"].append(
+                {"name": "DURATION", "value": str(args.spike_duration) + "s"})
+            subprocess.run(["kubectl", "apply", "-f", "-"], input=json.dumps(manifest), text=True, capture_output=True, check=True)
+            report["spike_duration_seconds"] = args.spike_duration
+        else:
+            cmd("sh", "chaos/inject.sh", args.scenario)
         report["injected_at"] = time.time()
         report["target_pod"] = selected if args.scenario == "slow-pod" else None
         deadline, streak = time.time() + args.timeout, 0

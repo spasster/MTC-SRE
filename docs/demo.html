@@ -19,7 +19,7 @@ canvas{width:100%;background:#19263c;border-radius:12px}.steps{line-height:1.8;m
 <div class="card">p95 / цель &lt; 300 мс<div class="value" id="latency">Ожидание</div></div>
 <div class="card">5xx / цель ≤ 0.5%<div class="value" id="errors">Ожидание</div></div>
 <div class="card">Синтетика / HTTP 200<div class="value" id="probe">Ожидание</div></div>
-<div class="card">Готовые реплики<div class="value" id="replicas">Ожидание</div></div>
+<div class="card">Реплики checkout<div class="value" id="replicas">Ожидание</div></div>
 </div>
 <canvas id="chart" width="1160" height="250"></canvas>
 <p class="muted">Жёлтая линия - p95 из Prometheus. Красная линия - порог 300 мс. Время - с открытия экрана.</p>
@@ -42,7 +42,9 @@ text('latency',number(d.p95,1000)+' мс');text('errors',number(d.error_ratio,10
 text('replicas',(d.rollout_ready?'Готово: ':'Ожидание: ')+d.replicas);history.push([(Date.now()-start)/1000,d.p95]);plot();
 const age=d.time-d.synthetic_time;
 const healthy=d.p95!==null&&d.p95>=0&&d.p95<.3&&d.error_ratio!==null&&d.error_ratio>=0&&d.error_ratio<=.005&&d.request_rate>0&&d.synthetic_success===1&&d.synthetic_time!==null&&age>=0&&age<=45&&d.rollout_ready;
-const h=d.healer||{},timing=h.api_accepted_at?h:(h.last_recovery||{});const action=timing.api_accepted_at,restored=timing.slo_restored_at;
+const h=d.healer||{},last=h.last_recovery||{};
+const timing=h.api_accepted_at>=start/1000?h:(last.api_accepted_at>=start/1000?last:{});
+const action=timing.api_accepted_at,restored=timing.slo_restored_at;
 text('state',healthy?'SLO в норме':d.alerts_firing?'Тревога firing. Проверяется причина и допустимое действие.':'SLO нарушен. Накапливается окно алерта.');
 document.getElementById('state').className=healthy?'ok':'bad';
 const stamp=t=>t?new Date(t*1000).toLocaleTimeString('ru-RU'):'ещё не зафиксировано';
