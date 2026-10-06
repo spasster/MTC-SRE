@@ -1,0 +1,56 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: healer
+  namespace: obs
+  labels:
+    release: kube-prom
+spec:
+  groups:
+    - name: healer.health
+      rules:
+        - alert: HealerMetricsMissing
+          expr: absent_over_time(up{namespace="heal",job="healer-metrics"}[2m]) == 1 or max(up{namespace="heal",job="healer-metrics"}) == 0
+          for: 1m
+          labels:
+            service: healer
+            severity: critical
+          annotations:
+            summary: Нет метрик контура восстановления
+            runbook_url: docs/runbooks/healer.md
+        - alert: HealerNoLeader
+          expr: max(healer_leader{namespace="heal"}) == 0
+          for: 1m
+          labels:
+            service: healer
+            severity: critical
+          annotations:
+            summary: Healer не подтверждает владельца Lease
+            runbook_url: docs/runbooks/healer.md
+        - alert: HealerStateUnavailable
+          expr: max(healer_state_available{namespace="heal"}) == 0 or time() - max(healer_state_checked_timestamp_seconds{namespace="heal"}) > 60
+          for: 1m
+          labels:
+            service: healer
+            severity: critical
+          annotations:
+            summary: Состояние healer недоступно или цикл проверки остановлен
+            runbook_url: docs/runbooks/healer.md
+        - alert: HealerEvidenceMissing
+          expr: max(healer_evidence_complete{namespace="heal"}) == 0 or time() - max(healer_evidence_checked_timestamp_seconds{namespace="heal"}) > 60
+          for: 2m
+          labels:
+            service: healer
+            severity: warning
+          annotations:
+            summary: Healer не имеет полного свежего снимка метрик checkout
+            runbook_url: docs/runbooks/healer.md
+        - alert: HealerOperationUnknown
+          expr: max(healer_operation_unknown{namespace="heal"}) == 1
+          for: 15s
+          labels:
+            service: healer
+            severity: critical
+          annotations:
+            summary: Результат команды Kubernetes неизвестен
+            runbook_url: docs/runbooks/healer.md

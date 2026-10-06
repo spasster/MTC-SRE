@@ -35,6 +35,11 @@ alertmanager:
       routes:
         - receiver: telegram
           matchers:
+            - service = "healer"
+          group_wait: 10s
+          repeat_interval: 10m
+        - receiver: telegram
+          matchers:
             - service = "checkout"
           group_wait: 10s
           repeat_interval: 30m

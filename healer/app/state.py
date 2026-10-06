@@ -43,6 +43,9 @@ class MemoryStore:
     def load(self):
         return copy.deepcopy(self.document["state"])
 
+    def peek(self):
+        return copy.deepcopy(self.document)
+
     def save(self, state):
         self.document["state"] = copy.deepcopy(state)
 
@@ -111,8 +114,7 @@ class KubernetesStore(MemoryStore):
             self.leader = False
             raise StateUnavailable("Право записи healer не подтверждено") from None
 
-    def load(self):
-        self.assert_leader()
+    def _read(self):
         try:
             obj = self.core.read_namespaced_config_map(self.name, self.namespace, _request_timeout=5)
             document = json.loads((obj.data or {}).get("state.json", "{}")) or empty_document()
@@ -122,12 +124,18 @@ class KubernetesStore(MemoryStore):
                 or not isinstance(document.get("events"), list)
                 or any(not isinstance(row, dict) for row in document["operations"] + document["events"])):
                 raise ValueError("schema")
-            self.document = document
-            self.resource_version = obj.metadata.resource_version
-            self.original = json.dumps(document, ensure_ascii=False, sort_keys=True)
-            return copy.deepcopy(document["state"])
+            return document, obj.metadata.resource_version
         except Exception:
             raise StateUnavailable("Состояние healer не удалось прочитать; автомат запрещен") from None
+
+    def peek(self):
+        return self._read()[0]
+
+    def load(self):
+        self.assert_leader()
+        self.document, self.resource_version = self._read()
+        self.original = json.dumps(self.document, ensure_ascii=False, sort_keys=True)
+        return copy.deepcopy(self.document["state"])
 
     def save(self, state):
         self.assert_leader()

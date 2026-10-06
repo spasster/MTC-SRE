@@ -108,6 +108,7 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+            - containerPort: 8081
           env:
             - name: HEALER_STATE_BACKEND
               value: kubernetes
@@ -163,7 +164,42 @@ metadata:
 spec:
   selector:
     app: healer
+  # Метрики собираются напрямую с каждого пода через отдельный Service.
   ports:
     - name: http
       port: 8080
       targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: healer-metrics
+  namespace: heal
+  labels:
+    app: healer-metrics
+spec:
+  selector:
+    app: healer
+  ports:
+    - name: metrics
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: healer
+  namespace: obs
+  labels:
+    release: kube-prom
+spec:
+  jobLabel: app
+  namespaceSelector:
+    matchNames: [heal]
+  selector:
+    matchLabels:
+      app: healer-metrics
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 5s

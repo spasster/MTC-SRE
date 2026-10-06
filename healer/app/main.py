@@ -21,6 +21,7 @@ from app.evidence import gather
 from app.k8s import ActionSkipped, K8sActuator
 from app.telegram import Telegram
 from app.state import StateUnavailable, create_store
+from app import observability as obs
 
 SERVICE = "healer"
 WHITELIST = {"CheckoutSlow", "CheckoutHighErrorRate", "CheckoutSyntheticFailed"}
@@ -129,6 +130,9 @@ def restore_state(snapshot):
 
 def persist_state():
     get_store().save(state_snapshot())
+    obs.STATE_OK.set(1)
+    obs.LAST_CHECK.set(time.time())
+    obs.state(state_snapshot())
 
 
 def journal_event(event, **details):
@@ -167,7 +171,9 @@ def state_transaction(function):
             store = get_store()
             if depth == 0:
                 if not store.acquire():
+                    obs.LEADER.set(0)
                     raise StateUnavailable("Этот экземпляр healer находится в резерве")
+                obs.LEADER.set(1)
                 if store.durable:
                     restore_state(store.load())
                     reconcile_intent()
@@ -183,6 +189,8 @@ def state_transaction(function):
 
 @app.exception_handler(StateUnavailable)
 async def state_error(request, exc):
+    obs.STATE_OK.set(0)
+    obs.FAILURES.labels("state").inc()
     return JSONResponse(status_code=503, content={"detail": str(exc)})
 
 
@@ -207,6 +215,7 @@ def run_operation(action, target, apply, before, owner_after=None, count=True):
     except Exception as exc:
         definite = isinstance(exc, ActionSkipped) or isinstance(exc, ApiException) and exc.status in (400, 401, 403, 404, 409, 422)
         operation["status"] = "failed" if definite else "unknown"
+        obs.OPERATIONS.labels(action, operation["status"]).inc()
         _uncertain = not definite
         if definite:
             _action_intent = None
@@ -216,6 +225,7 @@ def run_operation(action, target, apply, before, owner_after=None, count=True):
         persist_state()
         raise
     operation.update(status="applied", api_accepted_at=time.time())
+    obs.OPERATIONS.labels(action, "applied").inc()
     _update_operation(operation)
     _action_intent = None
     _uncertain = False
@@ -410,7 +420,9 @@ def remember_start(alert) -> None:
 
 def remember_title(decision) -> None:
     global _incident_name
-    if decision is None or decision.diagnosis == "settling" or _incident_name is not None:
+    if decision is None or decision.diagnosis == "settling":
+        return
+    if _incident_name is not None and _incident_name != TITLES["unknown"]:
         return
     _incident_name = _title(decision)
 
@@ -461,6 +473,10 @@ def notify_recovered() -> None:
         "slo_restored_at": _fixed_at,
         "resolved_received_at": time.time(),
     }
+    if _fixed_at is not None:
+        obs.RECOVERY.observe(max(0, _fixed_at - _broke_at))
+    journal_event("incident_resolved", started_at=_broke_at, slo_restored_at=_fixed_at,
+                  api_accepted_at=_applied_at, resolved_received_at=_last_recovery["resolved_received_at"])
     bot = get_notifier()
     if bot.enabled():
         bot.send(text)
@@ -761,6 +777,7 @@ def _poll_loop() -> None:
                 continue
             updates = bot.poll(timeout=25)
         except Exception:
+            obs.FAILURES.labels("telegram").inc()
             log.warning("Не удалось получить обновления Telegram")
             _worker_stop.wait(2)
             continue
@@ -796,8 +813,20 @@ def _recovery_loop() -> None:
         try:
             check_recovery()
             finish_scale_down()
+            if get_store().leader and obs.needs_sample():
+                observe_evidence()
+        except StateUnavailable:
+            obs.LEADER.set(0)
+            obs.STATE_OK.set(0)
+            obs.FAILURES.labels("state").inc()
         except Exception:
+            obs.FAILURES.labels("recovery").inc()
             log.exception("Не удалось проверить восстановление")
+
+
+@state_transaction
+def observe_evidence():
+    obs.evidence(gather(TARGET_NAMESPACE, actuator=get_actuator()))
 
 
 def start_recovery_worker() -> None:
@@ -825,6 +854,7 @@ def check_recovery():
         _busy = True
     try:
         evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
+        obs.evidence(evidence)
         if not recovery_ready(evidence, get_rules()):
             return None
         if _recovery_pending:
@@ -1053,10 +1083,13 @@ def handle_alert(alert: dict) -> dict:
         _busy = True
     try:
         evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
+        obs.evidence(evidence)
         if _healthy(evidence, limits):
             return {"alertname": alertname, "result": "ignored: healthy", "action": "none", "mode": "ignore"}
         remember_start(alert)
         decision = decide(evidence, limits)
+        obs.DECISIONS.labels(decision.diagnosis, decision.mode).inc()
+        journal_event("decision", diagnosis=decision.diagnosis, mode=decision.mode, action=decision.action)
         remember_title(decision)
         cooling = _acted_alert is not None and time.time() < _cooldown_until
         if cooling and decision.mode != "approval" and decision.diagnosis != "partition":
@@ -1120,6 +1153,7 @@ def handle_alert(alert: dict) -> dict:
 
 @app.on_event("startup")
 def _startup():
+    obs.start()
     start_recovery_worker()
     start_poller()
 
@@ -1155,15 +1189,16 @@ def webhook(payload: dict):
 
 @app.get("/status", dependencies=[Depends(authorize_webhook)])
 def status():
-    with _lock:
+    with _transaction_lock:
+        saved = get_store().peek().get("state", {}) if get_store().durable else state_snapshot()
         return {
-            "started_at": _broke_at,
-            "api_accepted_at": _applied_at,
-            "slo_restored_at": _fixed_at,
-            "recovery_pending": _recovery_pending,
-            "actions": _actions,
-            "last_recovery": _last_recovery,
+            "started_at": saved.get("_broke_at"),
+            "api_accepted_at": saved.get("_applied_at"),
+            "slo_restored_at": saved.get("_fixed_at"),
+            "recovery_pending": saved.get("_recovery_pending", False),
+            "actions": saved.get("_actions", 0),
+            "last_recovery": saved.get("_last_recovery"),
             "state_backend": "kubernetes" if get_store().durable else "memory",
             "leader": get_store().leader,
-            "operation_unknown": _uncertain,
+            "operation_unknown": saved.get("_uncertain", False),
         }
