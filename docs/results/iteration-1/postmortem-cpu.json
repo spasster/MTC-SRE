@@ -1,0 +1,116 @@
+{
+  "checked_at": "2026-10-06T22:45:02.766712+00:00",
+  "passed": true,
+  "duration_seconds": 53.40199279785156,
+  "rbac": {
+    "get deployments": "yes",
+    "patch deployments": "no",
+    "delete pods": "no",
+    "get secrets": "no",
+    "get heal/configmap/healer-state": "yes",
+    "patch heal/configmap/healer-state": "no",
+    "get heal/secrets": "no",
+    "patch heal/lease/healer-leader": "no"
+  },
+  "response": {
+    "source": "local_llm",
+    "model": "qwen2.5:1.5b",
+    "snapshot": {
+      "collection_failed": false,
+      "replicas": 2,
+      "request_rate": 3.1111111111111107,
+      "p95": 0.23999999999999985,
+      "revision_age_seconds": 7559.393492,
+      "error_ratio": 0.0,
+      "application_error_ratio": 0.0,
+      "redis_error_ratio": 0.0,
+      "payment_error_ratio": 0.0,
+      "payment_timeout_ratio": 0.0,
+      "synthetic_success": 1.0,
+      "synthetic_age_seconds": 2.240999937057495,
+      "redis_ready": true,
+      "payment_ready": true,
+      "pods": [
+        {
+          "pod": "checkout-7fc5f76f9b-wlv2v",
+          "p95": 0.19685714285714284,
+          "p95_recent": 0.2524999999999999,
+          "throttle": 0.26480836236933797
+        },
+        {
+          "pod": "checkout-7fc5f76f9b-f7zkz",
+          "p95": 0.30666666666666703,
+          "p95_recent": 0.27999999999999986,
+          "throttle": 0.3056768558951965
+        }
+      ]
+    },
+    "slo_assessment": {
+      "state": "healthy",
+      "p95_limit_seconds": 0.3,
+      "error_ratio_limit": 0.005,
+      "source": "measured_metrics"
+    },
+    "incident_facts": {
+      "scope": "latest_completed",
+      "status": "completed",
+      "started_at": 1791326272.709,
+      "slo_restored_at": 1791326521.928078,
+      "api_accepted_at": 1791326419.7337747,
+      "resolved_received_at": 1791326538.9636798,
+      "mttr_seconds": 249.21907782554626,
+      "api_delay_seconds": 147.0247745513916,
+      "operations": [
+        {
+          "action": "scale",
+          "status": "applied",
+          "prepared_at": 1791326419.6605463,
+          "api_accepted_at": 1791326419.7337027
+        }
+      ],
+      "timeline": [
+        {
+          "time": 1791326283.8122172,
+          "event": "decision",
+          "action": "none",
+          "diagnosis": "settling",
+          "mode": "ignore"
+        },
+        {
+          "time": 1791326419.6304352,
+          "event": "decision",
+          "action": "scale",
+          "diagnosis": "cpu",
+          "mode": "auto"
+        },
+        {
+          "time": 1791326493.7316086,
+          "event": "decision",
+          "action": "none",
+          "diagnosis": "cpu",
+          "mode": "escalate"
+        }
+      ],
+      "current_unknown_operation": false,
+      "timeline_truncated": false,
+      "unknown_operation_in_selected_incident": false,
+      "operations_truncated": false
+    },
+    "report_sections": {
+      "symptoms": "Сейчас SLO в норме; этот снимок описывает момент запроса, а не начало выбранного инцидента.",
+      "actions": "масштабирование: команда принята API",
+      "recovery": "По журналу восстановление SLO подтверждено; MTTR 249.2 с.",
+      "next_checks": "следующая безопасная проверка по журналу и текущему снимку"
+    },
+    "rule_decision": {
+      "diagnosis": "settling",
+      "mode": "ignore",
+      "action": "none",
+      "target": null,
+      "detail": "за последние 30 секунд поды уже быстрые"
+    },
+    "report": "Симптомы: Сейчас SLO в норме; этот снимок описывает момент запроса, а не начало выбранного инцидента.\n\nДействия и подтверждения: масштабирование: команда принята API\n\nВосстановление и время: По журналу восстановление SLO подтверждено; MTTR 249.2 с.\n\nЧто еще проверить: следующая безопасная проверка по журналу и текущему снимку",
+    "actions_applied": [],
+    "notice": "Оценка SLO вычислена по метрикам. Текст модели не проверен и может противоречить данным. Ассистент не меняет кластер."
+  }
+}
