@@ -1,0 +1,64 @@
+{
+  "checked_at": "2026-10-06T22:22:25.030513+00:00",
+  "retention": [],
+  "runtime_storage_retention": "5w",
+  "runtime_config_reload_success": true,
+  "pvc": [
+    {
+      "name": "prometheus-kube-prom-kube-prometheus-prometheus-db-prometheus-kube-prom-kube-prometheus-prometheus-0",
+      "phase": "Bound",
+      "capacity": {
+        "storage": "10Gi"
+      }
+    }
+  ],
+  "coverage_30d": [
+    {
+      "labels": {
+        "__name__": "checkout:probe_history_coverage:30d",
+        "service": "checkout"
+      },
+      "value": "0.00020833333333333335"
+    }
+  ],
+  "observed_budget_30d": [
+    {
+      "labels": {
+        "__name__": "checkout:slo_budget_remaining:30d",
+        "service": "checkout",
+        "sli": "availability"
+      },
+      "value": "1"
+    },
+    {
+      "labels": {
+        "__name__": "checkout:slo_budget_remaining:30d",
+        "service": "checkout",
+        "sli": "errors"
+      },
+      "value": "1"
+    },
+    {
+      "labels": {
+        "__name__": "checkout:slo_budget_remaining:30d",
+        "service": "checkout",
+        "sli": "latency"
+      },
+      "value": "0"
+    }
+  ],
+  "groups": [
+    {
+      "name": "checkout.budget",
+      "rules": 24,
+      "all_rules_healthy": true
+    },
+    {
+      "name": "healer.health",
+      "rules": 5,
+      "all_rules_healthy": true
+    }
+  ],
+  "monthly_slo_proven": false,
+  "passed": true
+}
