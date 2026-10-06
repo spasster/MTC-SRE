@@ -19,7 +19,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=".runtime/proof/diagnostics.json")
     args = parser.parse_args()
-    report = {"checked_at": datetime.now(timezone.utc).isoformat(), "pods": [], "events": []}
+    report = {"checked_at": datetime.now(timezone.utc).isoformat(), "pods": [], "events": [], "nodes": []}
+    for node in read("nodes"):
+        report["nodes"].append({"capacity": node.get("status", {}).get("capacity"),
+                                "allocatable": node.get("status", {}).get("allocatable"),
+                                "conditions": node.get("status", {}).get("conditions")})
     for namespace in ("heal", "demo", "obs"):
         for pod in read("pods", namespace):
             status = pod.get("status", {})
@@ -32,6 +36,8 @@ def main():
                 containers.append(row)
             report["pods"].append({"namespace": namespace, "name": pod["metadata"]["name"],
                                    "phase": status.get("phase"), "conditions": status.get("conditions", []),
+                                   "resources": [{"name": row["name"], "resources": row.get("resources", {})}
+                                                 for row in pod.get("spec", {}).get("containers", []) + pod.get("spec", {}).get("initContainers", [])],
                                    "containers": containers})
         for event in read("events", namespace):
             report["events"].append({"namespace": namespace, "reason": event.get("reason"),
