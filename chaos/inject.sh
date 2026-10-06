@@ -2,6 +2,7 @@
 set -eu
 
 ns=demo
+sh scripts/require-context.sh "${CLUSTER:-mtc}"
 
 running_pod() {
   app=$1

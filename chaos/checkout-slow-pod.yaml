@@ -19,7 +19,7 @@ spec:
       labelSelectors:
         app: payment
   delay:
-    latency: 2s
+    latency: 500ms
     correlation: "0"
     jitter: 0ms
   duration: 15m
