@@ -449,10 +449,10 @@ def notify_escalation(decision) -> str:
     global _escalated
     if _escalated:
         return "escalated"
-    _escalated = True
     bot = get_notifier()
     if bot.enabled():
         bot.send(_escalation_text(decision))
+    _escalated = True
     return "escalated"
 
 
@@ -544,19 +544,22 @@ def apply_callback(data: str) -> str:
 
 def _poll_loop() -> None:
     bot = get_notifier()
-    while True:
+    while not _worker_stop.is_set():
         try:
             updates = bot.poll(timeout=25)
         except Exception:
-            log.exception("telegram poll failed")
-            time.sleep(2)
+            log.warning("Не удалось получить обновления Telegram")
+            _worker_stop.wait(2)
             continue
         for callback_id, data in updates:
             try:
                 bot.answer(callback_id)
             except Exception:
-                log.exception("telegram answer failed")
-            apply_callback(data)
+                log.warning("Не удалось подтвердить получение кнопки Telegram")
+            try:
+                apply_callback(data)
+            except Exception:
+                log.warning("Не удалось обработать кнопку Telegram; опрос продолжается")
 
 
 def start_poller() -> None:

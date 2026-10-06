@@ -646,3 +646,43 @@ def test_recovery_worker_starts_without_telegram():
     finally:
         main._shutdown()
     assert not main._recovery_worker.is_alive()
+
+
+def test_failed_escalation_can_be_delivered_again(monkeypatch):
+    from app.diagnose import Decision
+
+    bot = FakeTelegram()
+    main.notifier = bot
+    decision = Decision("unknown", "escalate", "none", None, "Нужна проверка")
+    monkeypatch.setattr(bot, "send", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("offline")))
+    with pytest.raises(RuntimeError):
+        main.notify_escalation(decision)
+    assert main._escalated is False
+    monkeypatch.undo()
+    assert main.notify_escalation(decision) == "escalated"
+    assert len(bot.messages) == 1
+
+
+def test_polling_survives_a_callback_error(monkeypatch):
+    bot = FakeTelegram()
+    main.notifier = bot
+    handled = []
+    main._worker_stop.clear()
+
+    def poll(timeout):
+        main._worker_stop.set()
+        return [("first", "first"), ("second", "second")]
+
+    def callback(data):
+        handled.append(data)
+        if data == "first":
+            raise RuntimeError("Ошибка уведомления")
+
+    monkeypatch.setattr(bot, "poll", poll, raising=False)
+    monkeypatch.setattr(bot, "answer", lambda callback_id: None, raising=False)
+    monkeypatch.setattr(main, "apply_callback", callback)
+    try:
+        main._poll_loop()
+    finally:
+        main._worker_stop.clear()
+    assert handled == ["first", "second"]
