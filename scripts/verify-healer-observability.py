@@ -47,7 +47,7 @@ def main():
     cmd("sh", "scripts/require-context.sh", args.cluster)
     wait_healthy(PROM, timeout=300)
     report = {"checked_at": datetime.now(timezone.utc).isoformat(), "passed": False}
-    monitor = json.loads(cmd("kubectl", "get", "servicemonitor", "checkout", "-n", "obs", "-o", "json"))
+    monitor = json.loads(cmd("kubectl", "get", "servicemonitor", "checkout", "-n", "demo", "-o", "json"))
     monitor["metadata"] = {key: value for key, value in monitor["metadata"].items()
                            if key in ("name", "namespace", "labels", "annotations")}
     monitor.pop("status", None)
@@ -59,7 +59,7 @@ def main():
         token = base64.b64decode(json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))["data"]["token"]).decode()
         forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18085:8080"],
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        cmd("kubectl", "delete", "servicemonitor", "checkout", "-n", "obs")
+        cmd("kubectl", "delete", "servicemonitor", "checkout", "-n", "demo")
         removed = True
         report["missing"] = wait(lambda row: row["evidence_complete"] == 0, 120)
         payload = {"alerts": [{"status": "firing", "labels": {"service": "checkout", "alertname": "CheckoutSlow"},
@@ -85,7 +85,7 @@ def main():
                 report["restored"] = wait(lambda row: row["evidence_complete"] == 1 and row["evidence_alert_firing"] == 0, 180)
             except Exception:
                 report["passed"] = False
-                report["restore_error"] = "Восстановление сбора не подтверждено; проверить ServiceMonitor checkout"
+                report["restore_error"] = "Восстановление сбора не подтверждено; проверить ServiceMonitor demo/checkout"
         if forward:
             forward.terminate()
         target = Path(args.output)
