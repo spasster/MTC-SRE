@@ -603,7 +603,7 @@ def test_auto_delete_tells_telegram(monkeypatch):
     assert body["action"] == "delete_pod"
     text, buttons = main.notifier.messages[0]
     assert buttons is False
-    assert "Удалил под" in text
+    assert "Удален под" in text
     assert "slow" in text
 
 

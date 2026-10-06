@@ -873,14 +873,14 @@ def notify_done(decision) -> None:
         return
     if decision.action == "delete_pod":
         text = "\n".join([
-            f"✅ Удалил под {decision.target}",
+            f"✅ Удален под {decision.target}",
             "",
             "Он был минимум в 3 раза медленнее остальных, throttle CPU ниже 0.4.",
             "ReplicaSet поднимет новый под.",
         ])
     elif decision.action == "scale":
         text = "\n".join([
-            f"✅ Scale checkout до {decision.target}",
+            f"✅ Масштабирование checkout до {decision.target} принято API",
             "",
             "Все поды медленные и упёрлись в CPU limit.",
             f"Реплик стало {decision.target}.",
@@ -974,7 +974,7 @@ def _scale_to_baseline(evidence, limits) -> dict:
     bot = get_notifier()
     if bot.enabled():
         bot.send("\n".join([
-            "✅ Scale checkout обратно до 2",
+            "✅ Возврат checkout к двум репликам принят API",
             "",
             "Spike кончился, GET /work снова быстрее 300 мс.",
             "Реплик снова 2.",
