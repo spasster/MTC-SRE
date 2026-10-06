@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import socket
 import threading
@@ -125,15 +126,28 @@ def get_notifier():
 def _healthy(evidence, limits) -> bool:
     if not evidence or evidence.get("error"):
         return False
-    if (evidence.get("error_ratio") or 0) > limits["error_ratio"]:
+    error_ratio = evidence.get("error_ratio")
+    if not _finite_number(error_ratio) or not 0 <= error_ratio <= limits["error_ratio"]:
         return False
+    if "request_rate" in evidence:
+        requests = evidence["request_rate"]
+        if not _finite_number(requests) or requests <= 0:
+            return False
     aggregate = evidence.get("p95")
     if aggregate is not None:
-        return aggregate < limits["slow_seconds"]
-    for pod in evidence.get("pods") or []:
-        if pod.get("p95") is not None and pod["p95"] >= limits["slow_seconds"]:
+        return _finite_number(aggregate) and 0 <= aggregate < limits["slow_seconds"]
+    pods = evidence.get("pods") or []
+    if not pods:
+        return False
+    for pod in pods:
+        latency = pod.get("p95")
+        if not _finite_number(latency) or not 0 <= latency < limits["slow_seconds"]:
             return False
     return True
+
+
+def _finite_number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
 TITLES = {

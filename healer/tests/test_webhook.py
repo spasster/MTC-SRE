@@ -1,6 +1,8 @@
 import json
 import logging
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from app import main
@@ -50,6 +52,7 @@ class FakeActuator:
 def evidence(**overrides):
     base = {
         "replicas": 2,
+        "request_rate": 3.0,
         "revision_age_seconds": 5000,
         "error_ratio": 0.0,
         "redis_error_ratio": 0.0,
@@ -554,3 +557,32 @@ def test_skipped_rollback_does_not_mark_recovery(monkeypatch):
     assert "Действие пропущено" in main.notifier.messages[-1][0]
     assert main._fixed_at is None
     assert main._actions == 0
+
+
+@pytest.mark.parametrize("value", [None, float("nan"), float("inf"), -0.1])
+def test_missing_or_invalid_error_rate_is_not_recovery(value):
+    assert not main._healthy(evidence(error_ratio=value, pods=list(HEALTHY)), main.rules)
+
+
+@pytest.mark.parametrize("value", [None, float("nan"), float("inf"), -1])
+def test_missing_or_invalid_latency_is_not_recovery(value):
+    assert not main._healthy(evidence(p95=value, pods=[]), main.rules)
+
+
+@pytest.mark.parametrize("value", [None, 0, float("nan"), float("inf"), -1])
+def test_recovery_requires_observed_requests(value):
+    assert not main._healthy(evidence(request_rate=value, pods=list(HEALTHY)), main.rules)
+
+
+def test_empty_metrics_do_not_close_or_scale_down_an_incident(monkeypatch):
+    from app.evidence import gather
+    from test_evidence import Actor
+
+    main._actions = 1
+    main._pending = object()
+    missing = gather("demo", actuator=Actor(), query=lambda query: [])
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: missing)
+    assert main.handle_resolved()["result"] == "ignored: still unhealthy"
+    assert main._pending is not None
+    assert main._actions == 1
+    assert main.actuator.calls == []

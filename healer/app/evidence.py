@@ -1,4 +1,5 @@
 import os
+import math
 
 import httpx
 
@@ -22,7 +23,9 @@ def parse_vector(payload):
         raw = item.get("value", [None, None])[1]
         if raw in (None, "NaN", "+Inf", "-Inf"):
             continue
-        rows.append((item.get("metric") or {}, float(raw)))
+        number = float(raw)
+        if math.isfinite(number):
+            rows.append((item.get("metric") or {}, number))
     return rows
 
 
@@ -60,8 +63,8 @@ def _by_label(rows, label):
 
 
 def _ratio(part, whole):
-    if not whole:
-        return 0.0
+    if whole is None or whole <= 0:
+        return None
     return part / whole
 
 
@@ -132,6 +135,7 @@ def gather(namespace, actuator=None, query=None):
         })
     return {
         "replicas": replicas,
+        "request_rate": requests,
         "p95": p95_all,
         "revision_age_seconds": revision_age,
         "error_ratio": _ratio(errors or 0.0, requests),
