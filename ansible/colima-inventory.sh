@@ -11,4 +11,4 @@ cat > "$root/inventory/colima.ini" <<EOF
 [colima]
 colima ansible_host=${host} ansible_port=${port} ansible_user=${user} ansible_ssh_private_key_file=${key} ansible_python_interpreter=/usr/bin/python3
 EOF
-echo "wrote $root/inventory/colima.ini"
+echo "Подготовлен $root/inventory/colima.ini"

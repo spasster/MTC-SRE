@@ -11,12 +11,12 @@ scrape_configs:
       - targets: [localhost]
         labels:
           job: syslog
-          host: colima
+          host: ${NODE_LOG_HOST}
           __path__: /var/log/syslog
   - job_name: audit
     static_configs:
       - targets: [localhost]
         labels:
           job: audit
-          host: colima
+          host: ${NODE_LOG_HOST}
           __path__: /var/log/audit/audit.log

@@ -1,5 +1,5 @@
-- name: System logs on the Colima VM
-  hosts: colima
+- name: Настроить системные журналы Linux
+  hosts: all
   become: true
   roles:
     - node-logs

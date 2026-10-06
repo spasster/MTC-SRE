@@ -1,4 +1,4 @@
-- name: Install rsyslog and auditd
+- name: Установить rsyslog и auditd
   ansible.builtin.apt:
     name:
       - rsyslog
@@ -6,35 +6,39 @@
     state: present
     update_cache: true
 
-- name: Enable and start rsyslog
+- name: Включить rsyslog
   ansible.builtin.service:
     name: rsyslog
     state: started
     enabled: true
 
-- name: Install audit rules
+- name: Создать файл до загрузки правила наблюдения
+  ansible.builtin.copy:
+    content: "mtc-sre\n"
+    dest: /etc/mtc-sre-audit-marker
+    mode: "0644"
+    force: false
+
+- name: Установить правило проекта без удаления чужих правил
   ansible.builtin.copy:
     src: audit.rules
     dest: /etc/audit/rules.d/mtc.rules
     mode: "0640"
 
-- name: Enable and start auditd
+- name: Включить auditd
   ansible.builtin.service:
     name: auditd
     state: started
     enabled: true
 
-- name: Load audit rules
+- name: Загрузить правила auditd
   ansible.builtin.command: augenrules --load
   changed_when: false
 
-- name: Write a marker so syslog is not empty
-  ansible.builtin.command: logger -t mtc-sre "node log pipeline ready"
+- name: Записать контрольное событие в syslog
+  ansible.builtin.command: logger -t mtc-sre "Сбор системных журналов настроен"
   changed_when: false
 
-- name: Touch a watched file so auditd records an event
-  ansible.builtin.lineinfile:
-    path: /etc/mtc-sre-audit-marker
-    line: "mtc-sre"
-    create: true
-    mode: "0644"
+- name: Записать контрольное событие auditd
+  ansible.builtin.command: touch /etc/mtc-sre-audit-marker
+  changed_when: false

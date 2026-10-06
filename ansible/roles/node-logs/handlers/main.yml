@@ -1,4 +1,4 @@
-- name: Restart auditd
+- name: Перезапустить auditd
   ansible.builtin.service:
     name: auditd
     state: restarted

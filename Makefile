@@ -1,7 +1,8 @@
 CLUSTER := mtc
+NODE_LOG_HOST ?= colima
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up up-linux stack ready cluster cluster-linux images apps repos observability dashboards loki logs logs-linux node-logs promtail-host chaos
+.PHONY: up up-linux stack ready cluster cluster-linux images apps repos observability dashboards loki logs logs-linux node-logs node-logs-linux promtail-host chaos
 
 up: cluster
 	$(MAKE) stack
@@ -87,21 +88,31 @@ loki: repos
 	helm upgrade --install promtail grafana/promtail -n obs -f observability/promtail-values.yaml
 	kubectl apply -f k8s/loki-nodeport.yaml -f observability/loki-datasource.yaml
 
-logs: loki node-logs promtail-host
+logs:
+	$(MAKE) loki
+	$(MAKE) node-logs
+	$(MAKE) promtail-host NODE_LOG_HOST=colima
 
-logs-linux: loki
+logs-linux:
+	$(MAKE) loki
+	$(MAKE) node-logs-linux
+	$(MAKE) promtail-host NODE_LOG_HOST=linux
 
 node-logs:
 	sh ansible/colima-inventory.sh
-	cd ansible && ansible-playbook playbooks/node-logs.yaml
+	cd ansible && ANSIBLE_CONFIG=ansible.cfg ansible-playbook playbooks/node-logs.yaml
+
+node-logs-linux:
+	cd ansible && ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory/linux.ini playbooks/node-logs.yaml
 
 promtail-host:
-	-docker rm -f promtail-host
-	docker run -d --name promtail-host --restart unless-stopped --user 0 \
+	-docker rm -f $(CLUSTER)-promtail-host
+	docker run -d --name $(CLUSTER)-promtail-host --restart unless-stopped --user 0 \
 		--network container:k3d-$(CLUSTER)-server-0 \
+		-e NODE_LOG_HOST=$(NODE_LOG_HOST) \
 		-v /var/log:/var/log:ro \
 		-v "$(CURDIR)/observability/promtail-host.yaml":/etc/promtail/config.yml:ro \
-		grafana/promtail:3.5.1 -config.file=/etc/promtail/config.yml
+		grafana/promtail:3.5.1 -config.file=/etc/promtail/config.yml -config.expand-env=true
 
 chaos: repos
 	helm upgrade --install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh --create-namespace \
