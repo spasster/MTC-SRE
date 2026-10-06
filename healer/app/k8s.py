@@ -131,17 +131,19 @@ class K8sActuator:
         }
 
     def revision_age_seconds(self, namespace: str, name: str):
+        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        revision = (deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
+        if not deployment.metadata.uid or revision is None:
+            return None
         newest = None
-        newest_rev = -1
         listed = self.apps.list_namespaced_replica_set(namespace)
         for replica_set in listed.items:
             owners = replica_set.metadata.owner_references or []
-            owned = any(owner.kind == "Deployment" and owner.name == name for owner in owners)
+            owned = any(owner.kind == "Deployment" and owner.uid == deployment.metadata.uid for owner in owners)
             if not owned or replica_set.metadata.creation_timestamp is None:
                 continue
-            rev = int((replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
-            if rev >= newest_rev:
-                newest_rev = rev
+            rev = (replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
+            if rev == revision and (newest is None or replica_set.metadata.creation_timestamp > newest):
                 newest = replica_set.metadata.creation_timestamp
         if newest is None:
             return None
@@ -197,7 +199,7 @@ class K8sActuator:
         current = int((deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
         if current <= 1:
             raise ActionSkipped("Нет предыдущей ревизии для отката")
-        previous = self._previous_replicaset(namespace, name, current - 1)
+        previous = self._previous_replicaset(namespace, name, current - 1, deployment.metadata.uid)
         if previous is None:
             raise ActionSkipped("ReplicaSet предыдущей ревизии не найден")
         template = client.ApiClient().sanitize_for_serialization(previous.spec.template)
@@ -225,11 +227,15 @@ class K8sActuator:
         return ((deployment.metadata.annotations or {}).get("mtc-sre/healer-operation") == operation["id"]
                 and deployment.metadata.uid == operation["before"]["uid"])
 
-    def _previous_replicaset(self, namespace: str, name: str, revision: int):
+    def _previous_replicaset(self, namespace: str, name: str, revision: int, deployment_uid=None):
+        if deployment_uid is None:
+            deployment_uid = self.apps.read_namespaced_deployment(name, namespace).metadata.uid
+        if not deployment_uid:
+            return None
         listed = self.apps.list_namespaced_replica_set(namespace)
         for replica_set in listed.items:
             owners = replica_set.metadata.owner_references or []
-            owned = any(owner.kind == "Deployment" and owner.name == name for owner in owners)
+            owned = any(owner.kind == "Deployment" and owner.uid == deployment_uid for owner in owners)
             if not owned:
                 continue
             rev = int((replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
