@@ -15,6 +15,7 @@ def test_parse_updates_keeps_our_chat_only():
                 "update_id": 4,
                 "callback_query": {
                     "id": "cb",
+                    "from": {"id": 77, "is_bot": False},
                     "data": f"approve:{APPROVAL}",
                     "message": {"chat": {"id": 77}},
                 },
@@ -23,6 +24,7 @@ def test_parse_updates_keeps_our_chat_only():
                 "update_id": 5,
                 "callback_query": {
                     "id": "other",
+                    "from": {"id": 77, "is_bot": False},
                     "data": f"reject:{APPROVAL}",
                     "message": {"chat": {"id": 8}},
                 },
@@ -31,7 +33,23 @@ def test_parse_updates_keeps_our_chat_only():
     }
     offset, found = parse_updates(body, "77")
     assert offset == 6
-    assert found == [("cb", f"approve:{APPROVAL}")]
+    assert found == [("cb", f"approve:{APPROVAL}", "77")]
+
+
+@pytest.mark.parametrize("sender", [{}, {"id": 77}, {"id": 77, "is_bot": True}, {"id": True, "is_bot": False}])
+def test_missing_or_bot_sender_cannot_supply_a_callback(sender):
+    body = {"result": [{"update_id": 1, "callback_query": {
+        "id": "cb", "from": sender, "data": f"approve:{APPROVAL}", "message": {"chat": {"id": 77}},
+    }}]}
+    assert parse_updates(body, "77") == (2, [])
+
+
+def test_operator_list_is_required_and_does_not_authorize_other_members(monkeypatch):
+    monkeypatch.delenv("TELEGRAM_ALLOWED_USER_IDS", raising=False)
+    assert not Telegram(token="test", chat_id="77").authorized("77")
+    bot = Telegram(token="test", chat_id="77", allowed_user_ids="77,88,invalid,-1")
+    assert bot.authorized(77) and bot.authorized("88")
+    assert not bot.authorized("99")
 
 
 def test_plain_or_malformed_callbacks_are_ignored():

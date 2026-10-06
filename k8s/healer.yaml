@@ -136,6 +136,12 @@ spec:
                   name: telegram
                   key: chat_id
                   optional: true
+            - name: TELEGRAM_ALLOWED_USER_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: telegram
+                  key: allowed_user_ids
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health

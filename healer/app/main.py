@@ -1,4 +1,5 @@
 import json
+import hashlib
 import logging
 import math
 import os
@@ -556,14 +557,15 @@ def request_approval(decision) -> str:
     if decision.action == "restart_redis":
         decision.cart_seq = read_cart_seq()
     bot = get_notifier()
-    if not bot.enabled():
+    if not bot.enabled() or isinstance(bot, Telegram) and not bot.allowed_user_ids:
         return f"needs approval: {decision.action}"
     decision.deployment_identity = get_actuator().deployment_identity(TARGET_NAMESPACE, decision.target)
     decision.approval_id = uuid.uuid4().hex
     approval_ttl = get_rules().get("approval_ttl_seconds", 300)
     decision.approval_expires_at = time.time() + approval_ttl
     _pending = decision
-    journal_event("approval_requested", action=decision.action)
+    journal_event("approval_requested", action=decision.action,
+                  approval_key=hashlib.sha256(decision.approval_id.encode()).hexdigest()[:16])
     persist_state()
     start_poller()
     try:
@@ -655,14 +657,24 @@ def apply_confirmed(decision) -> str:
 
 
 @state_transaction
-def apply_callback(data: str) -> str:
+def apply_callback(data: str, operator_id=None) -> str:
     global _busy
+    operator_key = hashlib.sha256(str(operator_id).encode()).hexdigest()[:16]
+    if not get_notifier().authorized(operator_id):
+        journal_event("approval_refused", operator_key=operator_key, reason="operator_not_allowed")
+        return "ignored: operator not allowed"
     with _lock:
         if _busy:
             return "ignored: busy"
         _busy = True
     try:
-        return _apply_callback(data)
+        result = _apply_callback(data)
+        approval_id = data.partition(":")[2] if isinstance(data, str) else ""
+        journal_event("approval_callback", operator_key=operator_key,
+                      approval_key=hashlib.sha256(approval_id.encode()).hexdigest()[:16],
+                      choice=data.partition(":")[0] if isinstance(data, str) else "invalid",
+                      result=result.split(":", 1)[0][:40])
+        return result
     finally:
         with _lock:
             _busy = False
@@ -742,7 +754,9 @@ def _poll_loop() -> None:
     bot = get_notifier()
     while not _worker_stop.is_set():
         try:
-            if not get_store().acquire():
+            with _transaction_lock:
+                active = get_store().acquire()
+            if not active:
                 _worker_stop.wait(5)
                 continue
             updates = bot.poll(timeout=25)
@@ -750,15 +764,22 @@ def _poll_loop() -> None:
             log.warning("Не удалось получить обновления Telegram")
             _worker_stop.wait(2)
             continue
-        for callback_id, data in updates:
+        for callback_id, data, operator_id in updates:
+            while True:
+                try:
+                    apply_callback(data, operator_id=operator_id)
+                    break
+                except StateUnavailable:
+                    # До сохранения решения обновление не подтверждается новым getUpdates.
+                    if _worker_stop.wait(5):
+                        return
+                except Exception:
+                    log.warning("Не удалось обработать кнопку Telegram; опрос продолжается")
+                    break
             try:
                 bot.answer(callback_id)
             except Exception:
                 log.warning("Не удалось подтвердить получение кнопки Telegram")
-            try:
-                apply_callback(data)
-            except Exception:
-                log.warning("Не удалось обработать кнопку Telegram; опрос продолжается")
 
 
 def start_poller() -> None:

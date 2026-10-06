@@ -16,22 +16,33 @@ def parse_updates(body, chat_id):
         query = update.get("callback_query") or {}
         message = query.get("message") or {}
         chat = (message.get("chat") or {}).get("id")
+        sender = query.get("from") or {}
+        operator = sender.get("id")
         data = query.get("data")
         if (
             str(chat) == str(chat_id)
+            and isinstance(operator, int) and not isinstance(operator, bool) and operator > 0
+            and sender.get("is_bot") is False
             and isinstance(data, str)
             and re.fullmatch(r"(?:approve|reject):[0-9a-f]{32}", data)
         ):
-            found.append((query.get("id"), data))
+            found.append((query.get("id"), data, str(operator)))
     return offset, found
 
 
 class Telegram:
-    def __init__(self, token="", chat_id="", client=None):
+    def __init__(self, token="", chat_id="", client=None, allowed_user_ids=None):
         self.token = token or os.getenv("TELEGRAM_BOT_TOKEN", "")
         self.chat_id = str(chat_id or os.getenv("TELEGRAM_CHAT_ID", ""))
         self.offset = None
+        configured = os.getenv("TELEGRAM_ALLOWED_USER_IDS", "") if allowed_user_ids is None else allowed_user_ids
+        self.allowed_user_ids = frozenset(str(item).strip() for item in
+                                         (configured.split(",") if isinstance(configured, str) else configured)
+                                         if re.fullmatch(r"[1-9][0-9]*", str(item).strip()))
         self.http = client or httpx.Client(timeout=35)
+
+    def authorized(self, operator_id):
+        return str(operator_id) in self.allowed_user_ids
 
     def enabled(self) -> bool:
         return bool(self.token and self.chat_id and self.chat_id != "0")

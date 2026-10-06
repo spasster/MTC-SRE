@@ -31,6 +31,12 @@ for ns in obs heal; do
   kubectl apply -f "$tmp/secret.yaml" >/dev/null
 done
 
+if kubectl get secret telegram -n heal >/dev/null 2>&1; then
+  for field in token chat_id allowed_user_ids; do
+    kubectl get secret telegram -n heal -o "jsonpath={.data.$field}" | base64 -d > "$tmp/telegram-$field"
+  done
+fi
+
 python3 - "$tmp" <<'PY'
 import os
 import sys
@@ -39,7 +45,12 @@ from pathlib import Path
 import yaml
 
 tmp = Path(sys.argv[1])
-token, chat = os.getenv("TELEGRAM_BOT_TOKEN", ""), os.getenv("TELEGRAM_CHAT_ID", "")
+def existing(field):
+    file = tmp / ("telegram-" + field)
+    return file.read_text(encoding="utf-8") if file.exists() else ""
+
+token, chat = os.getenv("TELEGRAM_BOT_TOKEN", existing("token")), os.getenv("TELEGRAM_CHAT_ID", existing("chat_id"))
+operators = os.getenv("TELEGRAM_ALLOWED_USER_IDS", existing("allowed_user_ids"))
 values = {}
 if bool(token) != bool(chat):
     raise SystemExit("Для Telegram нужны оба параметра TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID")
@@ -50,6 +61,9 @@ if token and chat:
         raise SystemExit("TELEGRAM_CHAT_ID должен быть числом") from None
     (tmp / "telegram-token").write_text(token, encoding="utf-8")
     (tmp / "telegram-chat").write_text(chat, encoding="utf-8")
+    if any(not row.strip().isdigit() or int(row.strip()) <= 0 for row in operators.split(",") if row.strip()):
+        raise SystemExit("TELEGRAM_ALLOWED_USER_IDS должен содержать положительные числовые ID через запятую")
+    (tmp / "telegram-operators").write_text(operators, encoding="utf-8")
     base = yaml.safe_load(Path("observability/kube-prom-values.yaml").read_text(encoding="utf-8"))
     receivers = base["alertmanager"]["config"]["receivers"]
     receivers[-1]["telegram_configs"] = [{
@@ -68,6 +82,7 @@ if [ -s "$tmp/telegram-token" ]; then
   for ns in obs heal; do
     kubectl create secret generic telegram -n "$ns" \
       --from-file=token="$tmp/telegram-token" --from-file=chat_id="$tmp/telegram-chat" \
+      --from-file=allowed_user_ids="$tmp/telegram-operators" \
       --dry-run=client -o yaml > "$tmp/secret.yaml"
     kubectl apply -f "$tmp/secret.yaml" >/dev/null
   done
