@@ -203,6 +203,7 @@ def test_third_auto_action_escalates(monkeypatch):
 
 
 def test_resolved_scales_back(monkeypatch):
+    main._scaled_by_healer = True
     monkeypatch.setattr(
         main,
         "gather",
@@ -220,6 +221,7 @@ def test_resolved_scales_back(monkeypatch):
 
 
 def test_resolved_does_not_scale_down_during_spike(monkeypatch):
+    main._scaled_by_healer = True
     main.actuator.spike = True
     monkeypatch.setattr(
         main,
@@ -239,6 +241,7 @@ def test_resolved_does_not_scale_down_during_spike(monkeypatch):
 
 
 def test_scale_down_runs_after_the_spike_job_ends(monkeypatch):
+    main._scaled_by_healer = True
     main.notifier = FakeTelegram()
     main.actuator.spike = True
     monkeypatch.setattr(
@@ -263,6 +266,7 @@ def test_scale_down_runs_after_the_spike_job_ends(monkeypatch):
 
 
 def test_scale_down_waits_while_answers_are_still_slow(monkeypatch):
+    main._scaled_by_healer = True
     main.actuator.spike = True
     monkeypatch.setattr(
         main,
@@ -294,6 +298,7 @@ def test_scale_down_waits_while_answers_are_still_slow(monkeypatch):
 
 
 def test_scale_down_follows_the_aggregate(monkeypatch):
+    main._scaled_by_healer = True
     main.notifier = FakeTelegram()
     main._scale_down_pending = True
     monkeypatch.setattr(
@@ -310,6 +315,27 @@ def test_scale_down_follows_the_aggregate(monkeypatch):
     )
     result = main.finish_scale_down()
     assert "scale replicas=2" in result["result"]
+    assert main._scale_down_pending is False
+
+
+def test_resolved_preserves_replicas_changed_by_the_operator(monkeypatch):
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
+        replicas=5, pods=list(HEALTHY)))
+    assert main.handle_resolved()["result"] == "resolved"
+    assert main.actuator.calls == []
+
+
+def test_failed_scale_down_is_retried_by_the_worker(monkeypatch):
+    main._scaled_by_healer = True
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
+        replicas=5, pods=list(HEALTHY)))
+    original = main.actuator.scale
+    monkeypatch.setattr(main.actuator, "scale", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("API недоступен")))
+    with pytest.raises(RuntimeError):
+        main.handle_resolved()
+    assert main._scale_down_pending is True
+    monkeypatch.setattr(main.actuator, "scale", original)
+    assert "scale replicas=2" in main.finish_scale_down()["result"]
     assert main._scale_down_pending is False
 
 

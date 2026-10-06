@@ -30,6 +30,7 @@ _escalated = False
 _acted_alert = None
 _cooldown_until = 0.0
 _scale_down_pending = False
+_scaled_by_healer = False
 _broke_at = None
 _fixed_at = None
 _applied_at = None
@@ -107,6 +108,7 @@ def reset_state() -> None:
     global actuator, rules, notifier, _busy, _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
     global _broke_at, _fixed_at, _incident_name, _mttr_sent, _last_recovery
     global _applied_at, _recovery_pending, _resolved_pending
+    global _scaled_by_healer
     with _lock:
         _busy = False
         _actions = 0
@@ -116,6 +118,7 @@ def reset_state() -> None:
         _acted_alert = None
         _cooldown_until = 0.0
         _scale_down_pending = False
+        _scaled_by_healer = False
         _broke_at = None
         _fixed_at = None
         _applied_at = None
@@ -677,6 +680,7 @@ def notify_done(decision) -> None:
 
 
 def execute(decision) -> str:
+    global _scaled_by_healer
     if decision.mode == "ignore":
         return "ignored: recovering"
     if decision.mode == "approval":
@@ -688,6 +692,7 @@ def execute(decision) -> str:
         replicas = int(decision.target)
         preview = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=True)
         applied = actor.scale(TARGET_NAMESPACE, "checkout", replicas, dry_run=False)
+        _scaled_by_healer = True
         mark_action_applied("checkout")
         return f"{preview}; {applied}"
     if decision.action == "delete_pod":
@@ -711,12 +716,20 @@ def arm_cooldown(alertname, limits) -> None:
 
 
 def _scale_to_baseline(evidence, limits) -> dict:
+    global _scaled_by_healer, _scale_down_pending
+    if not _scaled_by_healer:
+        _scale_down_pending = False
+        return {"result": "resolved"}
     replicas = evidence.get("replicas") or 0
     if replicas <= limits["scale_from"]:
+        _scaled_by_healer = False
+        _scale_down_pending = False
         return {"result": "resolved"}
     actor = get_actuator()
     preview = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=True)
     applied = actor.scale(TARGET_NAMESPACE, "checkout", limits["scale_from"], dry_run=False)
+    _scaled_by_healer = False
+    _scale_down_pending = False
     log.info("scaled down", extra={"action": "scale", "result": applied})
     bot = get_notifier()
     if bot.enabled():
@@ -768,14 +781,14 @@ def _handle_resolved(evidence=None) -> dict:
     _escalated = False
     _acted_alert = None
     _cooldown_until = 0.0
-    if get_actuator().spike_running(TARGET_NAMESPACE):
+    if _scaled_by_healer and get_actuator().spike_running(TARGET_NAMESPACE):
         _scale_down_pending = True
         log.info(
             "Spike ещё идёт, верну 2 реплики когда Job кончится",
             extra={"action": "scale", "result": "waiting for spike job"},
         )
         return {"result": "resolved", "detail": "spike still running"}
-    _scale_down_pending = False
+    _scale_down_pending = _scaled_by_healer
     return _scale_to_baseline(evidence, limits)
 
 
