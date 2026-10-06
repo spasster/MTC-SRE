@@ -37,6 +37,11 @@ def plot_iteration(directory):
     report = json.loads(capacity_file.read_text(encoding="utf-8"))
     if not report.get("finished_at"):
         return
+    upper = directory / "capacity-upper.json"
+    if upper.exists():
+        extra = json.loads(upper.read_text(encoding="utf-8"))
+        if extra.get("finished_at"):
+            report["stages"] += extra["stages"]
     fig, axes = plt.subplots(4, 1, figsize=(10, 10), sharex=True)
     for replicas, color in ((2, "#31688e"), (5, "#159947")):
         stages = [stage for stage in report["stages"] if stage["replicas"] == replicas and "client" in stage]

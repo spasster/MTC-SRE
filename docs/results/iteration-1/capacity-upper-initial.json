@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-10-06T22:15:10.378632+00:00",
+  "source_commit": "422a0ba9a4cabdebca9b6f6d3f6469897d515397",
+  "duration_seconds": 120,
+  "stages": [
+    {
+      "replicas": 5,
+      "planned_rps": 16,
+      "samples": [],
+      "passed": false
+    }
+  ],
+  "bounds": {
+    "5": {
+      "highest_tested_passing_rps": null,
+      "first_tested_failing_rps": null
+    }
+  },
+  "passed": false,
+  "method": "Фоновая нагрузка и healer выключены на время серии; 2 и 5 реплик проверяются при одинаковом профиле. Каждый RPS держится не менее 90 с. Результаты относятся только к этому контуру.",
+  "checkout_resources_per_replica": {
+    "limits": {
+      "cpu": "200m",
+      "memory": "256Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "64Mi"
+    }
+  },
+  "error": "<urlopen error [Errno 111] Connection refused>",
+  "finished_at": "2026-10-06T22:16:01.456076+00:00",
+  "limitation": "Указаны проверенные прошедшие ступени и первые отказы. Если одной границы нет, интервал максимума не установлен. Точный максимум и минимальные CPU/RAM этим опытом не доказаны."
+}
