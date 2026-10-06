@@ -66,19 +66,3 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: payment
-  namespace: demo
-  labels:
-    release: kube-prom
-spec:
-  selector:
-    matchLabels:
-      app: payment
-  endpoints:
-    - port: http
-      path: /metrics
-      interval: 15s

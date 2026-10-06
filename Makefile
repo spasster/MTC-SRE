@@ -1,10 +1,33 @@
 CLUSTER := mtc
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up up-linux cluster cluster-linux images apps repos observability dashboards loki logs logs-linux node-logs promtail-host chaos
+.PHONY: up up-linux stack ready cluster cluster-linux images apps repos observability dashboards loki logs logs-linux node-logs promtail-host chaos
 
-up: cluster images apps observability dashboards logs chaos
-up-linux: cluster-linux images apps observability dashboards logs-linux chaos
+up: cluster
+	$(MAKE) stack
+	$(MAKE) logs
+	$(MAKE) chaos
+	$(MAKE) ready
+
+up-linux: cluster-linux
+	$(MAKE) stack
+	$(MAKE) logs-linux
+	$(MAKE) chaos
+	$(MAKE) ready
+
+# Этапы выполняются последовательно, в том числе при make -j.
+stack:
+	$(MAKE) images
+	$(MAKE) apps
+	$(MAKE) observability
+	$(MAKE) dashboards
+
+ready:
+	kubectl rollout status deployment/checkout -n demo --timeout=180s
+	kubectl rollout status deployment/payment -n demo --timeout=180s
+	kubectl rollout status deployment/redis -n demo --timeout=180s
+	kubectl rollout status deployment/healer -n heal --timeout=180s
+	kubectl rollout status deployment/tempo -n obs --timeout=180s
 
 cluster:
 	colima status >/dev/null 2>&1 || colima start --cpu 4 --memory 8 --disk 40
@@ -43,9 +66,12 @@ repos:
 observability: repos
 	helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 		-n obs --create-namespace \
+		--wait --timeout 10m \
 		-f observability/kube-prom-values.yaml \
 		$(if $(TELEGRAM_VALUES),-f $(TELEGRAM_VALUES),)
-	kubectl apply -f k8s/checkout-servicemonitor.yaml -f observability/rules.yaml -f k8s/healer.yaml
+	kubectl wait --for=condition=Established --timeout=120s \
+		crd/servicemonitors.monitoring.coreos.com crd/prometheusrules.monitoring.coreos.com
+	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f k8s/healer.yaml
 	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
 	@if [ -n "$$TELEGRAM_BOT_TOKEN" ] && [ -n "$$TELEGRAM_CHAT_ID" ]; then \
 		kubectl create secret generic telegram -n heal \
