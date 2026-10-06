@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "dry_run_preserves_replicas": true,
+  "unguarded_downscale_rejected": true,
+  "stale_replica_count_rejected": true,
+  "original_replicas_restored": true
+}
