@@ -1,0 +1,18 @@
+logging {
+  level = "info"
+}
+local.file_match "node" {
+  path_targets = [
+    {"__path__" = "/var/log/syslog", "job" = "syslog", "host" = sys.env("NODE_LOG_HOST")},
+    {"__path__" = "/var/log/audit/audit.log", "job" = "audit", "host" = sys.env("NODE_LOG_HOST")},
+  ]
+}
+loki.source.file "node" {
+  targets = local.file_match.node.targets
+  forward_to = [loki.write.local.receiver]
+}
+loki.write "local" {
+  endpoint {
+    url = "http://127.0.0.1:31000/loki/api/v1/push"
+  }
+}

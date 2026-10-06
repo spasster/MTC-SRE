@@ -3,7 +3,7 @@ CLUSTER ?= mtc
 NODE_LOG_HOST ?= colima
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up up-linux stack ready cluster cluster-linux images apps repos mesh observability dashboards loki logs logs-linux node-logs node-logs-linux promtail-host chaos
+.PHONY: up up-linux stack ready cluster cluster-linux images apps repos mesh observability dashboards blackbox loki logs logs-linux node-logs node-logs-linux alloy-host chaos
 
 up: cluster
 	$(MAKE) stack
@@ -101,18 +101,18 @@ dashboards:
 
 loki: repos
 	helm upgrade --install loki grafana/loki --version $(LOKI_CHART_VERSION) -n obs -f observability/loki-values.yaml --wait --timeout 5m
-	helm upgrade --install promtail grafana/promtail --version $(PROMTAIL_CHART_VERSION) -n obs -f observability/promtail-values.yaml --wait --timeout 5m
+	helm upgrade --install alloy grafana/alloy --version $(ALLOY_CHART_VERSION) -n obs -f observability/alloy-values.yaml --wait --timeout 5m
 	kubectl apply -f k8s/loki-nodeport.yaml -f observability/loki-datasource.yaml
 
 logs:
 	$(MAKE) loki
 	$(MAKE) node-logs
-	$(MAKE) promtail-host NODE_LOG_HOST=colima
+	$(MAKE) alloy-host NODE_LOG_HOST=colima
 
 logs-linux:
 	$(MAKE) loki
 	$(MAKE) node-logs-linux
-	$(MAKE) promtail-host NODE_LOG_HOST=linux
+	$(MAKE) alloy-host NODE_LOG_HOST=linux
 
 node-logs:
 	sh ansible/colima-inventory.sh
@@ -121,14 +121,15 @@ node-logs:
 node-logs-linux:
 	cd ansible && ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory/linux.ini playbooks/node-logs.yaml
 
-promtail-host:
-	-docker rm -f $(CLUSTER)-promtail-host
-	docker run -d --name $(CLUSTER)-promtail-host --restart unless-stopped --user 0 \
+alloy-host:
+	-docker rm -f $(CLUSTER)-alloy-host
+	docker run -d --name $(CLUSTER)-alloy-host --restart unless-stopped --user 0 \
 		--network container:k3d-$(CLUSTER)-server-0 \
 		-e NODE_LOG_HOST=$(NODE_LOG_HOST) \
 		-v /var/log:/var/log:ro \
-		-v "$(CURDIR)/observability/promtail-host.yaml":/etc/promtail/config.yml:ro \
-		grafana/promtail:3.5.1 -config.file=/etc/promtail/config.yml -config.expand-env=true
+		-v $(CLUSTER)-alloy-state:/var/lib/alloy \
+		-v "$(CURDIR)/observability/alloy-host.alloy":/etc/alloy/config.alloy:ro \
+		$(ALLOY_IMAGE) run --storage.path=/var/lib/alloy --server.http.listen-addr=127.0.0.1:12345 /etc/alloy/config.alloy
 
 chaos: repos
 	helm upgrade --install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh --create-namespace \
