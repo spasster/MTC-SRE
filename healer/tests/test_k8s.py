@@ -122,6 +122,39 @@ def test_missing_current_replicaset_has_unknown_age():
     assert instance.revision_age_seconds("demo", "checkout") is None
 
 
+@pytest.mark.parametrize("method,args", [
+    ("replicas", ("demo", "checkout")),
+    ("deployment_identity", ("demo", "checkout")),
+    ("deployment_ready", ("demo", "checkout")),
+    ("telemetry_pods", ("demo", "checkout")),
+    ("revision_age_seconds", ("demo", "checkout")),
+    ("rollback", ("demo", "checkout")),
+    ("_previous_replicaset", ("demo", "checkout", 2)),
+    ("operation_observed", ("demo", {"action": "scale", "id": "op", "before": {"uid": "checkout-uid"}})),
+])
+def test_api_read_timeout_does_not_trigger_a_write(method, args):
+    instance = actor(3)
+    instance.apps.read_namespaced_deployment.side_effect = TimeoutError("API не ответил")
+    with pytest.raises(TimeoutError):
+        getattr(instance, method)(*args)
+    assert instance.apps.read_namespaced_deployment.call_args.kwargs["_request_timeout"] == 5
+    instance.apps.patch_namespaced_deployment.assert_not_called()
+
+
+def test_dependency_and_job_reads_are_bounded():
+    instance = actor(3)
+    instance.core, instance.batch = Mock(), Mock()
+    for sdk, method, action in (
+        (instance.core, "list_namespaced_pod", lambda: instance.ready("demo", "redis")),
+        (instance.batch, "read_namespaced_job", lambda: instance.spike_running("demo")),
+        (instance.apps, "list_namespaced_replica_set", lambda: instance.telemetry_pods("demo", "checkout")),
+    ):
+        getattr(sdk, method).side_effect = TimeoutError("API не ответил")
+        with pytest.raises(TimeoutError):
+            action()
+        assert getattr(sdk, method).call_args.kwargs["_request_timeout"] == 5
+
+
 @pytest.mark.parametrize("observed,updated,available,total,expected", [
     (3, 2, 2, 2, True),
     (2, 2, 2, 2, False),

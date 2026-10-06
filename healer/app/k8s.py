@@ -66,7 +66,7 @@ class K8sActuator:
         return f"{prefix}delete pod {name}"
 
     def replicas(self, namespace: str, name: str) -> int:
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         return int(deployment.spec.replicas or 0)
 
     @staticmethod
@@ -79,7 +79,7 @@ class K8sActuator:
         }
 
     def deployment_identity(self, namespace: str, name: str):
-        return self._identity(self.apps.read_namespaced_deployment(name, namespace))
+        return self._identity(self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5))
 
     def _guarded_metadata(self, deployment, expected_identity):
         if expected_identity is None:
@@ -92,7 +92,7 @@ class K8sActuator:
         }
 
     def deployment_ready(self, namespace: str, name: str) -> bool:
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         desired = int(deployment.spec.replicas or 0)
         status = deployment.status
         if desired <= 0 or status is None:
@@ -105,7 +105,7 @@ class K8sActuator:
         )
 
     def ready(self, namespace: str, app: str) -> bool:
-        listed = self.core.list_namespaced_pod(namespace, label_selector=f"app={app}")
+        listed = self.core.list_namespaced_pod(namespace, label_selector=f"app={app}", _request_timeout=5)
         for pod in listed.items:
             conditions = pod.status.conditions or []
             if any(item.type == "Ready" and item.status == "True" for item in conditions):
@@ -114,15 +114,15 @@ class K8sActuator:
 
     def telemetry_pods(self, namespace: str, name: str):
         """Рабочие поды текущей ревизии, принадлежащие указанному Deployment."""
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         revision = (deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
         owners = set()
-        for replica_set in self.apps.list_namespaced_replica_set(namespace).items:
+        for replica_set in self.apps.list_namespaced_replica_set(namespace, _request_timeout=5).items:
             if ((replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision") == revision
                 and any(owner.kind == "Deployment" and owner.uid == deployment.metadata.uid
                         for owner in replica_set.metadata.owner_references or [])):
                 owners.add(replica_set.metadata.uid)
-        selected = self.core.list_namespaced_pod(namespace, label_selector=f"app={name}")
+        selected = self.core.list_namespaced_pod(namespace, label_selector=f"app={name}", _request_timeout=5)
         return {
             pod.metadata.name: pod.metadata.uid for pod in selected.items
             if not pod.metadata.deletion_timestamp and pod.status.phase == "Running"
@@ -131,12 +131,12 @@ class K8sActuator:
         }
 
     def revision_age_seconds(self, namespace: str, name: str):
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         revision = (deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
         if not deployment.metadata.uid or revision is None:
             return None
         newest = None
-        listed = self.apps.list_namespaced_replica_set(namespace)
+        listed = self.apps.list_namespaced_replica_set(namespace, _request_timeout=5)
         for replica_set in listed.items:
             owners = replica_set.metadata.owner_references or []
             owned = any(owner.kind == "Deployment" and owner.uid == deployment.metadata.uid for owner in owners)
@@ -152,7 +152,7 @@ class K8sActuator:
 
     def spike_running(self, namespace: str) -> bool:
         try:
-            job = self.batch.read_namespaced_job("k6-spike", namespace)
+            job = self.batch.read_namespaced_job("k6-spike", namespace, _request_timeout=5)
         except ApiException as exc:
             if exc.status == 404:
                 return False
@@ -169,7 +169,7 @@ class K8sActuator:
         kwargs = {"dry_run": "All"} if dry_run else {}
         metadata = {}
         if expected_identity is not None:
-            deployment = self.apps.read_namespaced_deployment(name, namespace)
+            deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
             metadata = self._guarded_metadata(deployment, expected_identity)
         if operation_id:
             metadata["annotations"] = {"mtc-sre/healer-operation": operation_id}
@@ -194,7 +194,7 @@ class K8sActuator:
         return f"{prefix}restart {name}"
 
     def rollback(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None, operation_id=None) -> str:
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         metadata = self._guarded_metadata(deployment, expected_identity)
         current = int((deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
         if current <= 1:
@@ -223,16 +223,16 @@ class K8sActuator:
                     return True
                 raise
         name = "redis" if operation["action"] == "restart_redis" else "checkout"
-        deployment = self.apps.read_namespaced_deployment(name, namespace)
+        deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         return ((deployment.metadata.annotations or {}).get("mtc-sre/healer-operation") == operation["id"]
                 and deployment.metadata.uid == operation["before"]["uid"])
 
     def _previous_replicaset(self, namespace: str, name: str, revision: int, deployment_uid=None):
         if deployment_uid is None:
-            deployment_uid = self.apps.read_namespaced_deployment(name, namespace).metadata.uid
+            deployment_uid = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5).metadata.uid
         if not deployment_uid:
             return None
-        listed = self.apps.list_namespaced_replica_set(namespace)
+        listed = self.apps.list_namespaced_replica_set(namespace, _request_timeout=5)
         for replica_set in listed.items:
             owners = replica_set.metadata.owner_references or []
             owned = any(owner.kind == "Deployment" and owner.uid == deployment_uid for owner in owners)
