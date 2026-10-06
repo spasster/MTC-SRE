@@ -40,6 +40,7 @@ _recovery_worker = None
 _worker_stop = threading.Event()
 _incident_name = None
 _mttr_sent = False
+_last_recovery = None
 _poller_started = False
 actuator = None
 rules = None
@@ -104,7 +105,7 @@ def get_actuator():
 
 def reset_state() -> None:
     global actuator, rules, notifier, _busy, _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
-    global _broke_at, _fixed_at, _incident_name, _mttr_sent
+    global _broke_at, _fixed_at, _incident_name, _mttr_sent, _last_recovery
     global _applied_at, _recovery_pending, _resolved_pending
     with _lock:
         _busy = False
@@ -123,6 +124,7 @@ def reset_state() -> None:
         _recovery_targets.clear()
         _incident_name = None
         _mttr_sent = False
+        _last_recovery = None
     actuator = None
     rules = None
     notifier = None
@@ -231,13 +233,13 @@ def format_duration(seconds: float) -> str:
 
 def remember_start(alert) -> None:
     global _broke_at, _mttr_sent, _fixed_at, _incident_name
+    if alert.get("status") != "firing":
+        return
     if alert.get("status") == "firing" and _mttr_sent:
         _mttr_sent = False
         _broke_at = None
         _fixed_at = None
         _incident_name = None
-    if alert.get("status") == "resolved" and _mttr_sent:
-        return
     started = _parse_time(alert.get("startsAt"))
     if started is None and alert.get("status") == "firing" and _broke_at is None:
         started = time.time()
@@ -289,10 +291,17 @@ def recovery_text(now=None) -> str:
 
 
 def notify_recovered() -> None:
-    global _broke_at, _fixed_at, _incident_name, _mttr_sent
+    global _broke_at, _fixed_at, _incident_name, _mttr_sent, _last_recovery
     text = recovery_text()
     if not text:
         return
+    _last_recovery = {
+        "incident": _incident_name,
+        "started_at": _broke_at,
+        "api_accepted_at": _applied_at,
+        "slo_restored_at": _fixed_at,
+        "resolved_received_at": time.time(),
+    }
     bot = get_notifier()
     if bot.enabled():
         bot.send(text)
@@ -915,3 +924,16 @@ def webhook(payload: dict):
     if not isinstance(alerts, list) or len(alerts) > 32 or any(not isinstance(item, dict) for item in alerts):
         raise HTTPException(status_code=422, detail="Ожидается список не более 32 алертов")
     return {"results": [handle_alert(alert) for alert in alerts]}
+
+
+@app.get("/status", dependencies=[Depends(authorize_webhook)])
+def status():
+    with _lock:
+        return {
+            "started_at": _broke_at,
+            "api_accepted_at": _applied_at,
+            "slo_restored_at": _fixed_at,
+            "recovery_pending": _recovery_pending,
+            "actions": _actions,
+            "last_recovery": _last_recovery,
+        }

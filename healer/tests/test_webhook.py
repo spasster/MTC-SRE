@@ -95,6 +95,24 @@ def test_health():
     assert client.get("/health").json() == {"status": "ok"}
 
 
+def test_old_resolved_does_not_start_a_new_incident():
+    payload = alert(status="resolved")
+    payload["startsAt"] = "2026-10-01T00:00:00Z"
+    main.remember_start(payload)
+    assert main._broke_at is None
+
+
+def test_completed_incident_timings_remain_available(monkeypatch):
+    main._broke_at, main._applied_at, main._fixed_at = 1000, 1005, 1025
+    monkeypatch.setattr(main.time, "time", lambda: 1030)
+    main.notify_recovered()
+    status = client.get("/status").json()
+    assert status["last_recovery"]["slo_restored_at"] == 1025
+    assert status["last_recovery"]["api_accepted_at"] == 1005
+    assert status["started_at"] is None
+    assert client.get("/status", headers={"Authorization": ""}).status_code == 401
+
+
 @pytest.mark.parametrize("authorization", ["", "Bearer invalid", "Basic invalid"])
 def test_unauthorized_webhook_cannot_mutate_the_cluster(authorization):
     response = client.post("/webhook", headers={"Authorization": authorization}, json={"alerts": [alert()]})
