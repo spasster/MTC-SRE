@@ -180,18 +180,18 @@ TITLES = {
     "unknown": "Непонятная поломка",
 }
 WILL_DO = {
-    "rollback": "сделаю rollout undo checkout",
-    "restart_redis": "рестартую Deployment redis",
-    "delete_pod": "удалю медленный под",
-    "scale": "сделаю scale checkout",
-    "none": "ничего не изменю",
+    "rollback": "выполняется откат checkout",
+    "restart_redis": "перезапускается Deployment redis",
+    "delete_pod": "удаляется медленный под",
+    "scale": "масштабируется checkout",
+    "none": "кластер остаётся без изменений",
 }
 HUMAN = {
     "bad_release": "Отказ оставит эту ревизию. Руками: sh chaos/inject.sh undo-release",
-    "redis": "Пока думаешь, checkout может уже не читать корзину. Отказ оставит Redis как есть.",
-    "partition": "Сними разрыв: sh chaos/inject.sh clear. Delete подов и scale не помогут.",
-    "cpu": "Реплик уже 5. Дождись конца spike или удали Job k6-spike.",
-    "slow_pod": "Обычно медленный под удаляю сам. Если не помогло: sh chaos/inject.sh clear",
+    "redis": "Корзина хранится в памяти. Отказ сохраняет текущее состояние Redis.",
+    "partition": "Снять разрыв: sh chaos/inject.sh clear. Delete подов и scale не помогут.",
+    "cpu": "Реплик уже 5. Дождаться конца spike или удалить Job k6-spike.",
+    "slow_pod": "При подтверждённой причине медленный под удаляется автоматически. Если не помогло: sh chaos/inject.sh clear",
     "unknown": "Дашборд «Инцидент» в Grafana и лог пода healer.",
 }
 
@@ -288,7 +288,7 @@ def recovery_text(now=None) -> str:
         lines.append(f"До подтверждённого восстановления SLO {format_duration(_fixed_at - _broke_at)}.")
         lines.append(f"Сообщение resolved получено через {format_duration(moment - _broke_at)}.")
     else:
-        lines.append("Сам не чинил.")
+        lines.append("Автоматическое действие не выполнялось.")
         lines.append(f"Алерт погас через {format_duration(moment - _broke_at)}.")
     return "\n".join(lines)
 
@@ -353,34 +353,34 @@ def read_cart_seq():
 def _cart_line(decision) -> str:
     seq = getattr(decision, "cart_seq", None)
     if seq is None:
-        return "Рестарт сотрёт корзину. Номер прочитать не смог."
+        return "Рестарт сотрёт корзину. Номер корзины недоступен."
     return f"Рестарт сотрёт корзину. Сейчас в ней номер {seq}."
 
 
 def approval_text(decision) -> str:
     if decision.diagnosis == "bad_release":
         return "\n".join([
-            "⚠️ Нужен approve",
+            "⚠️ Нужно подтверждение",
             "",
             "Плохой релиз checkout.",
             "Ревизия моложе 10 минут, 5xx пошли сразу, Redis и payment тихие.",
             "",
-            "«Разрешить» — rollout undo на предыдущую ревизию.",
-            "«Отклонить» — оставлю эту ревизию.",
+            "«Разрешить» - rollout undo на предыдущую ревизию.",
+            "«Отклонить» - текущая ревизия сохраняется.",
         ])
     if decision.diagnosis == "redis":
         return "\n".join([
-            "⚠️ Нужен approve",
+            "⚠️ Нужно подтверждение",
             "",
             "Redis Ready, но checkout ловит таймаут.",
             _cart_line(decision),
             "Она только в памяти.",
             "",
-            "«Разрешить» — рестарт redis.",
-            "«Отклонить» — оставлю как есть.",
+            "«Разрешить» - рестарт redis.",
+            "«Отклонить» - изменений нет.",
         ])
     return "\n".join([
-        "⚠️ Нужно твоё решение",
+        "⚠️ Нужно решение оператора",
         "",
         _title(decision),
         decision.detail,
@@ -422,44 +422,44 @@ def request_approval(decision) -> str:
 
 
 def _escalation_text(decision) -> str:
-    if decision.detail.startswith("Я уже дважды"):
+    if decision.detail.startswith("Уже выполнены два действия:"):
         return "\n".join([
-            "🚨 Дальше сам не делаю",
+            "🚨 Лимит автоматических действий достигнут",
             "",
-            "Уже два автоматических действия. Третье не делаю, дальше человек.",
+            "Выполнены два автоматических действия. Дальше требуется оператор.",
         ])
     if decision.diagnosis == "partition":
         return "\n".join([
-            "🚨 Сам не чиню",
+            "🚨 Нужно вмешательство оператора",
             "",
             "Нет связи checkout → payment.",
             "Оба Ready. Delete пода и scale сеть не откроют.",
             "",
-            "Сними разрыв: sh chaos/inject.sh clear",
+            "Снять разрыв: sh chaos/inject.sh clear",
         ])
     if decision.diagnosis == "cpu":
         return "\n".join([
             "⚠️ Scale до 5 не снял тормоза",
             "",
             "Прошло 2 минуты, GET /work всё ещё медленнее 300 мс.",
-            "Шестую реплику не добавлю.",
+            "Лимит в пять реплик достигнут.",
         ])
     if decision.diagnosis == "unknown":
         return "\n".join([
-            "🚨 Сам не чиню",
+            "🚨 Нужно вмешательство оператора",
             "",
             decision.detail,
-            "Ничего не менял.",
+            "Кластер не изменён.",
             "",
             "Дашборд «Инцидент» в Grafana и лог пода healer.",
         ])
     return "\n".join([
-        "🚨 Сам не чиню",
+        "🚨 Нужно вмешательство оператора",
         "",
         _title(decision),
         decision.detail,
         "",
-        "Ничего не менял.",
+        "Кластер не изменён.",
     ])
 
 
@@ -531,7 +531,7 @@ def _apply_callback(data: str) -> str:
             bot.send("\n".join([
                 "🚫 Отказ принят",
                 "",
-                f"{_title(decision)}. Ничего не менял.",
+                f"{_title(decision)}. Кластер не изменён.",
             ]))
         log.info("rejected", extra={"diagnosis": decision.diagnosis, "action": decision.action, "result": "rejected"})
         return "rejected"
@@ -784,7 +784,7 @@ def _handle_resolved(evidence=None) -> dict:
     if _scaled_by_healer and get_actuator().spike_running(TARGET_NAMESPACE):
         _scale_down_pending = True
         log.info(
-            "Spike ещё идёт, верну 2 реплики когда Job кончится",
+            "Нагрузка ещё идёт. Возврат к двум репликам отложен до завершения Job",
             extra={"action": "scale", "result": "waiting for spike job"},
         )
         return {"result": "resolved", "detail": "spike still running"}
@@ -878,7 +878,7 @@ def handle_alert(alert: dict) -> dict:
         if decision.mode == "auto" and _actions >= limits["max_actions"]:
             decision.mode = "escalate"
             decision.action = "none"
-            decision.detail = "Я уже дважды чинил сам. Дальше пусть смотрит человек."
+            decision.detail = "Уже выполнены два действия: требуется проверка оператором."
         try:
             result = execute(decision)
         except Exception as exc:

@@ -14,7 +14,7 @@
       "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
       "options": {
         "mode": "markdown",
-        "content": "Алерт сообщает симптом. Healer сам выбирает действие: один медленный под удаляет, упор всех подов в CPU лечит scale до 5.\n\nНижние графики разделяют эти две картины. На графике «Запросы и пример трейса» точка — конкретный запрос. Клик открывает трейс в Tempo, из трейса — лог с тем же trace_id.\n\nRunbook: `docs/runbooks/checkout-high-error-rate.md`, `docs/runbooks/checkout-slow.md`."
+        "content": "Алерт сообщает симптом. Healer сам выбирает действие: один медленный под удаляет, упор всех подов в CPU лечит scale до 5.\n\nНижние графики разделяют эти две картины. На графике «Запросы и пример трейса» точка - конкретный запрос. Клик открывает трейс в Tempo, из трейса - лог с тем же trace_id.\n\nRunbook: `docs/runbooks/checkout-high-error-rate.md`, `docs/runbooks/checkout-slow.md`."
       }
     },
     {
@@ -188,7 +188,7 @@
       "id": 8,
       "type": "timeseries",
       "title": "Запросы и пример трейса",
-      "description": "Точка на линии — exemplar. Клик открывает трейс. У плохого релиза смотри статус 500: в трейсе нет Redis и payment.",
+      "description": "Точка на линии - exemplar. Клик открывает трейс. У плохого релиза смотри статус 500: в трейсе нет Redis и payment.",
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 36},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "fieldConfig": {"defaults": {"unit": "short", "custom": {"showPoints": "auto"}}},

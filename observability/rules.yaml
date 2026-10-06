@@ -44,7 +44,7 @@ spec:
             severity: warning
           annotations:
             summary: У checkout ошибки
-            description: "5xx на GET /work выше 0.5% уже минуту. Дальше либо спрошу approve, либо напишу, что сам не починю."
+            description: "Доля 5xx за окно 1 минута выше 0.5% и держится 30 секунд. Проверить причину и допустимое действие по runbook."
             resolved: Checkout снова без лишних 5xx
             runbook_url: docs/runbooks/checkout-high-error-rate.md
         - alert: CheckoutSlow
@@ -61,6 +61,6 @@ spec:
             severity: warning
           annotations:
             summary: Checkout тормозит
-            description: "GET /work медленнее 300 мс уже минуту. Если удалю медленный под или сделаю scale, напишу отдельно."
+            description: "p95 за окно 1 минута выше 300 мс и держится 30 секунд. Сравнить задержку и CPU throttle подов."
             resolved: Checkout снова быстрее 300 мс
             runbook_url: docs/runbooks/checkout-slow.md

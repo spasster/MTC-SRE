@@ -43,7 +43,7 @@ def _live(pods):
 
 def decide(evidence, rules):
     if not evidence or evidence.get("error"):
-        return Decision("unknown", "escalate", "none", None, "Не смог собрать данные и ничего не менял.")
+        return Decision("unknown", "escalate", "none", None, "Не удалось собрать данные. Кластер не изменён.")
 
     requests, errors = evidence.get("request_rate"), evidence.get("error_ratio")
     if (

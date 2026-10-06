@@ -10,10 +10,8 @@ spec:
     pods:
       demo:
         - POD_NAME
-  # Delay the reply from this Redis pod back to checkout. Checkout's socket
-  # timeout is 3s, so GET /work becomes redis_timeout. The rule lives in this
-  # pod's network namespace: a restart removes it, the new pod is not in the
-  # selector. Kubelet probes come from the node, so the pod stays Ready.
+  # Задержка ответа выбранного Redis вызывает таймаут checkout через 3 секунды.
+  # Новый под не входит в селектор по имени. Пробы kubelet идут от ноды.
   direction: to
   target:
     mode: all

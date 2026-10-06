@@ -24,18 +24,18 @@ BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 3, 5, 10, 30)
 
 REQUESTS = Counter(
     "http_requests_total",
-    "Total HTTP requests",
+    "Количество HTTP-запросов",
     ["method", "path", "status"],
 )
 LATENCY = Histogram(
     "http_request_duration_seconds",
-    "HTTP request latency in seconds",
+    "Длительность HTTP-запроса в секундах",
     ["method", "path"],
     buckets=BUCKETS,
 )
 DEPENDENCY_ERRORS = Counter(
     "dependency_errors_total",
-    "Failed calls from checkout to a dependency",
+    "Ошибки вызова зависимостей checkout",
     ["dependency", "reason"],
 )
 APPLICATION_ERRORS = Counter(
@@ -45,7 +45,7 @@ APPLICATION_ERRORS = Counter(
 )
 DEPENDENCY_LATENCY = Histogram(
     "dependency_duration_seconds",
-    "Time spent calling a dependency",
+    "Длительность вызова зависимости",
     ["dependency"],
     buckets=BUCKETS,
 )

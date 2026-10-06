@@ -208,7 +208,7 @@ def test_third_auto_action_escalates(monkeypatch):
     main._cooldown_until = 0
     body = client.post("/webhook", json={"alerts": [alert()]}).json()["results"][0]
     assert body["result"] == "escalated"
-    assert body["detail"] == "Я уже дважды чинил сам. Дальше пусть смотрит человек."
+    assert body["detail"] == "Уже выполнены два действия: требуется проверка оператором."
     assert len(main.actuator.calls) == 4
 
 
@@ -372,7 +372,7 @@ def test_idle_pod_does_not_hide_a_failed_scale(monkeypatch):
     main._cooldown_until = 0
     body = client.post("/webhook", json={"alerts": [alert()]}).json()["results"][0]
     assert body["result"] == "escalated"
-    assert "Шестую реплику" in main.notifier.messages[-1][0]
+    assert "Лимит в пять реплик" in main.notifier.messages[-1][0]
     assert "300 мс" in main.notifier.messages[-1][0]
 
 
@@ -498,7 +498,7 @@ def test_partition_reports_only_the_resolved_time(monkeypatch):
     resolved["startsAt"] = firing["startsAt"]
     client.post("/webhook", json={"alerts": [resolved]})
     text = main.notifier.messages[-1][0]
-    assert "Сам не чинил." in text
+    assert "Автоматическое действие не выполнялось." in text
     assert "Алерт погас через" in text
     assert "До починки" not in text
 
@@ -546,7 +546,7 @@ def test_after_cooldown_a_failed_scale_is_reported(monkeypatch):
     main._cooldown_until = 0
     body = client.post("/webhook", json={"alerts": [alert()]}).json()["results"][0]
     assert body["result"] == "escalated"
-    assert "Шестую реплику" in main.notifier.messages[-1][0]
+    assert "Лимит в пять реплик" in main.notifier.messages[-1][0]
 
 
 def test_auto_delete_tells_telegram(monkeypatch):
