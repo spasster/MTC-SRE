@@ -9,6 +9,28 @@ spec:
   groups:
     - name: checkout.slo
       rules:
+        - alert: CheckoutSyntheticFailed
+          expr: probe_success{service="checkout"} == 0
+          for: 30s
+          labels:
+            service: checkout
+            severity: critical
+          annotations:
+            summary: Синтетический запрос checkout не прошёл
+            description: "GET /work проверяет Redis, payment, HTTP 200 и тело ответа. Проверка не проходит 30 секунд."
+            resolved: Синтетический запрос checkout снова успешен
+            runbook_url: docs/runbooks/checkout-synthetic.md
+        - alert: CheckoutSyntheticMissing
+          expr: absent_over_time(probe_success{service="checkout"}[2m]) == 1
+          for: 1m
+          labels:
+            service: checkout
+            severity: critical
+          annotations:
+            summary: Нет данных синтетической проверки checkout
+            description: "Нет probe_success две минуты. Проверить Blackbox и его ServiceMonitor; отсутствие данных не означает доступность."
+            resolved: Данные синтетической проверки появились
+            runbook_url: docs/runbooks/checkout-synthetic.md
         - alert: CheckoutHighErrorRate
           expr: |
             (

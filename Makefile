@@ -87,6 +87,11 @@ observability: repos
 		crd/servicemonitors.monitoring.coreos.com crd/prometheusrules.monitoring.coreos.com
 	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f k8s/healer.yaml
 	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
+	$(MAKE) blackbox
+
+blackbox:
+	helm upgrade --install blackbox prometheus-community/prometheus-blackbox-exporter \
+		--version $(BLACKBOX_CHART_VERSION) -n obs -f observability/blackbox-values.yaml --wait --timeout 5m
 
 dashboards:
 	kubectl create configmap mtc-dashboards -n obs \

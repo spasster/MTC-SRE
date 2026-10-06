@@ -1,0 +1,46 @@
+fullnameOverride: blackbox
+image:
+  registry: docker.io
+  repository: prom/blackbox-exporter
+  tag: v0.28.0
+  digest: sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
+pod:
+  labels:
+    sidecar.istio.io/inject: "true"
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+config:
+  modules:
+    checkout_work:
+      prober: http
+      timeout: 5s
+      http:
+        method: GET
+        valid_status_codes: [200]
+        preferred_ip_protocol: ip4
+        fail_if_body_not_matches_regexp:
+          - '"status"\s*:\s*"ok"'
+          - '"payment"\s*:\s*"ok"'
+serviceMonitor:
+  enabled: true
+  selfMonitor:
+    enabled: true
+    labels:
+      release: kube-prom
+  defaults:
+    interval: 15s
+    scrapeTimeout: 10s
+    module: checkout_work
+    labels:
+      release: kube-prom
+    additionalRelabeling:
+      - targetLabel: service
+        replacement: checkout
+  targets:
+    - name: checkout-work
+      url: http://checkout.demo.svc/work

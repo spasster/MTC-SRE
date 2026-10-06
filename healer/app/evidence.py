@@ -1,5 +1,6 @@
 import os
 import math
+import time
 
 import httpx
 
@@ -125,6 +126,8 @@ def gather(namespace, actuator=None, query=None):
         application_errors = _scalar(
             ask('sum(rate(application_errors_total{job="checkout"}[1m]))')
         )
+        synthetic_success = _scalar(ask('min(probe_success{service="checkout"})'))
+        synthetic_time = _scalar(ask('max(timestamp(probe_success{service="checkout"}))'))
         revision_age = actor.revision_age_seconds(namespace, "checkout")
         replicas = actor.replicas(namespace, "checkout")
         redis_ready = actor.ready(namespace, "redis")
@@ -149,6 +152,8 @@ def gather(namespace, actuator=None, query=None):
         "payment_timeout_ratio": _ratio(payment_timeouts or 0.0, requests),
         "payment_error_ratio": _ratio(payment_errors or 0.0, requests),
         "application_error_ratio": _ratio(application_errors or 0.0, requests),
+        "synthetic_success": synthetic_success,
+        "synthetic_age_seconds": time.time() - synthetic_time if synthetic_time is not None else None,
         "redis_ready": redis_ready,
         "payment_ready": payment_ready,
         "pods": pods,

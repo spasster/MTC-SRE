@@ -68,6 +68,8 @@ def evidence(**overrides):
         "error_ratio": 0.0,
         "application_error_ratio": 0.0,
         "payment_error_ratio": 0.0,
+        "synthetic_success": 1.0,
+        "synthetic_age_seconds": 5.0,
         "redis_error_ratio": 0.0,
         "payment_timeout_ratio": 0.0,
         "redis_ready": True,
@@ -647,6 +649,12 @@ def test_empty_metrics_do_not_close_or_scale_down_an_incident(monkeypatch):
     assert main._pending is not None
     assert main._actions == 1
     assert main.actuator.calls == []
+
+
+@pytest.mark.parametrize("success,age", [(0, 5), (None, 5), (1, None), (1, 46), (1, -1)])
+def test_recovery_requires_a_recent_successful_synthetic_probe(success, age):
+    assert not main._healthy(evidence(pods=list(HEALTHY), synthetic_success=success,
+                                      synthetic_age_seconds=age), main.rules)
 
 
 def test_mttr_waits_for_metrics_and_rollout(monkeypatch):

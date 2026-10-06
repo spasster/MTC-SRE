@@ -18,7 +18,7 @@ from app.k8s import ActionSkipped, K8sActuator
 from app.telegram import Telegram
 
 SERVICE = "healer"
-WHITELIST = {"CheckoutSlow", "CheckoutHighErrorRate"}
+WHITELIST = {"CheckoutSlow", "CheckoutHighErrorRate", "CheckoutSyntheticFailed"}
 TARGET_NAMESPACE = os.getenv("TARGET_NAMESPACE", "demo")
 
 _lock = threading.Lock()
@@ -137,6 +137,10 @@ def get_notifier():
 
 def _healthy(evidence, limits) -> bool:
     if not evidence or evidence.get("error"):
+        return False
+    synthetic = evidence.get("synthetic_success")
+    synthetic_age = evidence.get("synthetic_age_seconds")
+    if synthetic != 1 or not _finite_number(synthetic_age) or not 0 <= synthetic_age <= 45:
         return False
     error_ratio = evidence.get("error_ratio")
     if not _finite_number(error_ratio) or not 0 <= error_ratio <= limits["error_ratio"]:
