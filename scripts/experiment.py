@@ -126,6 +126,11 @@ def main():
               "created_at": datetime.now(timezone.utc).isoformat(), "samples": [], "passed": False,
               "baseline_note": "Задержка оператора задаётся явно; это контролируемый baseline, не измерение работы человека."}
     try:
+        if args.mode == "auto":
+            # Временный импорт может исчезнуть после удаления всех подов baseline.
+            # Исходный образ остается в Docker; подготовка заканчивается до внесения сбоя.
+            report["healer_image_id"] = cmd("docker", "image", "inspect", "healer:dev", "--format", "{{.Id}}").strip()
+            cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct")
         cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + ("0" if args.mode == "baseline" else "1"))
         if args.mode == "auto":
             cmd("kubectl", "rollout", "restart", "deployment/healer", "-n", "heal")

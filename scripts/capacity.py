@@ -14,10 +14,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
     parser.add_argument("--rates", default="1,3,4,6,8,12")
+    parser.add_argument("--replicas", default="2,5", help="Проверяемые варианты: 2, 5 или 2,5")
     parser.add_argument("--duration", type=int, default=120)
     parser.add_argument("--output", default="docs/results/capacity.json")
     args = parser.parse_args()
     rates = [int(item) for item in args.rates.split(",")]
+    replica_counts = [int(item) for item in args.replicas.split(",")]
+    if replica_counts != sorted(set(replica_counts)) or not set(replica_counts) <= {2, 5}:
+        parser.error("Разрешены варианты с двумя и пятью репликами")
     if rates != sorted(set(rates)) or rates[0] <= 0 or args.duration < 90:
         parser.error("Нужны возрастающие положительные RPS и длительность не менее 90 с")
     os.environ["CLUSTER"] = args.cluster
@@ -36,7 +40,7 @@ def main():
     try:
         for (namespace, name) in [("heal", "healer"), ("demo", "k6-background")]:
             cmd("kubectl", "scale", "deployment/" + name, "-n", namespace, "--replicas=0")
-        for replicas in (2, 5):
+        for replicas in replica_counts:
             cmd("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(replicas))
             cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s")
             bound = {"highest_tested_passing_rps": None, "first_tested_failing_rps": None}
@@ -97,6 +101,8 @@ def main():
         report["error"] = str(exc)
     finally:
         cmd("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
+        if original[("heal", "healer")] > 0:
+            cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct")
         for (namespace, name), replicas in original.items():
             cmd("kubectl", "scale", "deployment/" + name, "-n", namespace, "--replicas=" + str(replicas))
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
@@ -104,7 +110,7 @@ def main():
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     if not report["passed"]:
-        raise SystemExit(report.get("error", "Проходящие ступени не подтверждены для обоих вариантов"))
+        raise SystemExit(report.get("error", "Проходящие ступени не подтверждены для выбранных вариантов"))
     print("Границы измеренной мощности и ресурсы сохранены", flush=True)
 
 
