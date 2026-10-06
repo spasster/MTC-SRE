@@ -2,8 +2,6 @@ name: Проверка полного контура Ubuntu
 
 on:
   push:
-    branches:
-      - fix/sre-case-completion
     paths:
       - .github/workflows/e2e.yml
       - Makefile
@@ -11,13 +9,32 @@ on:
       - k8s/**
       - observability/**
       - ansible/**
-      - scripts/verify-*.py
+      - scripts/**
+      - chaos/**
+      - k6/**
+      - apps/**
+      - healer/**
+  pull_request:
+    paths:
+      - .github/workflows/e2e.yml
+      - Makefile
+      - versions.mk
+      - k8s/**
+      - observability/**
+      - ansible/**
+      - scripts/**
+      - chaos/**
+      - k6/**
       - apps/**
       - healer/**
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: sre-e2e-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   stack:
@@ -64,7 +81,18 @@ jobs:
           sudo touch /etc/mtc-sre-audit-marker
           python scripts/verify-node-logs.py --output .runtime/proof/node-logs.json
           python scripts/verify-observability.py --output .runtime/proof/observability.json
+      - name: Проверить реальные отказы и сохранение состояния healer
+        run: |
+          python scripts/verify-scenarios.py --cluster "$CLUSTER" --output .runtime/proof/scenarios.json
+          python scripts/verify-healer-state.py --cluster "$CLUSTER" --output .runtime/proof/healer-state.json
+      - name: Сравнить восстановление одного инцидента
+        run: |
+          python scripts/experiment.py --cluster "$CLUSTER" --scenario slow-pod --mode baseline --incident-chain-output .runtime/proof/incident-chain.json --output .runtime/proof/mttr-baseline.json
+          python scripts/experiment.py --cluster "$CLUSTER" --scenario slow-pod --mode auto --output .runtime/proof/mttr-auto.json
+      - name: Проверить CPU spike и самостоятельный возврат масштаба
+        run: python scripts/experiment.py --cluster "$CLUSTER" --scenario spike --mode auto --natural-end --timeout 660 --output .runtime/proof/spike-lifecycle.json
       - name: Сохранить обезличенные результаты
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sre-proof

@@ -75,7 +75,9 @@ def main():
                     raise RuntimeError("Ожидаемый диагноз не подтверждён: " + scenario)
                 if scenario == "partition" and result.get("action") != "none":
                     raise RuntimeError("Сетевой разрыв вызвал изменение кластера")
-                if scenario in ("bad-release", "redis") and not result.get("result", "").startswith("needs approval:"):
+                if (scenario in ("bad-release", "redis")
+                    and not (result.get("result", "").startswith("needs approval:")
+                             or result.get("result") in ("waiting approval", "ignored: waiting approval"))):
                     raise RuntimeError("Опасное действие не остановлено без подтверждения")
                 case = {"scenario": scenario, "diagnosis": result["diagnosis"], "action": result["action"],
                         "result": result["result"], "error_ratio": sample["error_ratio"],

@@ -6,6 +6,7 @@ import json
 import math
 import os
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +18,7 @@ PROMQL = {
     "request_rate": 'sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[1m]))',
     "error_ratio": '(sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[1m])) or vector(0)) / sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[1m]))',
     "synthetic_success": 'min(probe_success{service="checkout",target_namespace="demo"})',
-    "synthetic_time": 'max(timestamp(probe_success{service="checkout",target_namespace="demo"}))',
+    "synthetic_time": 'min(timestamp(probe_success{service="checkout",target_namespace="demo"}))',
     "alerts_firing": 'count(ALERTS{service="checkout",alertstate="firing"}) or vector(0)',
     "alerts_active": 'count(ALERTS{service="checkout"}) or vector(0)',
     "cpu_throttle": 'max(rate(container_cpu_cfs_throttled_periods_total{namespace="demo",container="checkout"}[1m]) / rate(container_cpu_cfs_periods_total{namespace="demo",container="checkout"}[1m]))',
@@ -99,7 +100,11 @@ def main():
     parser.add_argument("--timeout", type=int, default=420)
     parser.add_argument("--prometheus", default="http://127.0.0.1:19090")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--natural-end", action="store_true", help="Дождаться окончания spike и возврата масштаба самим healer")
+    parser.add_argument("--incident-chain-output", help="Проверить exemplar, трейс и лог медленного запроса в этом инциденте")
     args = parser.parse_args()
+    if args.natural_end and (args.scenario != "spike" or args.mode != "auto"):
+        parser.error("--natural-end допустим только для auto spike")
     os.environ["CLUSTER"] = args.cluster
     cmd("sh", "scripts/require-context.sh", args.cluster)
     existing = json.loads(cmd("kubectl", "get", "networkchaos,podchaos", "-n", "demo", "-o", "json"))
@@ -139,6 +144,10 @@ def main():
                 report["detected_at"] = sample["time"]
             if sample["alerts_firing"] and report.get("alert_firing_at") is None:
                 report["alert_firing_at"] = sample["time"]
+            if args.incident_chain_output and not report.get("incident_chain_verified") and sample["p95"] and sample["p95"] > .3:
+                result = subprocess.run([sys.executable, "scripts/verify-observability.py", "--since", str(report["injected_at"]),
+                                         "--min-duration", ".3", "--output", args.incident_chain_output], capture_output=True)
+                report["incident_chain_verified"] = result.returncode == 0
             if args.mode == "baseline" and report.get("alert_firing_at") and not report.get("api_accepted_at"):
                 if sample["time"] >= report["alert_firing_at"] + args.manual_delay:
                     if args.scenario == "slow-pod":
@@ -158,6 +167,15 @@ def main():
             print(f"После внесения сбоя {sample['time'] - report['injected_at']:.0f} с: "
                   f"p95={sample['p95']}, доля ошибок={sample['error_ratio']}, реплик={sample['replicas']}", flush=True)
             if report.get("api_accepted_at") and healthy(sample):
+                if args.natural_end and report.get("slo_restored_at"):
+                    job = json.loads(cmd("kubectl", "get", "job", "k6-spike", "-n", "demo", "-o", "json"))
+                    if job.get("status", {}).get("failed"):
+                        raise RuntimeError("Spike завершился ошибкой")
+                    if job.get("status", {}).get("succeeded") and sample["replicas"] == 2:
+                        report.update(natural_job_completion=True, autonomous_scale_down=True, scale_down_at=sample["time"], passed=True)
+                        break
+                    time.sleep(5)
+                    continue
                 if args.scenario == "spike":
                     job = json.loads(cmd("kubectl", "get", "job", "k6-spike", "-n", "demo", "-o", "json"))
                     if job.get("status", {}).get("succeeded"):
@@ -169,13 +187,16 @@ def main():
                     report["mttr_seconds"] = sample["time"] - report["injected_at"]
                     report["detection_seconds"] = report["detected_at"] - report["injected_at"]
                     report["api_acceptance_seconds"] = report["api_accepted_at"] - report["injected_at"]
-                    report["passed"] = True
-                    break
+                    report["passed"] = not args.natural_end
+                    if not args.natural_end:
+                        break
             else:
                 streak = 0
             time.sleep(5)
         if not report["passed"]:
-            report["error"] = "Восстановление не подтверждено до таймаута"
+            report.setdefault("error", "Восстановление и требуемый возврат масштаба не подтверждены до таймаута")
+        if args.incident_chain_output and not report.get("incident_chain_verified"):
+            report.update(passed=False, error="Связка метрика -> трейс -> лог на инциденте не подтверждена")
     except Exception as exc:
         report["error"] = str(exc)
     except KeyboardInterrupt:

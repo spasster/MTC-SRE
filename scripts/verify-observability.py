@@ -20,18 +20,20 @@ def main():
     parser.add_argument("--tempo", default="http://127.0.0.1:13200")
     parser.add_argument("--loki", default="http://127.0.0.1:13100")
     parser.add_argument("--output", default=".runtime/observability.json")
+    parser.add_argument("--since", type=float)
+    parser.add_argument("--min-duration", type=float, default=0)
     args = parser.parse_args()
     now = time.time()
     result = get(args.prometheus + "/api/v1/query_exemplars", {
         "query": 'http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work"}',
-        "start": now - 120, "end": now - 5,
+        "start": max(now - 120, args.since or 0), "end": now - 5,
     })
-    traces = set()
+    traces = {}
     for series in result.get("data", []):
         for sample in series.get("exemplars", []):
             trace_id = sample.get("labels", {}).get("trace_id")
-            if trace_id:
-                traces.add(trace_id)
+            if trace_id and float(sample["value"]) >= args.min_duration and sample["timestamp"] >= (args.since or 0):
+                traces[trace_id] = {"duration_seconds": float(sample["value"]), "request_at": sample["timestamp"]}
     for trace_id in sorted(traces):
         try:
             trace = get(args.tempo + "/api/traces/" + trace_id)
@@ -54,6 +56,8 @@ def main():
                 "trace_services": ["checkout", "payment"],
                 "log_services": ["checkout", "payment"],
                 "log_entries": sum(len(row.get("values", [])) for row in rows),
+                "incident_since": args.since,
+                "request": traces[trace_id],
             }
             output = Path(args.output)
             output.parent.mkdir(parents=True, exist_ok=True)
