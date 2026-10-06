@@ -69,6 +69,11 @@ spec:
           env:
             - name: TARGET_NAMESPACE
               value: demo
+            - name: HEALER_WEBHOOK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: healer-webhook
+                  key: token
             - name: PROMETHEUS_URL
               value: http://kube-prom-kube-prometheus-prometheus.obs.svc:9090
             - name: TELEGRAM_BOT_TOKEN

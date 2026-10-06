@@ -8,7 +8,12 @@ from fastapi.testclient import TestClient
 from app import main
 from app.main import JsonFormatter, app
 
-client = TestClient(app)
+client = TestClient(app, headers={"Authorization": "Bearer test-webhook-token"})
+
+
+@pytest.fixture(autouse=True)
+def webhook_token(monkeypatch):
+    monkeypatch.setenv("HEALER_WEBHOOK_TOKEN", "test-webhook-token")
 
 FAST = [
     {"pod": "fast", "p95": 0.04, "throttle": 0.0},
@@ -86,6 +91,24 @@ def setup_function():
 
 def test_health():
     assert client.get("/health").json() == {"status": "ok"}
+
+
+@pytest.mark.parametrize("authorization", ["", "Bearer invalid", "Basic invalid"])
+def test_unauthorized_webhook_cannot_mutate_the_cluster(authorization):
+    response = client.post("/webhook", headers={"Authorization": authorization}, json={"alerts": [alert()]})
+    assert response.status_code == 401
+    assert main.actuator.calls == []
+
+
+def test_missing_webhook_configuration_is_closed(monkeypatch):
+    monkeypatch.delenv("HEALER_WEBHOOK_TOKEN")
+    assert client.post("/webhook", json={"alerts": [alert()]}).status_code == 503
+    assert main.actuator.calls == []
+
+
+def test_webhook_batch_is_bounded():
+    assert client.post("/webhook", json={"alerts": [alert()] * 33}).status_code == 422
+    assert main.actuator.calls == []
 
 
 def test_slow_pod_deletes_after_dry_run(monkeypatch):

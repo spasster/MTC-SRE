@@ -16,6 +16,9 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
 alertmanager:
+  alertmanagerSpec:
+    secrets:
+      - healer-webhook
   config:
     route:
       receiver: "null"
@@ -46,16 +49,8 @@ alertmanager:
         webhook_configs:
           - url: http://healer.heal.svc:8080/webhook
             send_resolved: true
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager/secrets/healer-webhook/token
       - name: telegram
-        telegram_configs:
-          # токен бота и id чата.
-          - bot_token: "PASTE_BOT_TOKEN"
-            chat_id: 0
-            send_resolved: true
-            parse_mode: HTML
-            message: |
-              {{ range .Alerts }}
-              {{ if eq .Status "resolved" }}✅ {{ .Annotations.resolved }}{{ else }}⚠️ {{ .Annotations.summary }}
-
-              {{ .Annotations.description }}{{ end }}
-              {{ end }}

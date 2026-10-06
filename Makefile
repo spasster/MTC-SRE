@@ -64,22 +64,17 @@ repos:
 	helm repo update
 
 observability: repos
+	sh scripts/configure-secrets.sh
 	helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 		-n obs --create-namespace \
 		--wait --timeout 10m \
 		-f observability/kube-prom-values.yaml \
+		-f .runtime/notification-values.yaml \
 		$(if $(TELEGRAM_VALUES),-f $(TELEGRAM_VALUES),)
 	kubectl wait --for=condition=Established --timeout=120s \
 		crd/servicemonitors.monitoring.coreos.com crd/prometheusrules.monitoring.coreos.com
 	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f k8s/healer.yaml
 	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
-	@if [ -n "$$TELEGRAM_BOT_TOKEN" ] && [ -n "$$TELEGRAM_CHAT_ID" ]; then \
-		kubectl create secret generic telegram -n heal \
-			--from-literal=token="$$TELEGRAM_BOT_TOKEN" \
-			--from-literal=chat_id="$$TELEGRAM_CHAT_ID" \
-			--dry-run=client -o yaml | kubectl apply -f -; \
-		kubectl rollout restart deployment/healer -n heal; \
-	fi
 
 dashboards:
 	kubectl create configmap mtc-dashboards -n obs \

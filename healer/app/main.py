@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import os
+import secrets
 import socket
 import threading
 import time
@@ -9,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 
 import yaml
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Request
 
 from app.diagnose import decide
 from app.evidence import gather
@@ -895,7 +896,18 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/webhook")
+def authorize_webhook(request: Request):
+    expected = os.getenv("HEALER_WEBHOOK_TOKEN", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Токен webhook не настроен")
+    scheme, _, provided = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not secrets.compare_digest(provided.encode(), expected.encode()):
+        raise HTTPException(status_code=401, detail="Требуется токен webhook", headers={"WWW-Authenticate": "Bearer"})
+
+
+@app.post("/webhook", dependencies=[Depends(authorize_webhook)])
 def webhook(payload: dict):
     alerts = payload.get("alerts") or []
+    if not isinstance(alerts, list) or len(alerts) > 32 or any(not isinstance(item, dict) for item in alerts):
+        raise HTTPException(status_code=422, detail="Ожидается список не более 32 алертов")
     return {"results": [handle_alert(alert) for alert in alerts]}
