@@ -287,7 +287,7 @@ def test_scale_down_runs_after_the_spike_job_ends(monkeypatch):
     assert "scale replicas=2" in result["result"]
     assert main._scale_down_pending is False
     assert main.actuator.calls[-1] == ("scale", "demo", "checkout", 2, False)
-    assert "обратно до 2" in main.notifier.messages[-1][0]
+    assert "Возврат checkout к двум репликам принят API" in main.notifier.messages[-1][0]
 
 
 def test_scale_down_waits_while_answers_are_still_slow(monkeypatch):
