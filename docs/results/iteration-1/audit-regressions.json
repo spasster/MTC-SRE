@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-10-06T21:48:25.170689+00:00",
+  "source_commit": "47a1dc32b887ee0779efad971d223a6ba31529ef",
+  "replicaset_owner_uid_ignored": true,
+  "current_revision_age_expected_min_seconds": 3600,
+  "observed_revision_age_seconds": 5.0,
+  "deployment_read_timeout": null,
+  "negative_action_budget_accepted": true,
+  "method": "Управляемые объекты SDK; запись в Kubernetes и повреждение реального состояния не выполнялись.",
+  "rbac_checked_at": "2026-10-06T21:55:19.430035+00:00",
+  "healer_patch_payment": "yes",
+  "healer_update_payment": "yes",
+  "rbac_method": "kubectl auth can-i в отдельном mtc-review; Deployment payment не изменялся."
+}

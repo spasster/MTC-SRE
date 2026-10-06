@@ -1,0 +1,12 @@
+{
+  "source_commit": "b79a1ba9e7ada54869d5ff69309d340e28c9cc06",
+  "run_id": 37532796867,
+  "url": "https://github.com/spasster/MTC-SRE/actions/runs/37532796867",
+  "conclusion": "failure",
+  "started_at": "2026-10-06T21:17:31Z",
+  "completed_at": "2026-10-06T21:38:28Z",
+  "artifact_id": 11445977118,
+  "artifact_digest": "sha256:513b0e86f406967343a330f44d1c844150504b65057c665cc66b951dd7cacf8f",
+  "failure": "Новый healer не достиг готовности за 180 с перед auto MTTR. Причина не установлена этим набором результатов.",
+  "passed_before_failure": ["Установка Ubuntu", "mTLS", "Системные журналы", "Связка метрик, трейса и логов", "Сценарии отказов", "Сохранение состояния и один лидер", "Baseline MTTR"]
+}
