@@ -1,5 +1,8 @@
 grafana:
-  adminPassword: admin
+  admin:
+    existingSecret: grafana-admin
+    userKey: username
+    passwordKey: password
   sidecar:
     datasources:
       exemplarTraceIdDestinations:

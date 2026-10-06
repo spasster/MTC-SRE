@@ -1,4 +1,5 @@
-CLUSTER := mtc
+include versions.mk
+CLUSTER ?= mtc
 NODE_LOG_HOST ?= colima
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
@@ -34,14 +35,14 @@ cluster:
 	colima status >/dev/null 2>&1 || colima start --cpu 4 --memory 8 --disk 40
 	docker context use colima
 	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
-		k3d cluster create $(CLUSTER) --agents 0; \
+		k3d cluster create $(CLUSTER) --agents 0 --image $(K3S_IMAGE) --wait --timeout 180s; \
 	fi
 	kubectl config use-context k3d-$(CLUSTER)
 
 cluster-linux:
 	@docker info >/dev/null 2>&1 || { echo "Docker не запущен. Пакеты и группа docker описаны в README, раздел Ubuntu."; exit 1; }
 	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
-		k3d cluster create $(CLUSTER) --agents 0; \
+		k3d cluster create $(CLUSTER) --agents 0 --image $(K3S_IMAGE) --wait --timeout 180s; \
 	fi
 	kubectl config use-context k3d-$(CLUSTER)
 
@@ -49,7 +50,7 @@ images:
 	docker build -t checkout:dev apps/checkout
 	docker build -t payment:dev apps/payment
 	docker build -t healer:dev healer
-	k3d image import checkout:dev payment:dev healer:dev -c $(CLUSTER)
+	k3d image import checkout:dev payment:dev healer:dev -c $(CLUSTER) --mode direct
 
 apps:
 	kubectl apply -f k8s/namespace.yaml -f k8s/redis.yaml -f k8s/payment.yaml -f k8s/checkout.yaml
@@ -67,6 +68,7 @@ repos:
 observability: repos
 	sh scripts/configure-secrets.sh
 	helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
+		--version $(PROM_STACK_VERSION) \
 		-n obs --create-namespace \
 		--wait --timeout 10m \
 		-f observability/kube-prom-values.yaml \
@@ -84,8 +86,8 @@ dashboards:
 	kubectl label configmap mtc-dashboards -n obs grafana_dashboard=1 --overwrite
 
 loki: repos
-	helm upgrade --install loki grafana/loki -n obs -f observability/loki-values.yaml
-	helm upgrade --install promtail grafana/promtail -n obs -f observability/promtail-values.yaml
+	helm upgrade --install loki grafana/loki --version $(LOKI_CHART_VERSION) -n obs -f observability/loki-values.yaml --wait --timeout 5m
+	helm upgrade --install promtail grafana/promtail --version $(PROMTAIL_CHART_VERSION) -n obs -f observability/promtail-values.yaml --wait --timeout 5m
 	kubectl apply -f k8s/loki-nodeport.yaml -f observability/loki-datasource.yaml
 
 logs:
@@ -116,6 +118,7 @@ promtail-host:
 
 chaos: repos
 	helm upgrade --install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh --create-namespace \
+		--version $(CHAOS_CHART_VERSION) --wait --timeout 5m \
 		--set chaosDaemon.runtime=containerd \
 		--set chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock \
 		--set dashboard.securityMode=false

@@ -10,6 +10,15 @@ for ns in obs heal; do
   kubectl create namespace "$ns" --dry-run=client -o yaml > "$tmp/namespace.yaml"
   kubectl apply -f "$tmp/namespace.yaml" >/dev/null
 done
+
+if ! kubectl get secret grafana-admin -n obs >/dev/null 2>&1; then
+  printf '%s' admin > "$tmp/username"
+  python3 -c 'import secrets; print(secrets.token_urlsafe(32), end="")' > "$tmp/password"
+  kubectl create secret generic grafana-admin -n obs \
+    --from-file=username="$tmp/username" --from-file=password="$tmp/password" \
+    --dry-run=client -o yaml > "$tmp/secret.yaml"
+  kubectl apply -f "$tmp/secret.yaml" >/dev/null
+fi
 if kubectl get secret healer-webhook -n heal >/dev/null 2>&1; then
   kubectl get secret healer-webhook -n heal -o jsonpath='{.data.token}' > "$tmp/encoded"
   base64 -d "$tmp/encoded" > "$tmp/token"

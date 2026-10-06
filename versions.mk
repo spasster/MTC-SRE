@@ -1,0 +1,8 @@
+# Версии инфраструктуры для воспроизводимой установки.
+K3S_IMAGE := rancher/k3s:v1.35.5-k3s1
+PROM_STACK_VERSION := 91.9.0
+LOKI_CHART_VERSION := 7.3.0
+PROMTAIL_CHART_VERSION := 6.17.1
+CHAOS_CHART_VERSION := 2.8.4
+ISTIO_VERSION := 1.30.5
+BLACKBOX_CHART_VERSION := 11.19.1
