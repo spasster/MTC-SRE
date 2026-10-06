@@ -518,3 +518,39 @@ def test_callback_without_request_id_is_not_an_approval():
     assert main.apply_callback("approve") == "ignored: invalid callback"
     assert main._pending is not None
     assert main.actuator.calls == []
+
+
+def test_failed_rollback_does_not_send_success_or_close_the_incident(monkeypatch):
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Проверка отказа API"))
+    callback = f"approve:{main._pending.approval_id}"
+
+    def unavailable(*args, **kwargs):
+        raise RuntimeError("API недоступен")
+
+    monkeypatch.setattr(main.actuator, "rollback", unavailable)
+    assert main.apply_callback(callback).startswith("failed:")
+    assert "Действие не выполнено" in main.notifier.messages[-1][0]
+    assert main._fixed_at is None
+    assert main._actions == 0
+    assert "bad_release" not in main._closed
+
+
+def test_skipped_rollback_does_not_mark_recovery(monkeypatch):
+    from app.diagnose import Decision
+    from app.k8s import ActionSkipped
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Первый релиз"))
+    callback = f"approve:{main._pending.approval_id}"
+
+    def no_revision(*args, **kwargs):
+        raise ActionSkipped("Нет предыдущей ревизии")
+
+    monkeypatch.setattr(main.actuator, "rollback", no_revision)
+    assert main.apply_callback(callback).startswith("skipped:")
+    assert "Действие пропущено" in main.notifier.messages[-1][0]
+    assert main._fixed_at is None
+    assert main._actions == 0

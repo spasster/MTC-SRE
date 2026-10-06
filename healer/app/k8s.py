@@ -4,6 +4,10 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 
+class ActionSkipped(Exception):
+    """Действие неприменимо к текущему состоянию кластера."""
+
+
 class K8sActuator:
     def __init__(self):
         try:
@@ -99,11 +103,12 @@ class K8sActuator:
         deployment = self.apps.read_namespaced_deployment(name, namespace)
         current = int((deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
         if current <= 1:
-            return "rollback skipped: no previous revision"
+            raise ActionSkipped("Нет предыдущей ревизии для отката")
         previous = self._previous_replicaset(namespace, name, current - 1)
         if previous is None:
-            return "rollback skipped: previous replicaset not found"
+            raise ActionSkipped("ReplicaSet предыдущей ревизии не найден")
         template = client.ApiClient().sanitize_for_serialization(previous.spec.template)
+        template.get("metadata", {}).get("labels", {}).pop("pod-template-hash", None)
         kwargs = {"dry_run": "All"} if dry_run else {}
         self.apps.patch_namespaced_deployment(name, namespace, {"spec": {"template": template}}, **kwargs)
         prefix = "dry-run " if dry_run else ""

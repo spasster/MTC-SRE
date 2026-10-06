@@ -12,7 +12,7 @@ from fastapi import FastAPI
 
 from app.diagnose import decide
 from app.evidence import gather
-from app.k8s import K8sActuator
+from app.k8s import ActionSkipped, K8sActuator
 from app.telegram import Telegram
 
 SERVICE = "healer"
@@ -454,9 +454,10 @@ def apply_callback(data: str) -> str:
             _pending = None
             return "ignored: expired approval"
         _pending = None
-        _closed.add(decision.diagnosis)
     bot = get_notifier()
     if action == "reject":
+        with _lock:
+            _closed.add(decision.diagnosis)
         if bot.enabled():
             bot.send("\n".join([
                 "🚫 Отказ принят",
@@ -467,26 +468,31 @@ def apply_callback(data: str) -> str:
         return "rejected"
     try:
         result = apply_confirmed(decision)
+    except ActionSkipped as exc:
+        result = f"skipped: {exc}"
+        done = f"⏭ Действие пропущено\n\n{exc}. Кластер не изменён."
     except Exception as exc:
         result = f"failed: {exc}"
+        done = f"⚠️ Действие не выполнено\n\n{_title(decision)}. Восстановление не подтверждено."
     else:
-        _actions += 1
-    if bot.enabled():
+        with _lock:
+            _actions += 1
+            _closed.add(decision.diagnosis)
         if decision.action == "rollback":
             done = "\n".join([
-                "✅ Rollout undo checkout",
+                "✅ Откат checkout запрошен",
                 "",
-                "Вернул предыдущую ревизию.",
+                "Kubernetes принял запрос на предыдущую ревизию. Жду восстановления запросов.",
             ])
         elif decision.action == "restart_redis":
             seq = getattr(decision, "cart_seq", None)
-            wiped = "Корзина в памяти стёрта."
+            wiped = "Рестарт удалит корзину в памяти."
             if seq is not None:
-                wiped = f"Корзина в памяти стёрта. Было {seq}."
+                wiped = f"Рестарт удалит корзину в памяти. Было {seq} на момент запроса подтверждения."
             done = "\n".join([
-                "✅ Рестарт redis",
+                "✅ Рестарт Redis запрошен",
                 "",
-                "Deployment перезапущен.",
+                "Kubernetes принял запрос. Жду восстановления запросов.",
                 wiped,
             ])
         else:
@@ -496,6 +502,7 @@ def apply_callback(data: str) -> str:
                 _title(decision),
                 f"{WILL_DO.get(decision.action, decision.action)}.",
             ])
+    if bot.enabled():
         bot.send(done)
     log.info(decision.detail, extra={"diagnosis": decision.diagnosis, "action": decision.action, "result": result})
     return result
