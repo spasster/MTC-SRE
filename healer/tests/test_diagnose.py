@@ -18,6 +18,8 @@ def evidence(**overrides):
         "replicas": 2,
         "revision_age_seconds": 5000,
         "error_ratio": 0.0,
+        "application_error_ratio": 0.0,
+        "payment_error_ratio": 0.0,
         "redis_error_ratio": 0.0,
         "payment_timeout_ratio": 0.0,
         "redis_ready": True,
@@ -33,7 +35,8 @@ def evidence(**overrides):
 
 def test_bad_release_beats_a_slow_pod():
     found = decide(
-        evidence(revision_age_seconds=120, error_ratio=0.4, pods=[{"pod": "a", "p95": 2.0, "throttle": 0.0}]),
+        evidence(revision_age_seconds=120, error_ratio=0.4, application_error_ratio=0.4,
+                 pods=[{"pod": "a", "p95": 2.0, "throttle": 0.0}]),
         RULES,
     )
     assert found.diagnosis == "bad_release"
@@ -232,3 +235,23 @@ def test_missing_evidence_escalates():
     found = decide({"error": "prometheus down"}, RULES)
     assert found.mode == "escalate"
     assert found.action == "none"
+
+
+def test_payment_http_errors_do_not_roll_back_checkout():
+    found = decide(evidence(revision_age_seconds=30, error_ratio=0.8,
+                            payment_error_ratio=0.8), RULES)
+    assert found.diagnosis == "payment"
+    assert found.mode == "escalate"
+    assert found.action == "none"
+
+
+def test_mixed_application_and_dependency_errors_do_not_roll_back():
+    found = decide(evidence(revision_age_seconds=30, error_ratio=0.1,
+                            application_error_ratio=0.08, payment_error_ratio=0.02), RULES)
+    assert found.action == "none"
+
+
+def test_unattributed_errors_are_not_a_bad_release_or_recovery():
+    found = decide(evidence(revision_age_seconds=30, error_ratio=0.8), RULES)
+    assert found.diagnosis == "unknown"
+    assert found.mode == "escalate"

@@ -84,6 +84,7 @@ def test_fail_rate_skips_dependencies(monkeypatch):
     response = client.get("/work")
     assert response.status_code == 500
     assert response.json()["reason"] == "fail_rate"
+    assert 'application_errors_total{reason="fail_rate"}' in client.get("/metrics").text
 
 
 def test_extra_latency(monkeypatch):

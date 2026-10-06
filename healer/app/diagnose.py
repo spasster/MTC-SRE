@@ -47,14 +47,22 @@ def decide(evidence, rules):
     error_ratio = _ratio(evidence.get("error_ratio"))
     redis_ratio = _ratio(evidence.get("redis_error_ratio"))
     payment_timeout = _ratio(evidence.get("payment_timeout_ratio"))
+    payment_errors = max(payment_timeout, _ratio(evidence.get("payment_error_ratio")))
+    application_errors = _ratio(evidence.get("application_error_ratio"))
     fresh = revision_age is not None and revision_age <= rules["revision_window_seconds"]
-    if fresh and error_ratio > rules["error_ratio"] and redis_ratio < quiet and payment_timeout < quiet:
+    if (
+        fresh
+        and error_ratio > rules["error_ratio"]
+        and application_errors > rules["error_ratio"]
+        and redis_ratio <= rules["error_ratio"]
+        and payment_errors <= rules["error_ratio"]
+    ):
         return Decision(
             "bad_release",
             "approval",
             "rollback",
             "checkout",
-            "Ревизия checkout моложе 10 минут, 5xx пошли сразу, Redis и payment тихие.",
+            "Свежая ревизия checkout, есть ошибки внутри приложения, ошибки зависимостей ниже порога.",
         )
 
     if redis_ratio >= quiet and evidence.get("redis_ready"):
@@ -73,6 +81,21 @@ def decide(evidence, rules):
             "none",
             "payment",
             "payment Ready, у checkout до него таймаут. Delete пода и scale сеть не откроют.",
+        )
+
+    if payment_errors > rules["error_ratio"]:
+        return Decision(
+            "payment",
+            "escalate",
+            "none",
+            "payment",
+            "Ошибки вызова payment подтверждены отдельной метрикой. Откат checkout не обоснован.",
+        )
+
+    if error_ratio > rules["error_ratio"]:
+        return Decision(
+            "unknown", "escalate", "none", None,
+            "5xx выше порога, но подтверждения безопасного способа восстановления нет.",
         )
 
     pods = _live(_pods(evidence))

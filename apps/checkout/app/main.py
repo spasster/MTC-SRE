@@ -37,6 +37,11 @@ DEPENDENCY_ERRORS = Counter(
     "Failed calls from checkout to a dependency",
     ["dependency", "reason"],
 )
+APPLICATION_ERRORS = Counter(
+    "application_errors_total",
+    "Ошибки внутри приложения checkout",
+    ["reason"],
+)
 DEPENDENCY_LATENCY = Histogram(
     "dependency_duration_seconds",
     "Time spent calling a dependency",
@@ -245,6 +250,7 @@ def work(request: Request):
     burn_cpu()
     trace_id = request.state.trace_id
     if random.random() < fail_rate():
+        APPLICATION_ERRORS.labels("fail_rate").inc(exemplar=_exemplar(trace_id))
         request.state.reason = "fail_rate"
         return error_body("fail_rate", trace_id)
 

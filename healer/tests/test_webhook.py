@@ -58,6 +58,8 @@ def evidence(**overrides):
         "request_rate": 3.0,
         "revision_age_seconds": 5000,
         "error_ratio": 0.0,
+        "application_error_ratio": 0.0,
+        "payment_error_ratio": 0.0,
         "redis_error_ratio": 0.0,
         "payment_timeout_ratio": 0.0,
         "redis_ready": True,
@@ -109,7 +111,7 @@ def test_bad_release_does_not_change_the_cluster(monkeypatch):
     monkeypatch.setattr(
         main,
         "gather",
-        lambda namespace, actuator=None: evidence(revision_age_seconds=30, error_ratio=0.8),
+        lambda namespace, actuator=None: evidence(revision_age_seconds=30, error_ratio=0.8, application_error_ratio=0.8),
     )
     body = client.post("/webhook", json={"alerts": [alert("CheckoutHighErrorRate")]}).json()["results"][0]
     assert body["diagnosis"] == "bad_release"
@@ -306,7 +308,7 @@ def test_approval_waits_for_a_button(monkeypatch):
     monkeypatch.setattr(
         main,
         "gather",
-        lambda namespace, actuator=None: evidence(revision_age_seconds=30, error_ratio=0.8),
+        lambda namespace, actuator=None: evidence(revision_age_seconds=30, error_ratio=0.8, application_error_ratio=0.8),
     )
     body = client.post("/webhook", json={"alerts": [alert("CheckoutHighErrorRate")]}).json()["results"][0]
     assert body["result"] == "waiting approval"

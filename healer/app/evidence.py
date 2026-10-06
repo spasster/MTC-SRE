@@ -119,6 +119,12 @@ def gather(namespace, actuator=None, query=None):
                 'sum(rate(dependency_errors_total{job="checkout",dependency="payment",reason="timeout"}[1m]))'
             )
         )
+        payment_errors = _scalar(
+            ask('sum(rate(dependency_errors_total{job="checkout",dependency="payment"}[1m]))')
+        )
+        application_errors = _scalar(
+            ask('sum(rate(application_errors_total{job="checkout"}[1m]))')
+        )
         revision_age = actor.revision_age_seconds(namespace, "checkout")
         replicas = actor.replicas(namespace, "checkout")
         redis_ready = actor.ready(namespace, "redis")
@@ -141,6 +147,8 @@ def gather(namespace, actuator=None, query=None):
         "error_ratio": _ratio(errors or 0.0, requests),
         "redis_error_ratio": _ratio(redis_errors or 0.0, requests),
         "payment_timeout_ratio": _ratio(payment_timeouts or 0.0, requests),
+        "payment_error_ratio": _ratio(payment_errors or 0.0, requests),
+        "application_error_ratio": _ratio(application_errors or 0.0, requests),
         "redis_ready": redis_ready,
         "payment_ready": payment_ready,
         "pods": pods,
