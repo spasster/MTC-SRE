@@ -92,7 +92,7 @@ Ansible ставит только rsyslog и auditd на виртуалку Coli
 
 ## Как запустить
 
-`make up` поднимает Colima, кластер `mtc`, образы, сервисы, наблюдаемость, Loki, Chaos Mesh и фон k6. Всплеск k6 в этот подъём не входит. Что именно делает цель, расписано в разделе «Поднять с нуля».
+`make up` на Mac поднимает Colima, кластер `mtc`, образы, сервисы, наблюдаемость, Loki, журналы виртуалки, Chaos Mesh и фон k6. На Ubuntu та же сборка без Colima: `make up-linux`. Всплеск k6 в этот подъём не входит. Пакеты и шаги — в разделе «Поднять с нуля».
 
 Секрет Telegram в git не входит. Без файла `observability/telegram.local.yaml` и Secret `telegram` в namespace `heal` письма и кнопки не уйдут. Удаление пода и scale при этом работают.
 
@@ -276,11 +276,26 @@ Chaos Mesh и healer друг о друге не знают. Хаос ломае
 
 ## Поднять с нуля
 
+Mac:
+
 ```bash
 make up
 ```
 
-Ниже те же шаги по отдельности. `brew install kubectl k3d helm` make не ставит.
+Ubuntu. Сначала пакеты, `make` их не ставит. Нужно около 8 ГБ памяти. После группы `docker` выйди из сессии и зайди снова, иначе Docker не пустит без sudo.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y make docker.io
+sudo usermod -aG docker "$USER"
+curl -fsSL -o kubectl "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -m 0755 kubectl /usr/local/bin/kubectl
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+make up-linux
+```
+
+`make up-linux` не ставит rsyslog и auditd и не запускает Promtail по журналам машины. Логи подов в Loki при этом собираются. Ниже те же шаги по отдельности, для Mac. `brew install kubectl k3d helm` make не ставит.
 
 ```bash
 brew install kubectl k3d helm

@@ -1,13 +1,21 @@
 CLUSTER := mtc
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up cluster images apps repos observability dashboards logs node-logs promtail-host chaos
+.PHONY: up up-linux cluster cluster-linux images apps repos observability dashboards loki logs logs-linux node-logs promtail-host chaos
 
 up: cluster images apps observability dashboards logs chaos
+up-linux: cluster-linux images apps observability dashboards logs-linux chaos
 
 cluster:
 	colima status >/dev/null 2>&1 || colima start --cpu 4 --memory 8 --disk 40
 	docker context use colima
+	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
+		k3d cluster create $(CLUSTER) --agents 0; \
+	fi
+	kubectl config use-context k3d-$(CLUSTER)
+
+cluster-linux:
+	@docker info >/dev/null 2>&1 || { echo "Docker не запущен. Пакеты и группа docker описаны в README, раздел Ubuntu."; exit 1; }
 	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
 		k3d cluster create $(CLUSTER) --agents 0; \
 	fi
@@ -53,12 +61,14 @@ dashboards:
 		--dry-run=client -o yaml | kubectl apply -f -
 	kubectl label configmap mtc-dashboards -n obs grafana_dashboard=1 --overwrite
 
-logs: repos
+loki: repos
 	helm upgrade --install loki grafana/loki -n obs -f observability/loki-values.yaml
 	helm upgrade --install promtail grafana/promtail -n obs -f observability/promtail-values.yaml
 	kubectl apply -f k8s/loki-nodeport.yaml -f observability/loki-datasource.yaml
-	$(MAKE) node-logs
-	$(MAKE) promtail-host
+
+logs: loki node-logs promtail-host
+
+logs-linux: loki
 
 node-logs:
 	sh ansible/colima-inventory.sh
