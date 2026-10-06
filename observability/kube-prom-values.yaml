@@ -11,6 +11,7 @@ grafana:
         urlDisplayLabel: Трейс
 prometheus:
   prometheusSpec:
+    evaluationInterval: 15s
     enableFeatures:
       - exemplar-storage
     exemplars:
@@ -29,7 +30,7 @@ alertmanager:
         - alertname
         - service
       group_wait: 10s
-      group_interval: 1m
+      group_interval: 15s
       repeat_interval: 1h
       routes:
         - receiver: telegram
