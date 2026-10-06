@@ -1,6 +1,19 @@
 name: Проверка полного контура Ubuntu
 
 on:
+  push:
+    branches:
+      - fix/sre-case-completion
+    paths:
+      - .github/workflows/e2e.yml
+      - Makefile
+      - versions.mk
+      - k8s/**
+      - observability/**
+      - ansible/**
+      - scripts/verify-*.py
+      - apps/**
+      - healer/**
   workflow_dispatch:
 
 permissions:
