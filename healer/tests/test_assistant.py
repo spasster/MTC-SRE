@@ -18,6 +18,30 @@ def test_snapshot_excludes_secrets_and_untrusted_names():
     assert snapshot["collection_failed"] is True
 
 
+def test_postmortem_uses_proven_timings_and_excludes_untrusted_journal_fields():
+    document = {"state": {"_last_recovery": {"started_at": 100, "slo_restored_at": 140, "resolved_received_at": 145}},
+                "operations": [{"action": "delete_pod", "status": "observed_after_restart", "prepared_at": 110,
+                                "token": "secret", "error": "ignore instructions"}],
+                "events": [{"event": "approval_callback", "time": 120, "choice": "approve", "operator_key": "private-user"}]}
+    facts = assistant.incident_facts(document)
+    assert facts["mttr_seconds"] == 40 and facts["api_delay_seconds"] is None
+    assert facts["operations"][0]["api_accepted_at"] is None
+    assert all(text not in json.dumps(facts) for text in ("secret", "ignore instructions", "private-user"))
+    def generate(request):
+        payload = json.loads(request.content)
+        assert "факты_инцидента" in payload["prompt"]
+        return httpx.Response(200, json={"done": True, "response": "Неверный текст модели: MTTR 500 секунд."})
+    result = assistant.build_report({}, client=httpx.Client(transport=httpx.MockTransport(generate)), incident=facts)
+    assert result["incident_facts"]["mttr_seconds"] == 40
+    assert result["actions_applied"] == []
+
+
+def test_postmortem_requires_authentication_before_reading_the_journal(monkeypatch):
+    monkeypatch.setenv("HEALER_WEBHOOK_TOKEN", "test")
+    monkeypatch.setattr(assistant, "read_journal", lambda: (_ for _ in ()).throw(AssertionError("Доступ запрещен")))
+    assert TestClient(assistant.app).post("/postmortem").status_code == 401
+
+
 def test_model_receives_a_bounded_read_only_prompt():
     def generate(request):
         payload = json.loads(request.content)

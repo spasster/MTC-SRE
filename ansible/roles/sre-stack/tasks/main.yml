@@ -1,0 +1,24 @@
+- name: Проверить поддерживаемую платформу управления
+  ansible.builtin.assert:
+    that:
+      - ansible_system == 'Linux'
+      - sre_cluster is match('^[a-zA-Z0-9][a-zA-Z0-9_-]*$')
+    fail_msg: Для полного стека требуется Linux и корректное имя тестового кластера
+
+- name: Развернуть версионированный стек Kubernetes и наблюдаемости
+  ansible.builtin.command:
+    argv:
+      - make
+      - up-linux
+      - "CLUSTER={{ sre_cluster }}"
+    chdir: "{{ sre_repository }}"
+  register: sre_stack_result
+  # Helm upgrade выполняется при каждом запуске роли; результат не объявляется read-only.
+  changed_when: true
+
+- name: Подтвердить текущий Kubernetes контекст
+  ansible.builtin.command:
+    argv: [kubectl, config, current-context]
+  register: sre_stack_context
+  changed_when: false
+  failed_when: sre_stack_context.stdout != 'k3d-' + sre_cluster

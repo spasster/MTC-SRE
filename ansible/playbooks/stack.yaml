@@ -1,0 +1,9 @@
+- name: Развернуть полный учебный SRE-контур
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    sre_cluster: mtc
+    sre_repository: "{{ playbook_dir }}/../.."
+  roles:
+    - sre-stack

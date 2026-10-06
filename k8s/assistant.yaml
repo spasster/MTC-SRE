@@ -7,6 +7,31 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  name: sre-assistant-journal
+  namespace: heal
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [healer-state]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sre-assistant-journal
+  namespace: heal
+subjects:
+  - kind: ServiceAccount
+    name: sre-assistant
+    namespace: heal
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sre-assistant-journal
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
   name: sre-assistant
   namespace: demo
 rules:

@@ -60,7 +60,9 @@ jobs:
           tar -xzf /tmp/helm.tgz -C /tmp
           sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
       - name: Установить полный стек на чистом Ubuntu
-        run: make up-linux CLUSTER="$CLUSTER"
+        run: |
+          cd ansible
+          ansible-playbook -i localhost, playbooks/stack.yaml -e sre_cluster="$CLUSTER"
       - name: Проверить mTLS и подготовить доступ к наблюдаемости
         shell: bash
         run: |
@@ -81,6 +83,7 @@ jobs:
           sudo touch /etc/mtc-sre-audit-marker
           python scripts/verify-node-logs.py --output .runtime/proof/node-logs.json
           python scripts/verify-observability.py --output .runtime/proof/observability.json
+          python scripts/verify-rules.py --output .runtime/proof/rules.json
       - name: Проверить реальные отказы и сохранение состояния healer
         run: |
           python scripts/verify-scenarios.py --cluster "$CLUSTER" --output .runtime/proof/scenarios.json
