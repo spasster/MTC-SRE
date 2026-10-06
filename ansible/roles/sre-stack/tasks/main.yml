@@ -13,7 +13,7 @@
       - "CLUSTER={{ sre_cluster }}"
     chdir: "{{ sre_repository }}"
   register: sre_stack_result
-  # Helm upgrade выполняется при каждом запуске роли; результат не объявляется read-only.
+  # Helm upgrade выполняется при каждом запуске роли и отражается как изменение.
   changed_when: true
 
 - name: Подтвердить текущий Kubernetes контекст
