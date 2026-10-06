@@ -53,6 +53,7 @@ def main():
     monitor.pop("status", None)
     forward = None
     removed = False
+    fired = False
     try:
         report["healthy"] = wait(lambda row: all(row[key] == 1 for key in ("leader", "state_available", "evidence_complete", "scrape_up")), 120)
         before = operations()
@@ -68,6 +69,7 @@ def main():
                           headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
         with urlopen(request, timeout=30) as response:
             result = json.load(response)
+        fired = True
         report["webhook_result"] = [{key: row.get(key) for key in ("result", "action", "mode")} for row in result.get("results", [])]
         if len(report["webhook_result"]) != 1 or report["webhook_result"][0]["action"] != "none":
             raise RuntimeError("Webhook не подтвердил отказ от действия при отсутствии данных")
@@ -83,6 +85,16 @@ def main():
             try:
                 subprocess.run(["kubectl", "apply", "-f", "-"], input=json.dumps(monitor), text=True, capture_output=True, check=True)
                 report["restored"] = wait(lambda row: row["evidence_complete"] == 1 and row["evidence_alert_firing"] == 0, 180)
+                if fired:
+                    wait_healthy(PROM, timeout=180)
+                    payload["alerts"][0]["status"] = "resolved"
+                    request = Request("http://127.0.0.1:18085/webhook", data=json.dumps(payload).encode(),
+                                      headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+                    with urlopen(request, timeout=30) as response:
+                        cleanup = json.load(response)
+                    report["test_incident_closed"] = any(row.get("result") == "resolved" for row in cleanup.get("results", []))
+                    if not report["test_incident_closed"]:
+                        raise RuntimeError("Тестовый инцидент не закрыт после восстановления данных")
             except Exception:
                 report["passed"] = False
                 report["restore_error"] = "Восстановление сбора не подтверждено; проверить ServiceMonitor demo/checkout"
