@@ -52,6 +52,7 @@
 | MTTR до/после | slow-pod-baseline.json, slow-pod-auto.json, график mttr.png | 147.9 -> 119.7 с в одном сравнении; не статистическая оценка среднего |
 | mTLS | scripts/verify-mtls.sh в локальном стенде и Ubuntu CI | Mesh-клиент проходит, plain HTTP на рабочем порту отвергнут, метрики доступны |
 | Метрика -> трейс -> лог | results/observability.json и Ubuntu CI artifact | Один trace_id связывает exemplar, checkout/payment в Tempo и логи обоих в Loki |
+| Дашборды и переходы Grafana | results/grafana.json, чтение реального Grafana API после make dashboards | Загружены четыре дашборда; Prometheus exemplar связан с Tempo, Tempo и Loki имеют обратные переходы |
 | Синтетика и мощность | Blackbox, capacity.png, overload.png, клиентский итог k6 | 6 запросов/с восстанавливаются после scale; 19 запросов/с не удержаны пятью репликами |
 | Дополнительный локальный LLM | results/llm.json, verify-llm.py, отдельный RBAC | Ответ модели получен; запись запрещена; первый ошибочный ответ сохранён отдельно |
 | Стресс-демо | docs/demo.mp4 и demo.md | Реальная запись 148.7 с, русское синтезированное пояснение; секретов на экране нет |
@@ -69,4 +70,8 @@
 
 ### CI
 
-Первый полный контур: [run 37520561830](https://github.com/spasster/MTC-SRE/actions/runs/37520561830), commit 08cdf5a. Обезличенные артефакты и digest находятся в results/ubuntu-ci. Финальное повторение после последних защит масштабирования фиксируется отдельным результатом CI; ранний зелёный прогон не выдаётся за проверку нового head.
+Первый полный контур: [run 37520561830](https://github.com/spasster/MTC-SRE/actions/runs/37520561830), commit 08cdf5a. Обезличенные артефакты и digest находятся в results/ubuntu-ci.
+
+Финальный полный контур: [run 37523913041](https://github.com/spasster/MTC-SRE/actions/runs/37523913041), commit 5402945, success за 384 с. Подтверждены чистая установка, mTLS, настоящий API масштабирования, доставка syslog/audit и связь метрик с трейсами и логами. [Тесты и сборка того же commit](https://github.com/spasster/MTC-SRE/actions/runs/37523913059) также success. Полный SHA, времена и digest - в [results/ubuntu-ci-final/run.json](results/ubuntu-ci-final/run.json); сохранены только обезличенные доказательства.
+
+После этого прогона изменены только документы и сохранённые результаты. Реализация и инфраструктура соответствуют проверенному commit 5402945. Синтаксис исходников, JSON/YAML, относительные ссылки, формат текста и отсутствие секретных литералов проверены дополнительно.

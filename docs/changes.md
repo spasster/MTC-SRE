@@ -79,3 +79,9 @@
 | [bc78282](https://github.com/spasster/MTC-SRE/commit/bc78282e111d69d706df81e9f287d36082adb747) | Согласованы название дашборда, окна метрик и порог ошибок |
 | [d6b1537](https://github.com/spasster/MTC-SRE/commit/d6b1537caa81b7bf3d0412bd05a54c24605d2ea1) | Проверено масштабирование через настоящий Kubernetes API |
 | [07be559](https://github.com/spasster/MTC-SRE/commit/07be5597a07081c4df8c297a4596778864a211e3) | Проверены убийство пода и безопасная реакция на отказы зависимостей |
+| [50798f3](https://github.com/spasster/MTC-SRE/commit/50798f363b2e069999ed689a359760d0f1ba8405) | Сохранено подтверждение защиты масштаба от Kubernetes API |
+| [9c3266f](https://github.com/spasster/MTC-SRE/commit/9c3266f93c52e7d02cdd8daed2c3ff81c05ae7cb) | Обновлены выводы по повторным экспериментам и отказам зависимостей |
+| [28717d8](https://github.com/spasster/MTC-SRE/commit/28717d8d2425943ca117c1c4595cbbe34c14f00e) | README приведён к завершённому контуру и проверенным ограничениям |
+| [cd01848](https://github.com/spasster/MTC-SRE/commit/cd01848bb59ab6013204b69d6d0b4d1e21d155d9) | План дополнен результатами выполненных этапов |
+| [bf9e2d9](https://github.com/spasster/MTC-SRE/commit/bf9e2d957156b04224ba056197d9a58686c43cc7) | Завершён повторный аудит кода и требований кейса |
+| [5402945](https://github.com/spasster/MTC-SRE/commit/5402945ee8c1cf4dcc8321404191856096835df2) | Описаны исправления и отдельные коммиты по пунктам |
