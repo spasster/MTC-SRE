@@ -39,6 +39,28 @@ class K8sActuator:
         deployment = self.apps.read_namespaced_deployment(name, namespace)
         return int(deployment.spec.replicas or 0)
 
+    @staticmethod
+    def _identity(deployment):
+        metadata = deployment.metadata
+        return {
+            "uid": metadata.uid,
+            "generation": metadata.generation,
+            "revision": (metadata.annotations or {}).get("deployment.kubernetes.io/revision"),
+        }
+
+    def deployment_identity(self, namespace: str, name: str):
+        return self._identity(self.apps.read_namespaced_deployment(name, namespace))
+
+    def _guarded_metadata(self, deployment, expected_identity):
+        if expected_identity is None:
+            return {}
+        if self._identity(deployment) != expected_identity:
+            raise ActionSkipped("Deployment изменился после запроса подтверждения")
+        return {
+            "uid": deployment.metadata.uid,
+            "resourceVersion": deployment.metadata.resource_version,
+        }
+
     def deployment_ready(self, namespace: str, name: str) -> bool:
         deployment = self.apps.read_namespaced_deployment(name, namespace)
         desired = int(deployment.spec.replicas or 0)
@@ -92,13 +114,18 @@ class K8sActuator:
             return False
         return True
 
-    def restart(self, namespace: str, name: str, dry_run: bool = False) -> str:
+    def restart(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None) -> str:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         kwargs = {"dry_run": "All"} if dry_run else {}
+        metadata = {}
+        if expected_identity is not None:
+            deployment = self.apps.read_namespaced_deployment(name, namespace)
+            metadata = self._guarded_metadata(deployment, expected_identity)
         self.apps.patch_namespaced_deployment(
             name,
             namespace,
             {
+                "metadata": metadata,
                 "spec": {
                     "template": {
                         "metadata": {
@@ -112,8 +139,9 @@ class K8sActuator:
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}restart {name}"
 
-    def rollback(self, namespace: str, name: str, dry_run: bool = False) -> str:
+    def rollback(self, namespace: str, name: str, dry_run: bool = False, expected_identity=None) -> str:
         deployment = self.apps.read_namespaced_deployment(name, namespace)
+        metadata = self._guarded_metadata(deployment, expected_identity)
         current = int((deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
         if current <= 1:
             raise ActionSkipped("Нет предыдущей ревизии для отката")
@@ -123,7 +151,9 @@ class K8sActuator:
         template = client.ApiClient().sanitize_for_serialization(previous.spec.template)
         template.get("metadata", {}).get("labels", {}).pop("pod-template-hash", None)
         kwargs = {"dry_run": "All"} if dry_run else {}
-        self.apps.patch_namespaced_deployment(name, namespace, {"spec": {"template": template}}, **kwargs)
+        self.apps.patch_namespaced_deployment(
+            name, namespace, {"metadata": metadata, "spec": {"template": template}}, **kwargs,
+        )
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}rollback to revision {current - 1}"
 

@@ -35,12 +35,12 @@ class FakeActuator:
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}delete pod {name}"
 
-    def rollback(self, namespace, name, dry_run=False):
+    def rollback(self, namespace, name, dry_run=False, expected_identity=None):
         self.calls.append(("rollback", namespace, name, dry_run))
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}rollback {name}"
 
-    def restart(self, namespace, name, dry_run=False):
+    def restart(self, namespace, name, dry_run=False, expected_identity=None):
         self.calls.append(("restart", namespace, name, dry_run))
         prefix = "dry-run " if dry_run else ""
         return f"{prefix}restart {name}"
@@ -50,6 +50,9 @@ class FakeActuator:
 
     def deployment_ready(self, namespace, name):
         return True
+
+    def deployment_identity(self, namespace, name):
+        return {"uid": name, "generation": 1, "revision": "2"}
 
 
 def evidence(**overrides):
@@ -502,6 +505,7 @@ def test_old_button_does_not_confirm_a_new_incident(monkeypatch):
     assert main.apply_callback(f"approve:{old_id}") == "ignored: stale approval"
     assert main._pending.approval_id == current_id
     assert main.actuator.calls == []
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(redis_error_ratio=0.9))
     assert main.apply_callback(f"approve:{current_id}").startswith("dry-run restart")
 
 
@@ -528,10 +532,37 @@ def test_callback_without_request_id_is_not_an_approval():
     assert main.actuator.calls == []
 
 
+def test_recovered_incident_cannot_apply_an_old_confirmation(monkeypatch):
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Релиз"))
+    callback = f"approve:{main._pending.approval_id}"
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
+    assert main.apply_callback(callback).startswith("skipped:")
+    assert main.actuator.calls == []
+    assert main._actions == 0
+
+
+def test_busy_callback_preserves_the_pending_request():
+    from app.diagnose import Decision
+
+    main.notifier = FakeTelegram()
+    main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Релиз"))
+    pending = main._pending
+    main._busy = True
+    assert main.apply_callback(f"approve:{pending.approval_id}") == "ignored: busy"
+    assert main._pending is pending
+    assert main.actuator.calls == []
+    assert main.handle_resolved()["result"] == "ignored: busy"
+
+
 def test_failed_rollback_does_not_send_success_or_close_the_incident(monkeypatch):
     from app.diagnose import Decision
 
     main.notifier = FakeTelegram()
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
+        revision_age_seconds=30, error_ratio=0.8, application_error_ratio=0.8))
     main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Проверка отказа API"))
     callback = f"approve:{main._pending.approval_id}"
 
@@ -551,6 +582,8 @@ def test_skipped_rollback_does_not_mark_recovery(monkeypatch):
     from app.k8s import ActionSkipped
 
     main.notifier = FakeTelegram()
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
+        revision_age_seconds=30, error_ratio=0.8, application_error_ratio=0.8))
     main.request_approval(Decision("bad_release", "approval", "rollback", "checkout", "Первый релиз"))
     callback = f"approve:{main._pending.approval_id}"
 

@@ -386,6 +386,7 @@ def request_approval(decision) -> str:
     bot = get_notifier()
     if not bot.enabled():
         return f"needs approval: {decision.action}"
+    decision.deployment_identity = get_actuator().deployment_identity(TARGET_NAMESPACE, decision.target)
     decision.approval_id = uuid.uuid4().hex
     approval_ttl = get_rules().get("approval_ttl_seconds", 300)
     decision.approval_expires_at = time.time() + approval_ttl
@@ -458,20 +459,37 @@ def notify_escalation(decision) -> str:
 
 def apply_confirmed(decision) -> str:
     actor = get_actuator()
+    current = decide(gather(TARGET_NAMESPACE, actuator=actor), get_rules())
+    if (current.diagnosis, current.action, current.target) != (decision.diagnosis, decision.action, decision.target):
+        raise ActionSkipped("Текущие метрики больше не подтверждают согласованное действие")
+    guard = {"expected_identity": decision.deployment_identity}
     if decision.action == "rollback":
-        preview = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=True)
-        applied = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=False)
+        preview = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=True, **guard)
+        applied = actor.rollback(TARGET_NAMESPACE, "checkout", dry_run=False, **guard)
         mark_action_applied("checkout")
         return f"{preview}; {applied}"
     if decision.action == "restart_redis":
-        preview = actor.restart(TARGET_NAMESPACE, "redis", dry_run=True)
-        applied = actor.restart(TARGET_NAMESPACE, "redis", dry_run=False)
+        preview = actor.restart(TARGET_NAMESPACE, "redis", dry_run=True, **guard)
+        applied = actor.restart(TARGET_NAMESPACE, "redis", dry_run=False, **guard)
         mark_action_applied("redis")
         return f"{preview}; {applied}"
     return "escalated"
 
 
 def apply_callback(data: str) -> str:
+    global _busy
+    with _lock:
+        if _busy:
+            return "ignored: busy"
+        _busy = True
+    try:
+        return _apply_callback(data)
+    finally:
+        with _lock:
+            _busy = False
+
+
+def _apply_callback(data: str) -> str:
     global _pending, _actions
     if not isinstance(data, str):
         return "ignored: invalid callback"
@@ -609,7 +627,7 @@ def check_recovery():
         if _applied_at is not None:
             mark_fixed()
         if _resolved_pending:
-            return handle_resolved(evidence=evidence)
+            return _handle_resolved(evidence=evidence)
         return {"result": "recovery confirmed"}
     finally:
         with _lock:
@@ -698,6 +716,19 @@ def _scale_to_baseline(evidence, limits) -> dict:
 
 
 def handle_resolved(evidence=None) -> dict:
+    global _busy
+    with _lock:
+        if _busy:
+            return {"result": "ignored: busy"}
+        _busy = True
+    try:
+        return _handle_resolved(evidence=evidence)
+    finally:
+        with _lock:
+            _busy = False
+
+
+def _handle_resolved(evidence=None) -> dict:
     global _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
     global _applied_at, _recovery_pending, _resolved_pending
     limits = get_rules()

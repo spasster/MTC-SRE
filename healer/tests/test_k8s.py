@@ -11,7 +11,8 @@ def actor(revision):
     instance = object.__new__(K8sActuator)
     instance.apps = Mock()
     instance.apps.read_namespaced_deployment.return_value = SimpleNamespace(
-        metadata=SimpleNamespace(annotations={"deployment.kubernetes.io/revision": str(revision)})
+        metadata=SimpleNamespace(annotations={"deployment.kubernetes.io/revision": str(revision)},
+                                 uid="checkout-uid", generation=3, resource_version="42")
     )
     return instance
 
@@ -21,6 +22,25 @@ def test_rollback_without_previous_revision_is_skipped():
     with pytest.raises(ActionSkipped):
         instance.rollback("demo", "checkout")
     instance.apps.patch_namespaced_deployment.assert_not_called()
+
+
+@pytest.mark.parametrize("action", ["rollback", "restart"])
+def test_changed_deployment_cannot_use_an_old_approval(action):
+    instance = actor(3)
+    expected = instance.deployment_identity("demo", "checkout")
+    instance.apps.read_namespaced_deployment.return_value.metadata.generation = 4
+    with pytest.raises(ActionSkipped, match="изменился"):
+        getattr(instance, action)("demo", "checkout", expected_identity=expected)
+    instance.apps.patch_namespaced_deployment.assert_not_called()
+
+
+def test_restart_checks_resource_version_at_the_api():
+    instance = actor(3)
+    expected = instance.deployment_identity("demo", "checkout")
+    instance.restart("demo", "checkout", dry_run=True, expected_identity=expected)
+    patch = instance.apps.patch_namespaced_deployment.call_args
+    assert patch.args[2]["metadata"] == {"uid": "checkout-uid", "resourceVersion": "42"}
+    assert patch.kwargs == {"dry_run": "All"}
 
 
 def test_rollback_without_previous_replicaset_is_skipped():
