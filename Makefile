@@ -3,7 +3,7 @@ CLUSTER ?= mtc
 NODE_LOG_HOST ?= colima
 TELEGRAM_VALUES := $(wildcard observability/telegram.local.yaml)
 
-.PHONY: up up-linux stack ready cluster cluster-linux images apps repos mesh observability dashboards blackbox loki logs logs-linux node-logs node-logs-linux alloy-host chaos
+.PHONY: up up-linux stack ready cluster cluster-linux images apps repos mesh observability dashboards blackbox loki logs logs-linux node-logs node-logs-linux alloy-host chaos llm
 
 up: cluster
 	$(MAKE) stack
@@ -137,3 +137,9 @@ chaos: repos
 		--set chaosDaemon.runtime=containerd \
 		--set chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock \
 		--set dashboard.securityMode=false
+
+llm:
+	kubectl apply -f k8s/ollama.yaml -f k8s/assistant.yaml
+	kubectl rollout status deployment/ollama -n assist --timeout=600s
+	kubectl exec -n assist deployment/ollama -- ollama pull qwen2.5:1.5b
+	kubectl rollout status deployment/sre-assistant -n heal --timeout=180s
