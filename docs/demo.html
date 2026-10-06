@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>Кейс 2 - обнаружение и восстановление</title>
+<style>
+body{margin:0;background:#101b2c;color:#edf4ff;font:22px system-ui,sans-serif}
+main{max-width:1160px;margin:32px auto;padding:0 24px}h1{font-size:36px;margin:8px 0}
+.muted{color:#aac1dd;font-size:18px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+.card{background:#1d2c44;padding:20px;border-radius:12px}.value{font-size:36px;margin-top:12px}
+canvas{width:100%;background:#19263c;border-radius:12px}.steps{line-height:1.8;margin:18px 0}
+.ok{color:#6fe0a5}.bad{color:#ff927b}#state{font-size:28px;padding:16px;background:#1d2c44;border-radius:12px}
+</style>
+<main>
+<p class="muted">МТС / кейс 2 / работающий контур Kubernetes</p>
+<h1>Обнаружение -> dry-run -> действие -> проверка SLO</h1>
+<p class="muted">checkout -> Redis + payment / STRICT mTLS / k6 + Blackbox / данные обновляются каждые 2 секунды</p>
+<div class="grid">
+<div class="card">p95 / цель &lt; 300 мс<div class="value" id="latency">Ожидание</div></div>
+<div class="card">5xx / цель ≤ 0.5%<div class="value" id="errors">Ожидание</div></div>
+<div class="card">Синтетика / HTTP 200<div class="value" id="probe">Ожидание</div></div>
+<div class="card">Готовые реплики<div class="value" id="replicas">Ожидание</div></div>
+</div>
+<canvas id="chart" width="1160" height="250"></canvas>
+<p class="muted">Жёлтая линия - p95 из Prometheus. Красная линия - порог 300 мс. Время - с открытия экрана.</p>
+<div id="state">Подключение к измерениям</div>
+<div class="steps" id="details"></div>
+<p class="muted">Принятие команды API и восстановление SLO измеряются отдельно. При отсутствии данных автоматическое закрытие запрещено.</p>
+<p class="muted" id="updated"></p>
+</main>
+<script>
+const history=[];const start=Date.now();const text=(id,value)=>document.getElementById(id).textContent=value;
+const number=(value,scale=1,digits=1)=>Number.isFinite(value)?(value*scale).toFixed(digits):'нет данных';
+function plot(){const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,1160,250);
+const max=Math.max(1,...history.map(x=>x[1]||0));const y=v=>218-v/max*185;
+ctx.strokeStyle='#ff927b';ctx.beginPath();ctx.moveTo(55,y(.3));ctx.lineTo(1140,y(.3));ctx.stroke();
+ctx.fillStyle='#aac1dd';ctx.font='16px system-ui';ctx.fillText('p95, секунды',16,24);ctx.fillText(max.toFixed(1),16,50);ctx.fillText('0',25,222);
+ctx.strokeStyle='#ffd27c';ctx.lineWidth=3;ctx.beginPath();history.forEach(([t,v],i)=>{if(v===null)return;const x=55+Math.min(t/240,1)*1085;i?ctx.lineTo(x,y(v)):ctx.moveTo(x,y(v));});ctx.stroke();
+for(let t=0;t<=240;t+=60)ctx.fillText(t+' с',55+t/240*1085,242);}
+async function refresh(){try{const response=await fetch('/data');if(!response.ok)throw Error();const d=await response.json();
+text('latency',number(d.p95,1000)+' мс');text('errors',number(d.error_ratio,100,2)+'%');text('probe',d.synthetic_success===1?'Успешна':'Сбой / нет данных');
+text('replicas',(d.rollout_ready?'Готово: ':'Ожидание: ')+d.replicas);history.push([(Date.now()-start)/1000,d.p95]);plot();
+const age=d.time-d.synthetic_time;
+const healthy=d.p95!==null&&d.p95>=0&&d.p95<.3&&d.error_ratio!==null&&d.error_ratio>=0&&d.error_ratio<=.005&&d.request_rate>0&&d.synthetic_success===1&&d.synthetic_time!==null&&age>=0&&age<=45&&d.rollout_ready;
+const h=d.healer||{},timing=h.api_accepted_at?h:(h.last_recovery||{});const action=timing.api_accepted_at,restored=timing.slo_restored_at;
+text('state',healthy?'SLO в норме':d.alerts_firing?'Тревога firing. Проверяется причина и допустимое действие.':'SLO нарушен. Накапливается окно алерта.');
+document.getElementById('state').className=healthy?'ok':'bad';
+const stamp=t=>t?new Date(t*1000).toLocaleTimeString('ru-RU'):'ещё не зафиксировано';
+text('details','Запросов/с: '+number(d.request_rate)+' | активных алертов: '+d.alerts_active+' | действий healer: '+(h.actions??'нет данных')+'\n');
+document.getElementById('details').append(document.createElement('br'),document.createTextNode('Команда API: '+stamp(action)+' | SLO подтверждён healer: '+stamp(restored)));
+text('updated','Время измерения Prometheus: '+new Date(d.time*1000).toLocaleString('ru-RU')+'. Секреты и содержимое корзины не отображаются.');
+}catch{ text('state','Данные недоступны. Восстановление не подтверждено.');}setTimeout(refresh,2000);}
+refresh();
+</script>
+</html>
