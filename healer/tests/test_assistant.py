@@ -55,3 +55,14 @@ def test_report_requires_authentication(monkeypatch):
     monkeypatch.setenv("HEALER_WEBHOOK_TOKEN", "test")
     monkeypatch.setattr(assistant, "gather", lambda namespace: (_ for _ in ()).throw(AssertionError("Запрос запрещён")))
     assert TestClient(assistant.app).post("/report").status_code == 401
+
+
+def test_model_text_cannot_override_measured_slo():
+    evidence = {"request_rate": 3, "error_ratio": 0, "p95": .26,
+                "synthetic_success": 1, "synthetic_age_seconds": 5}
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(
+        200, json={"done": True, "response": "Ошибочная рекомендация модели: заменить Redis."})))
+    result = assistant.build_report(evidence, client=client)
+    assert result["slo_assessment"]["state"] == "healthy"
+    assert result["slo_assessment"]["source"] == "measured_metrics"
+    assert result["actions_applied"] == []

@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException
 
 from app.diagnose import decide
 from app.evidence import gather
-from app.main import authorize_webhook
+from app.main import authorize_webhook, _healthy
 
 app = FastAPI(title="SRE-ассистент")
 NUMERIC_FIELDS = (
@@ -43,10 +43,19 @@ def build_report(evidence, client=None):
     source = Path(__file__).resolve().parents[1]
     rules = yaml.safe_load((source / "rules.yaml").read_text(encoding="utf-8"))
     decision = decide(evidence, rules).as_dict()
+    complete = (
+        not snapshot["collection_failed"]
+        and all(snapshot[key] is not None for key in ("p95", "error_ratio", "request_rate", "synthetic_success", "synthetic_age_seconds"))
+        and snapshot["request_rate"] > 0 and snapshot["p95"] >= 0
+        and 0 <= snapshot["error_ratio"] <= 1 and 0 <= snapshot["synthetic_age_seconds"] <= 45
+    )
+    assessment = {"state": "healthy" if complete and _healthy(evidence, rules) else ("violated" if complete else "unknown"),
+                  "p95_limit_seconds": rules["slow_seconds"], "error_ratio_limit": rules["error_ratio"],
+                  "source": "measured_metrics"}
     payload = {
         "model": os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b"),
         "system": (source / "prompts/incident.md").read_text(encoding="utf-8"),
-        "prompt": json.dumps({"метрики": snapshot, "решение_правил": decision}, ensure_ascii=False),
+        "prompt": json.dumps({"оценка_SLO": assessment, "метрики": snapshot, "решение_правил": decision}, ensure_ascii=False),
         "stream": False,
         "options": {"num_predict": 384, "num_ctx": 2048, "num_thread": 2, "temperature": 0.1},
         "keep_alive": "5m",
@@ -66,9 +75,9 @@ def build_report(evidence, client=None):
     finally:
         if own_client:
             http.close()
-    return {"source": "local_llm", "model": payload["model"], "snapshot": snapshot,
+    return {"source": "local_llm", "model": payload["model"], "snapshot": snapshot, "slo_assessment": assessment,
             "rule_decision": decision, "report": answer[:16000], "actions_applied": [],
-            "notice": "Рекомендации модели требуют проверки. Ассистент не меняет кластер."}
+            "notice": "Оценка SLO вычислена по метрикам. Текст модели не проверен и может противоречить данным. Ассистент не меняет кластер."}
 
 
 @app.get("/health")
