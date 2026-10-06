@@ -1,0 +1,24 @@
+{
+  "checked_at": "2026-10-06T19:45:06.645598+00:00",
+  "cases": [
+    {
+      "scenario": "kill",
+      "replacement_observed": true,
+      "healthy_after": true,
+      "healer_action_applied": false,
+      "passed": true
+    },
+    {
+      "scenario": "partition",
+      "diagnosis": "partition",
+      "action": "none",
+      "result": "escalated",
+      "error_ratio": 0.4458372228795859,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true,
+      "passed": true
+    }
+  ],
+  "passed": false,
+  "error": "Во время отказа зависимости неожиданно заменён под"
+}
