@@ -102,6 +102,16 @@ def test_old_resolved_does_not_start_a_new_incident():
     assert main._broke_at is None
 
 
+def test_delayed_firing_does_not_start_an_incident_when_slo_is_healthy(monkeypatch):
+    monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
+    payload = alert()
+    payload["startsAt"] = "2026-10-01T00:00:00Z"
+    result = client.post("/webhook", json={"alerts": [payload]}).json()["results"][0]
+    assert result["result"] == "ignored: healthy"
+    assert main._broke_at is None
+    assert main.actuator.calls == []
+
+
 def test_completed_incident_timings_remain_available(monkeypatch):
     main._broke_at, main._applied_at, main._fixed_at = 1000, 1005, 1025
     monkeypatch.setattr(main.time, "time", lambda: 1030)
@@ -472,7 +482,12 @@ def test_partition_reports_only_the_resolved_time(monkeypatch):
     monkeypatch.setattr(
         main,
         "gather",
-        lambda namespace, actuator=None: evidence(payment_timeout_ratio=0.8, pods=list(HEALTHY)),
+        lambda namespace, actuator=None: evidence(
+            error_ratio=0.8,
+            payment_error_ratio=0.8,
+            payment_timeout_ratio=0.8,
+            pods=list(HEALTHY),
+        ),
     )
     firing = alert()
     firing["startsAt"] = "2026-10-05T10:30:51Z"

@@ -833,8 +833,6 @@ def handle_alert(alert: dict) -> dict:
         return body
     if alert.get("status") != "firing":
         return {"alertname": alertname, "result": "ignored: not firing"}
-    remember_start(alert)
-
     limits = get_rules()
     with _lock:
         if _busy:
@@ -842,6 +840,9 @@ def handle_alert(alert: dict) -> dict:
         _busy = True
     try:
         evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
+        if _healthy(evidence, limits):
+            return {"alertname": alertname, "result": "ignored: healthy", "action": "none", "mode": "ignore"}
+        remember_start(alert)
         decision = decide(evidence, limits)
         remember_title(decision)
         cooling = _acted_alert is not None and time.time() < _cooldown_until
