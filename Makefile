@@ -97,6 +97,7 @@ observability: repos
 	kubectl wait --for=condition=Established --timeout=120s \
 		crd/servicemonitors.monitoring.coreos.com crd/prometheusrules.monitoring.coreos.com
 	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f observability/healer-rules.yaml -f k8s/healer.yaml
+	kubectl apply -f observability/slo-budget.yaml
 	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
 	$(MAKE) blackbox
 

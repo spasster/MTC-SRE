@@ -1,0 +1,140 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: checkout-budget
+  namespace: obs
+  labels:
+    release: kube-prom
+spec:
+  groups:
+  - name: checkout.budget
+    interval: 15s
+    rules:
+    - record: checkout:sli_bad_ratio:5m
+      expr: 1 - min(avg_over_time(probe_success{service="checkout",target_namespace="demo"}[5m]))
+      labels:
+        service: checkout
+        sli: availability
+    - record: checkout:sli_bad_ratio:5m
+      expr: sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[5m])) / sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[5m]))
+      labels:
+        service: checkout
+        sli: errors
+    - record: checkout:sli_bad_ratio:5m
+      expr: 1 - sum(rate(http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work",le="0.3"}[5m])) / sum(rate(http_request_duration_seconds_count{namespace="demo",job="checkout",path="/work"}[5m]))
+      labels:
+        service: checkout
+        sli: latency
+    - record: checkout:sli_bad_ratio:30m
+      expr: 1 - min(avg_over_time(probe_success{service="checkout",target_namespace="demo"}[30m]))
+      labels:
+        service: checkout
+        sli: availability
+    - record: checkout:sli_bad_ratio:30m
+      expr: sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[30m])) / sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[30m]))
+      labels:
+        service: checkout
+        sli: errors
+    - record: checkout:sli_bad_ratio:30m
+      expr: 1 - sum(rate(http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work",le="0.3"}[30m])) / sum(rate(http_request_duration_seconds_count{namespace="demo",job="checkout",path="/work"}[30m]))
+      labels:
+        service: checkout
+        sli: latency
+    - record: checkout:sli_bad_ratio:1h
+      expr: 1 - min(avg_over_time(probe_success{service="checkout",target_namespace="demo"}[1h]))
+      labels:
+        service: checkout
+        sli: availability
+    - record: checkout:sli_bad_ratio:1h
+      expr: sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[1h])) / sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[1h]))
+      labels:
+        service: checkout
+        sli: errors
+    - record: checkout:sli_bad_ratio:1h
+      expr: 1 - sum(rate(http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work",le="0.3"}[1h])) / sum(rate(http_request_duration_seconds_count{namespace="demo",job="checkout",path="/work"}[1h]))
+      labels:
+        service: checkout
+        sli: latency
+    - record: checkout:sli_bad_ratio:6h
+      expr: 1 - min(avg_over_time(probe_success{service="checkout",target_namespace="demo"}[6h]))
+      labels:
+        service: checkout
+        sli: availability
+    - record: checkout:sli_bad_ratio:6h
+      expr: sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[6h])) / sum(rate(http_requests_total{namespace="demo",job="checkout",path="/work"}[6h]))
+      labels:
+        service: checkout
+        sli: errors
+    - record: checkout:sli_bad_ratio:6h
+      expr: 1 - sum(rate(http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work",le="0.3"}[6h])) / sum(rate(http_request_duration_seconds_count{namespace="demo",job="checkout",path="/work"}[6h]))
+      labels:
+        service: checkout
+        sli: latency
+    - record: checkout:sli_bad_ratio:30d
+      expr: 1 - min(avg_over_time(probe_success{service="checkout",target_namespace="demo"}[30d]))
+      labels:
+        service: checkout
+        sli: availability
+    - record: checkout:sli_bad_ratio:30d
+      expr: sum(increase(http_requests_total{namespace="demo",job="checkout",path="/work",status=~"5.."}[30d])) / sum(increase(http_requests_total{namespace="demo",job="checkout",path="/work"}[30d]))
+      labels:
+        service: checkout
+        sli: errors
+    - record: checkout:sli_bad_ratio:30d
+      expr: 1 - sum(increase(http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work",le="0.3"}[30d])) / sum(increase(http_request_duration_seconds_count{namespace="demo",job="checkout",path="/work"}[30d]))
+      labels:
+        service: checkout
+        sli: latency
+    - record: checkout:probe_history_coverage:1h
+      expr: clamp_max(min(count_over_time(probe_success{service="checkout",target_namespace="demo"}[1h])) * 15 / 3600, 1)
+      labels:
+        service: checkout
+    - record: checkout:probe_history_coverage:6h
+      expr: clamp_max(min(count_over_time(probe_success{service="checkout",target_namespace="demo"}[6h])) * 15 / 21600, 1)
+      labels:
+        service: checkout
+    - record: checkout:probe_history_coverage:30d
+      expr: clamp_max(min(count_over_time(probe_success{service="checkout",target_namespace="demo"}[30d])) * 15 / 2592000, 1)
+      labels:
+        service: checkout
+    - record: checkout:slo_target
+      expr: vector(0.995)
+      labels:
+        service: checkout
+        sli: availability
+    - record: checkout:slo_target
+      expr: vector(0.995)
+      labels:
+        service: checkout
+        sli: errors
+    - record: checkout:slo_target
+      expr: vector(0.95)
+      labels:
+        service: checkout
+        sli: latency
+    - record: checkout:slo_budget_remaining:30d
+      expr: clamp_min(clamp_max(1 - checkout:sli_bad_ratio:30d / on(sli) (1 - checkout:slo_target), 1), 0)
+      labels:
+        service: checkout
+    - alert: CheckoutBudgetFastBurn
+      expr: (checkout:sli_bad_ratio:1h / on(sli) (1 - checkout:slo_target) > 14.4) and on(sli) (checkout:sli_bad_ratio:5m / on(sli) (1 - checkout:slo_target) > 14.4)
+        and on() (checkout:probe_history_coverage:1h >= 0.95)
+      for: 2m
+      labels:
+        service: checkout
+        severity: critical
+      annotations:
+        summary: Бюджет SLO расходуется быстрее 14.4 нормы
+        description: Подтверждено в окнах 1h и 5m; покрытие длинного окна не менее 95%. Проверить данные и runbook, команда Kubernetes автоматически не выполняется.
+        runbook_url: docs/runbooks/slo-budget.md
+    - alert: CheckoutBudgetSlowBurn
+      expr: (checkout:sli_bad_ratio:6h / on(sli) (1 - checkout:slo_target) > 6) and on(sli) (checkout:sli_bad_ratio:30m / on(sli) (1 - checkout:slo_target) > 6) and
+        on() (checkout:probe_history_coverage:6h >= 0.95)
+      for: 2m
+      labels:
+        service: checkout
+        severity: warning
+      annotations:
+        summary: Бюджет SLO расходуется быстрее 6 норм
+        description: Подтверждено в окнах 6h и 30m; покрытие длинного окна не менее 95%. Проверить данные и runbook, команда Kubernetes автоматически не выполняется.
+        runbook_url: docs/runbooks/slo-budget.md

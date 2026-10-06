@@ -139,8 +139,8 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Запас бюджета за 5 минут",
-      "description": "1 значит весь бюджет 0.5% ошибок ещё цел. 0 значит бюджет выбран. Ниже нуля - SLO уже нарушен.",
+      "title": "Остаток бюджета ошибок по накопленным данным 30 дней",
+      "description": "Не является доказательством месячного SLO при неполной истории. Покрытие данных показано ниже.",
       "gridPos": {
         "h": 6,
         "w": 8,
@@ -189,7 +189,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "1 - ((1 - (sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[5m])))) / 0.005)",
+          "expr": "checkout:slo_budget_remaining:30d{sli=\"errors\"}",
           "legendFormat": "budget"
         }
       ]
@@ -441,9 +441,209 @@
       },
       "targets": [
         {
-          "expr": "probe_duration_seconds{service=\"checkout\"}",
+          "expr": "probe_duration_seconds{service=\"checkout\",target_namespace=\"demo\"}",
           "refId": "A",
           "legendFormat": "checkout"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Покрытие синтетики за 30 дней",
+      "description": "Не является доказательством месячного SLO при неполной истории. Покрытие данных показано ниже.",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 23
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "checkout:probe_history_coverage:30d",
+          "legendFormat": "budget"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Остаток бюджета доступности",
+      "description": "Не является доказательством месячного SLO при неполной истории. Покрытие данных показано ниже.",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 23
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "checkout:slo_budget_remaining:30d{sli=\"availability\"}",
+          "legendFormat": "budget"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Остаток бюджета задержки",
+      "description": "Не является доказательством месячного SLO при неполной истории. Покрытие данных показано ниже.",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 23
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "checkout:slo_budget_remaining:30d{sli=\"latency\"}",
+          "legendFormat": "budget"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Скорость расхода бюджета, окно 1 час",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "checkout:sli_bad_ratio:1h / on(sli) (1 - checkout:slo_target)",
+          "legendFormat": "{{sli}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ]
     }

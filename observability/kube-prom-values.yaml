@@ -11,6 +11,14 @@ grafana:
         urlDisplayLabel: Трейс
 prometheus:
   prometheusSpec:
+    retention: 35d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 10Gi
     evaluationInterval: 15s
     enableFeatures:
       - exemplar-storage

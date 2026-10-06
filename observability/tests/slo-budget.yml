@@ -1,0 +1,64 @@
+rule_files:
+  - slo-budget-rules.yml
+evaluation_interval: 15s
+tests:
+  - interval: 15s
+    input_series:
+      - series: probe_success{service="checkout",target_namespace="demo"}
+        values: 1x1600
+      - series: http_requests_total{namespace="demo",job="checkout",path="/work",status="200"}
+        values: 0+90x1600
+      - series: http_requests_total{namespace="demo",job="checkout",path="/work",status="500"}
+        values: 0+10x1600
+      - series: http_request_duration_seconds_count{namespace="demo",job="checkout",path="/work"}
+        values: 0+100x1600
+      - series: http_request_duration_seconds_bucket{namespace="demo",job="checkout",path="/work",le="0.3"}
+        values: 0+100x1600
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CheckoutBudgetFastBurn
+        exp_alerts: []
+      - eval_time: 65m
+        alertname: CheckoutBudgetFastBurn
+        exp_alerts:
+          - exp_labels:
+              sli: errors
+              service: checkout
+              severity: critical
+            exp_annotations:
+              summary: Бюджет SLO расходуется быстрее 14.4 нормы
+              description: Подтверждено в окнах 1h и 5m; покрытие длинного окна не менее 95%. Проверить данные и runbook, команда Kubernetes автоматически не выполняется.
+              runbook_url: docs/runbooks/slo-budget.md
+      - eval_time: 370m
+        alertname: CheckoutBudgetSlowBurn
+        exp_alerts:
+          - exp_labels:
+              sli: errors
+              service: checkout
+              severity: warning
+            exp_annotations:
+              summary: Бюджет SLO расходуется быстрее 6 норм
+              description: Подтверждено в окнах 6h и 30m; покрытие длинного окна не менее 95%. Проверить данные и runbook, команда Kubernetes автоматически не выполняется.
+              runbook_url: docs/runbooks/slo-budget.md
+  - interval: 15s
+    input_series: []
+    promql_expr_test:
+      - expr: checkout:slo_budget_remaining:30d
+        eval_time: 10m
+        exp_samples: []
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CheckoutBudgetFastBurn
+        exp_alerts: []
+  - interval: 15s
+    input_series:
+      - series: probe_success{service="checkout",target_namespace="demo"}
+        values: 1x320
+      - series: http_requests_total{namespace="demo",job="checkout",path="/work",status="200"}
+        values: 0+90x260 23400+100x60
+      - series: http_requests_total{namespace="demo",job="checkout",path="/work",status="500"}
+        values: 0+10x260 2600+0x60
+    alert_rule_test:
+      - eval_time: 72m
+        alertname: CheckoutBudgetFastBurn
+        exp_alerts: []
