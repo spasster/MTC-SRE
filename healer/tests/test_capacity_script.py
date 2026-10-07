@@ -101,8 +101,8 @@ def test_capacity_rejects_job_replacement_after_log_read(monkeypatch):
         capacity.job_summary(owner)
 
 
-@pytest.mark.parametrize("continue_series,expected_stages", [(False, 2), (True, 3)])
-def test_cpu_calibration_can_continue_after_failure_and_keeps_first_boundary(monkeypatch, tmp_path, continue_series, expected_stages):
+@pytest.mark.parametrize("continue_series,expected_stages,baseline_ok", [(False, 2, True), (True, 3, True), (True, 3, False)])
+def test_cpu_calibration_can_continue_after_failure_and_keeps_first_boundary(monkeypatch, tmp_path, continue_series, expected_stages, baseline_ok):
     objects, target, commands = controlled_capacity(monkeypatch, tmp_path)
     monkeypatch.setattr(sys, "argv", ["capacity", "--rates", "1,2,3", "--replicas", "2", "--duration", "90",
                                      "--output", str(target)] + (["--continue-after-failure"] if continue_series else []))
@@ -114,8 +114,9 @@ def test_cpu_calibration_can_continue_after_failure_and_keeps_first_boundary(mon
             self.name = name
         def mutate(self, replicas):
             objects[self.name]["spec"]["replicas"] = replicas
+            self.changed = True
         def cleanup(self):
-            pass
+            self.changed = False
 
     class Job:
         kind, name, namespace, generation = "Job", "k6-spike", "demo", 1
@@ -132,6 +133,14 @@ def test_cpu_calibration_can_continue_after_failure_and_keeps_first_boundary(mon
 
     monkeypatch.setattr(capacity, "OwnedDeployment", Deployment)
     monkeypatch.setattr(capacity, "OwnedResource", Job)
+    def confirmed_baseline(owners, report):
+        if not baseline_ok:
+            raise RuntimeError("Базовый SLO не подтвержден")
+        report["baseline_restored"] = {"passed": True}
+    monkeypatch.setattr(capacity, "confirm_baseline", confirmed_baseline)
+    def restored_checkout(owner):
+        return {"attempted": True, "confirmed_zero": True}
+    monkeypatch.setattr(capacity, "reset_checkout_for_baseline", restored_checkout)
     monkeypatch.setattr(capacity.time, "sleep", lambda *args: None)
     monkeypatch.setattr(capacity, "metrics", lambda *args: {"p95": .05, "error_ratio": 0, "request_rate": 1,
         "synthetic_success": 1, "synthetic_time": 100, "time": 110, "rollout_ready": True})
@@ -142,9 +151,132 @@ def test_cpu_calibration_can_continue_after_failure_and_keeps_first_boundary(mon
         "dropped_iterations": {"count": 0}, "http_req_failed": {"rate": 0},
         "http_req_duration": {"p(95)": 50 if counter["jobs"] == 1 else 500}})
 
-    capacity.main()
+    if baseline_ok:
+        capacity.main()
+    else:
+        with pytest.raises(SystemExit, match="Базовый контур"):
+            capacity.main()
     report = json.loads(target.read_text(encoding="utf-8"))
-    assert report["passed"] is True and len(report["stages"]) == expected_stages
+    assert report["passed"] is baseline_ok and len(report["stages"]) == expected_stages
     assert report["bounds"]["2"] == {"highest_tested_passing_rps": 1, "first_tested_failing_rps": 2}
     assert all(row["load_active"] is True for row in report["stages"][0]["samples"][:3])
     assert report["stages"][0]["samples"][-1]["load_active"] is False
+
+
+def baseline_owner(monkeypatch):
+    original = {"metadata": {"uid": "own-checkout", "generation": 1, "annotations": {}},
+                "spec": {"replicas": 2, "template": {"spec": {"containers": []}}},
+                "status": {"replicas": 2, "updatedReplicas": 2, "readyReplicas": 2, "availableReplicas": 2,
+                           "observedGeneration": 1}}
+    owner = experiment.OwnedDeployment("checkout", "demo", copy.deepcopy(original), "owned-series")
+    owner.changed = True
+    owner.expected = copy.deepcopy(original)
+    owner.expected["metadata"]["annotations"][experiment.OWNER_ANNOTATION] = owner.marker
+    writes = []
+    def mutate(replicas, **kwargs):
+        writes.append(replicas)
+        owner.expected["spec"]["replicas"] = replicas
+        owner.expected["metadata"]["generation"] += 1
+        owner.expected["status"] = {"replicas": replicas, "observedGeneration": owner.expected["metadata"]["generation"]}
+    def cleanup():
+        mutate(2)
+        owner.changed = False
+        owner.expected["metadata"]["annotations"] = {}
+    monkeypatch.setattr(owner, "mutate", mutate)
+    monkeypatch.setattr(owner, "cleanup", cleanup)
+    monkeypatch.setattr(capacity, "deployment", lambda *args: copy.deepcopy(owner.expected))
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: json.dumps({"items": []}))
+    return owner, writes
+
+
+def test_capacity_baseline_waits_for_stopped_processes_before_restore(monkeypatch):
+    owner, writes = baseline_owner(monkeypatch)
+    pending = iter([[{"metadata": {"uid": "old-pod"}}], []])
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: json.dumps({"items": next(pending)}) if "get" in args else "")
+    monkeypatch.setattr(capacity.time, "sleep", lambda *args: None)
+    result = capacity.reset_checkout_for_baseline(owner)
+    assert writes == [0, 2] and result["confirmed_zero"] is True
+    assert owner.changed is False and owner.expected["spec"] == owner.original["spec"]
+
+
+def test_capacity_baseline_preserves_foreign_scale_during_wait(monkeypatch):
+    owner, writes = baseline_owner(monkeypatch)
+    def foreign(*args):
+        obj = copy.deepcopy(owner.expected)
+        obj["spec"]["replicas"] = 7
+        return obj
+    monkeypatch.setattr(capacity, "deployment", foreign)
+    with pytest.raises(RuntimeError, match="другим участником"):
+        capacity.reset_checkout_for_baseline(owner)
+    assert writes == [0] and owner.changed is True
+
+
+def test_capacity_baseline_unknown_result_does_not_restart(monkeypatch):
+    owner, writes = baseline_owner(monkeypatch)
+    owner.unknown = True
+    with pytest.raises(RuntimeError, match="Владение"):
+        capacity.reset_checkout_for_baseline(owner)
+    assert writes == []
+
+
+def test_capacity_baseline_cannot_accept_zero_read_after_deadline(monkeypatch):
+    owner, writes = baseline_owner(monkeypatch)
+    clock = [0]
+    monkeypatch.setattr(capacity.time, "monotonic", lambda: clock[0])
+    def late(*args, **kwargs):
+        clock[0] = 6
+        return json.dumps({"items": []})
+    monkeypatch.setattr(capacity, "cmd", late)
+    with pytest.raises(RuntimeError, match="не подтверждено"):
+        capacity.reset_checkout_for_baseline(owner, timeout=5)
+    assert writes == [0]
+
+
+def restored_baseline(monkeypatch):
+    owners, objects = {}, {}
+    for namespace, name, replicas in [("demo", "checkout", 2), ("demo", "k6-background", 1), ("heal", "healer", 1)]:
+        obj = {"metadata": {"uid": "own-" + name, "generation": 2, "annotations": {}}, "spec": {"replicas": replicas},
+               "status": {"replicas": replicas, "updatedReplicas": replicas, "readyReplicas": replicas,
+                          "availableReplicas": replicas, "observedGeneration": 2}}
+        owners[(namespace, name)] = SimpleNamespace(original=copy.deepcopy(obj), expected=copy.deepcopy(obj), changed=False, unknown=False)
+        objects[(namespace, name)] = obj
+    monkeypatch.setattr(capacity, "deployment", lambda name, namespace: copy.deepcopy(objects[(namespace, name)]))
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: "")
+    monkeypatch.setattr(capacity, "wait_healthy", lambda *args: [{"slo_healthy": True}])
+    monkeypatch.setattr(capacity, "wait_incident_closed", lambda **kwargs: {"incident_closed": True})
+    return owners, objects
+
+
+def test_capacity_confirmed_baseline_keeps_health_and_closed_incident(monkeypatch):
+    owners, objects = restored_baseline(monkeypatch)
+    report = {}
+    capacity.confirm_baseline(owners, report)
+    assert report["baseline_restored"]["passed"] is True and report["baseline_restored"]["health_checked"] is True
+    assert len(report["baseline_restored"]["components"]) == 3
+    assert report["baseline_health_samples"] == [{"slo_healthy": True}]
+    assert report["baseline_incident"]["incident_closed"] is True
+
+
+def test_capacity_baseline_rechecks_operator_change_after_healthy_read(monkeypatch):
+    owners, objects = restored_baseline(monkeypatch)
+    def changed(*args):
+        objects[("demo", "checkout")]["spec"]["replicas"] = 7
+        objects[("demo", "checkout")]["metadata"]["generation"] = 3
+        return [{"slo_healthy": True}]
+    monkeypatch.setattr(capacity, "wait_healthy", changed)
+    report = {}
+    with pytest.raises(RuntimeError, match="не подтверждены"):
+        capacity.confirm_baseline(owners, report)
+    assert "baseline_restored" not in report and objects[("demo", "checkout")]["spec"]["replicas"] == 7
+
+
+def test_capacity_failed_baseline_keeps_precondition_samples(monkeypatch):
+    owners, objects = restored_baseline(monkeypatch)
+    def unhealthy(*args):
+        raise experiment.InitialHealthError([{"p95": 2, "slo_healthy": False}])
+    monkeypatch.setattr(capacity, "wait_healthy", unhealthy)
+    report = {}
+    with pytest.raises(experiment.InitialHealthError):
+        capacity.confirm_baseline(owners, report)
+    assert report["baseline_health_samples"] == [{"p95": 2, "slo_healthy": False}]
+    assert "baseline_restored" not in report

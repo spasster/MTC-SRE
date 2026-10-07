@@ -1,0 +1,456 @@
+{
+  "started_at": "2026-10-07T09:43:45.502661+00:00",
+  "source_commit": "3f49a38a140db757534e4720cb8ea83d37df1127",
+  "cluster": "mtc-review",
+  "verifier_sha256": "b6df92e9eaa240b073120d1dc8c4a20c59fe3dfc5262d8251644c8c44e6231ef",
+  "duration_seconds": 90,
+  "stages": [
+    {
+      "replicas": 5,
+      "planned_rps": 3,
+      "samples": [
+        {
+          "p95": 0.16099999999999998,
+          "request_rate": 0.8666666666666666,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366261.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 1.0,
+          "cpu_throttle": 0.7279411764705882,
+          "time": 1791366267.7974238,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.14102390198284398,
+          "checkout_ram_bytes": 249528320.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.18370082535980317,
+          "request_rate": 0.2688293829684619,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366276.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.49275362318840576,
+          "time": 1791366279.2938228,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.11207058590376588,
+          "checkout_ram_bytes": 249548800.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.17425224398673755,
+          "request_rate": 0.7558001237092026,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366276.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.38550057537399307,
+          "time": 1791366290.8555984,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.10807425199487994,
+          "checkout_ram_bytes": 250380288.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.17253902017731282,
+          "request_rate": 1.4063471607462266,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366291.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.05699481865284975,
+          "time": 1791366302.133201,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.04057291538943884,
+          "checkout_ram_bytes": 250552320.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.16186225544075622,
+          "request_rate": 2.2490077777777775,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366306.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.0779816513761468,
+          "time": 1791366313.5155675,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.07368018872338175,
+          "checkout_ram_bytes": 251105280.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.15898942752966438,
+          "request_rate": 2.938458889152269,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366321.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.08542713567839195,
+          "time": 1791366325.1410563,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.0916973324379737,
+          "checkout_ram_bytes": 251019264.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.15718751171896156,
+          "request_rate": 3.0444562965596766,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366321.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.10222222222222223,
+          "time": 1791366336.3569531,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.08757046135849986,
+          "checkout_ram_bytes": 251420672.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.16550007444560244,
+          "request_rate": 3.066680494134437,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366336.014,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11976047904191618,
+          "time": 1791366347.651569,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.09250980491380395,
+          "checkout_ram_bytes": 251441152.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.17043479878147158,
+          "request_rate": 3.0222088891851784,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366351.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11875000000000001,
+          "time": 1791366359.031567,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.08781436821477598,
+          "checkout_ram_bytes": 251453440.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.16999998941816852,
+          "request_rate": 2.7999861731467695,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366366.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.12849162011173185,
+          "time": 1791366370.6591341,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.08310110604246743,
+          "checkout_ram_bytes": 251506688.0,
+          "load_active": false
+        }
+      ],
+      "passed": true,
+      "job_uid": "3d62aaa8-1ca6-4fa4-b6dc-78bfc1b9eec1",
+      "client": {
+        "http_reqs": {
+          "count": 271,
+          "rate": 3.0092820987418416
+        },
+        "http_req_duration": {
+          "avg": 63.32656829520293,
+          "min": 25.396352,
+          "med": 50.103836,
+          "max": 204.763028,
+          "p(90)": 113.498989,
+          "p(95)": 121.55578750000001
+        },
+        "http_req_failed": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 271
+        },
+        "dropped_iterations": {},
+        "checks": {
+          "rate": 1,
+          "passes": 271,
+          "fails": 0
+        }
+      },
+      "planned_iterations": 270,
+      "sent": 271,
+      "dropped": 0,
+      "actual_client_rps": 3.011111111111111,
+      "client_p95_ms": 121.55578750000001,
+      "checkout_cpu_cores_max": 0.14102390198284398,
+      "checkout_ram_bytes_max": 251506688.0
+    },
+    {
+      "replicas": 5,
+      "planned_rps": 36,
+      "samples": [
+        {
+          "p95": 0.15100011555350118,
+          "request_rate": 1.0888814816460868,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366396.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.05555555555555556,
+          "time": 1791366397.1375527,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.0513507581172081,
+          "checkout_ram_bytes": 251564032.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.24000008888691354,
+          "request_rate": 1.333331358068586,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366396.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.01652892561983471,
+          "time": 1791366408.620628,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.022818893881192494,
+          "checkout_ram_bytes": 251850752.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.22769187114375267,
+          "request_rate": 9.68884543306445,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366411.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.14150943396226415,
+          "time": 1791366420.141413,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.04825377046702351,
+          "checkout_ram_bytes": 252489728.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.21365884452051997,
+          "request_rate": 19.28866225295772,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366426.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.339041095890411,
+          "time": 1791366431.834454,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.29811786955637964,
+          "checkout_ram_bytes": 254029824.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.26873023662659307,
+          "request_rate": 30.827825385023317,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366441.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.49470899470899476,
+          "time": 1791366443.3932538,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.6100768877765841,
+          "checkout_ram_bytes": 254484480.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.2846180668510523,
+          "request_rate": 34.110644807730374,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366441.013,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5339578454332553,
+          "time": 1791366455.0884488,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.7397994767881163,
+          "checkout_ram_bytes": 255684608.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.3189064104417418,
+          "request_rate": 36.14740636287675,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366456.017,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.6023809523809524,
+          "time": 1791366467.2227547,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.7310190479259187,
+          "checkout_ram_bytes": 255766528.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.37610358251680465,
+          "request_rate": 36.160573750186806,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366471.015,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.6243386243386242,
+          "time": 1791366479.0571213,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.675868522688154,
+          "checkout_ram_bytes": 255926272.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.37737704128796273,
+          "request_rate": 35.882669550336416,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366486.014,
+          "alerts_firing": 0.0,
+          "alerts_active": 1.0,
+          "cpu_throttle": 0.6398809523809524,
+          "time": 1791366490.6703153,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.7050832139541326,
+          "checkout_ram_bytes": 256569344.0,
+          "load_active": true
+        },
+        {
+          "p95": 0.39197054590516617,
+          "request_rate": 30.738776245169376,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791366501.014,
+          "alerts_firing": 0.0,
+          "alerts_active": 1.0,
+          "cpu_throttle": 0.6477611940298507,
+          "time": 1791366502.2612424,
+          "replicas": 5,
+          "rollout_ready": true,
+          "checkout_cpu_cores": 0.6970035080772734,
+          "checkout_ram_bytes": 257003520.0,
+          "load_active": false
+        }
+      ],
+      "passed": false,
+      "job_uid": "0522a4ac-d2ae-43ea-a6c4-e75f0625d09e",
+      "client": {
+        "http_reqs": {
+          "count": 3241,
+          "rate": 35.96934114658802
+        },
+        "http_req_duration": {
+          "min": 25.378683,
+          "med": 107.155851,
+          "max": 1273.419567,
+          "p(90)": 286.101917,
+          "p(95)": 358.275701,
+          "avg": 141.86675712249297
+        },
+        "http_req_failed": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 3241
+        },
+        "dropped_iterations": {},
+        "checks": {
+          "fails": 0,
+          "rate": 1,
+          "passes": 3241
+        }
+      },
+      "planned_iterations": 3240,
+      "sent": 3241,
+      "dropped": 0,
+      "actual_client_rps": 36.01111111111111,
+      "client_p95_ms": 358.275701,
+      "checkout_cpu_cores_max": 0.7397994767881163,
+      "checkout_ram_bytes_max": 257003520.0
+    }
+  ],
+  "bounds": {
+    "5": {
+      "highest_tested_passing_rps": 3,
+      "first_tested_failing_rps": 36
+    }
+  },
+  "passed": true,
+  "continue_after_failure": true,
+  "method": "Фоновая нагрузка и healer выключены на время серии; 2 и 5 реплик проверяются при одинаковом профиле. Каждый RPS держится не менее 90 с. Результаты относятся только к этому контуру.",
+  "checkout_resources_per_replica": {
+    "limits": {
+      "cpu": "200m",
+      "memory": "256Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "64Mi"
+    }
+  },
+  "initial_incident": {
+    "checked_at": 1791366226.7191854,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "cleanup_errors": [],
+  "resource_intents": [
+    {
+      "kind": "job",
+      "name": "k6-spike",
+      "namespace": "demo",
+      "uid_confirmed": "3d62aaa8-1ca6-4fa4-b6dc-78bfc1b9eec1",
+      "generation_confirmed": 1
+    },
+    {
+      "kind": "job",
+      "name": "k6-spike",
+      "namespace": "demo",
+      "uid_confirmed": "0522a4ac-d2ae-43ea-a6c4-e75f0625d09e",
+      "generation_confirmed": 1
+    }
+  ],
+  "finished_at": "2026-10-07T09:48:47.185291+00:00",
+  "limitation": "Указаны проверенные прошедшие ступени и первые отказы. Если одной границы нет или результаты немонотонны, интервал максимума не установлен. Точный максимум и минимальные CPU/RAM этим опытом не доказаны."
+}

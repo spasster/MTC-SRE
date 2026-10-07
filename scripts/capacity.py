@@ -9,7 +9,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from experiment import cmd, deployment, metrics, scalar, healthy, wait_incident_closed, OwnedDeployment, OwnedResource
+from experiment import (cmd, deployment, metrics, scalar, healthy, wait_healthy, wait_incident_closed,
+                        InitialHealthError, OWNER_ANNOTATION, OwnedDeployment, OwnedResource)
 from cpu_profile import stage_diagnostics
 
 
@@ -29,6 +30,71 @@ def job_summary(owned):
     if after is None or after["metadata"]["uid"] != job["metadata"]["uid"] or len(summaries) != 1:
         raise RuntimeError("Единственный итог собственного Job k6 не подтвержден")
     return summaries[0]
+
+
+def reset_checkout_for_baseline(owner, timeout=120):
+    """После нагрузки завершить процессы своего checkout и вернуть исходный масштаб."""
+    if owner.name != "checkout" or owner.namespace != "demo" or owner.unknown or not owner.changed:
+        raise RuntimeError("Владение checkout для восстановления базового контура не подтверждено")
+    deadline = time.monotonic() + timeout
+    owner.mutate(0)
+    while time.monotonic() < deadline:
+        current = deployment("checkout", "demo")
+        expected = owner.expected
+        if (current["metadata"]["uid"] != expected["metadata"]["uid"]
+                or current["metadata"]["generation"] != expected["metadata"]["generation"]
+                or current["spec"] != expected["spec"]
+                or current["metadata"].get("annotations", {}).get(OWNER_ANNOTATION) != owner.marker):
+            raise RuntimeError("Checkout изменен другим участником; перезапуск и возврат запрещены")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        pods = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json",
+                              timeout=min(10, remaining)))["items"]
+        status = current.get("status", {})
+        if time.monotonic() >= deadline:
+            break
+        if (not pods and status.get("replicas", 0) == 0
+                and status.get("observedGeneration", 0) >= expected["metadata"]["generation"]):
+            stopped_at = time.time()
+            owner.cleanup()
+            cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=120s", timeout=150)
+            return {"attempted": True, "confirmed_zero": True, "stopped_at": stopped_at,
+                    "original_replicas": owner.original["spec"]["replicas"]}
+        time.sleep(min(2, max(0, deadline - time.monotonic())))
+    raise RuntimeError("Завершение прежних процессов checkout не подтверждено")
+
+
+def confirm_baseline(owners, report):
+    """Число реплик, исходный spec и свежий SLO проверяются после своей очистки."""
+    for (namespace, name), owner in owners.items():
+        if owner.original["spec"]["replicas"] > 0:
+            cmd("kubectl", "rollout", "status", "deployment/" + name, "-n", namespace, "--timeout=120s", timeout=150)
+    traffic_expected = (owners[("demo", "checkout")].original["spec"]["replicas"] > 0
+                        and owners[("demo", "k6-background")].original["spec"]["replicas"] > 0)
+    if traffic_expected:
+        try:
+            report["baseline_health_samples"] = wait_healthy("http://127.0.0.1:19090")
+        except InitialHealthError as error:
+            report["baseline_health_samples"] = error.samples
+            raise
+    report["baseline_incident"] = wait_incident_closed(timeout=180)
+    components = []
+    for (namespace, name), owner in owners.items():
+        current = deployment(name, namespace)
+        expected = owner.expected
+        desired, status = owner.original["spec"]["replicas"], current.get("status", {})
+        if (owner.unknown or owner.changed or current["metadata"]["uid"] != owner.original["metadata"]["uid"]
+                or current["metadata"]["generation"] != expected["metadata"]["generation"]
+                or current["spec"] != owner.original["spec"]
+                or current["metadata"].get("annotations", {}).get(OWNER_ANNOTATION) is not None
+                or status.get("observedGeneration", 0) < current["metadata"]["generation"]
+                or any(status.get(key, 0) != desired for key in ("replicas", "updatedReplicas", "readyReplicas", "availableReplicas"))):
+            raise RuntimeError("Исходный Deployment или его готовность после серии мощности не подтверждены")
+        components.append({"namespace": namespace, "name": name, "replicas": desired,
+                           "uid_matches_original": True, "spec_matches_original": True, "rollout_ready": True})
+    report["baseline_restored"] = {"passed": True, "traffic_expected": traffic_expected,
+                                   "health_checked": traffic_expected, "components": components}
 
 
 def main():
@@ -146,12 +212,24 @@ def main():
                 cleanup_errors.append({"operation": operation, "error_type": type(error).__name__})
         for owned in reversed(owned_jobs):
             cleanup("job/" + owned.name, owned.cleanup)
+        checkout_owner = owners[("demo", "checkout")]
+        if checkout_owner.changed and not checkout_owner.unknown and not cleanup_errors:
+            report["baseline_reset"] = {"attempted": True, "confirmed_zero": False}
+            def reset_baseline():
+                report["baseline_reset"] = reset_checkout_for_baseline(checkout_owner)
+            cleanup("базовые процессы checkout", reset_baseline)
         healer_owner = owners[("heal", "healer")]
         if healer_owner.changed and not healer_owner.unknown and original_healer["spec"]["replicas"] > 0:
             cleanup("импорт исходного healer", lambda: cmd("k3d", "image", "import", original_healer_image,
                                                             "-c", args.cluster, "--mode", "direct", timeout=180))
-        for (namespace, name), owner in reversed(list(owners.items())):
+        for namespace, name in (("demo", "checkout"), ("demo", "k6-background"), ("heal", "healer")):
+            owner = owners[(namespace, name)]
             cleanup("deployment/" + namespace + "/" + name, owner.cleanup)
+        if report.get("baseline_reset", {}).get("confirmed_zero") and not cleanup_errors:
+            cleanup("проверка базового контура", lambda: confirm_baseline(owners, report))
+        if report["passed"] and report.get("baseline_restored", {}).get("passed") is not True:
+            report["passed"] = False
+            report.setdefault("error", "Базовый контур после серии мощности не подтвержден")
         report["cleanup_errors"] = cleanup_errors
         report["resource_intents"] = [{"kind": obj.kind, "name": obj.name, "namespace": obj.namespace,
                                        "uid_confirmed": obj.uid, "generation_confirmed": obj.generation} for obj in owned_jobs]
