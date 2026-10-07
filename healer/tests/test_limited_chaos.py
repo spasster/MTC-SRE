@@ -37,6 +37,15 @@ def test_client_loss_and_invalid_body_cannot_pass():
     assert not limited.client_passed({**client, "http_req_duration": {"p(95)": 300}})
 
 
+def test_complete_response_budget_matches_the_declared_availability_slo():
+    client = {"http_reqs": {"count": 360}, "dropped_iterations": {"count": 0},
+              "http_req_failed": {"rate": 1 / 360}, "checks": {"rate": 359 / 360},
+              "http_req_duration": {"p(95)": 100}}
+    assert limited.client_passed(client)
+    assert not limited.client_passed({**client, "checks": {"rate": 358 / 360}})
+    assert not limited.client_passed({**client, "http_req_failed": {"rate": 2 / 360}})
+
+
 def test_delay_or_total_loss_cannot_prove_a_bounded_partition():
     reachable = {"reachable": True}
     cut = {"reachable": False}

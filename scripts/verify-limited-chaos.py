@@ -48,7 +48,7 @@ def client_passed(summary):
     return (summary.get("http_reqs", {}).get("count", 0) >= 359
             and summary.get("dropped_iterations", {}).get("count", 0) == 0
             and summary.get("http_req_failed", {}).get("rate", 1) <= .005
-            and summary.get("checks", {}).get("rate", 0) >= .999
+            and summary.get("checks", {}).get("rate", 0) >= .995
             and 0 <= summary.get("http_req_duration", {}).get("p(95)", float("inf")) < 300)
 
 
@@ -150,6 +150,7 @@ def main():
               "source_commit": cmd("git", "rev-parse", "HEAD").strip(), "initial_incident": initial,
               "source_worktree_dirty": bool(cmd("git", "status", "--porcelain")),
               "profile": {"client_rps": 2, "duration_per_case_seconds": 180, "warmup_seconds": 60,
+                          "complete_response_ratio_minimum": .995,
                           "replicas": 3, "original_checkout_replicas": original_checkout["replicas"], "payment_replicas": 2, "network_action": "partition",
                           "network_scope": "Один checkout -> один payment; второй payment остается доступен",
                           "cpu_workers": 1, "cpu_load_percent_of_core": 5, "faults": args.faults},

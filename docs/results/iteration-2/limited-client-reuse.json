@@ -1,0 +1,444 @@
+{
+  "started_at": "2026-10-07T00:38:16.496837+00:00",
+  "passed": false,
+  "cases": [
+    {
+      "fault": "pod",
+      "samples": [
+        {
+          "p95": 0.09219238395226355,
+          "request_rate": 2.1555555555555554,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333577.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.09933774834437087,
+          "time": 1791333582.5932631,
+          "replicas": 3,
+          "rollout_ready": false,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.06126578045978616
+        },
+        {
+          "p95": 0.09217741935483872,
+          "request_rate": 2.1555555555555554,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333577.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.096045197740113,
+          "time": 1791333588.6371543,
+          "replicas": 3,
+          "rollout_ready": false,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.05295579562576494
+        },
+        {
+          "p95": 0.09300590322580646,
+          "request_rate": 1.9271766666666665,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333592.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1037037037037037,
+          "time": 1791333594.72174,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.05566973079015704
+        },
+        {
+          "p95": 0.09450164453125,
+          "request_rate": 2.0083355555555555,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333592.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 1.0,
+          "cpu_throttle": 0.10240963855421685,
+          "time": 1791333600.8327947,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.04858625385092259
+        },
+        {
+          "p95": 0.09476426953125,
+          "request_rate": 1.9336333333333333,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333592.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 1.0,
+          "cpu_throttle": 0.5813953488372093,
+          "time": 1791333607.0423772,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.08397320454545108
+        },
+        {
+          "p95": 0.09495820564516129,
+          "request_rate": 1.8336655555555554,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333607.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5813953488372093,
+          "time": 1791333613.333111,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.075254767373983
+        },
+        {
+          "p95": 0.09594739025564245,
+          "request_rate": 1.7991288888888888,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333607.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5813953488372093,
+          "time": 1791333619.566088,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.07431590730485996
+        },
+        {
+          "p95": 0.09590284729525958,
+          "request_rate": 1.8815688888888888,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333622.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.3313953488372093,
+          "time": 1791333625.7248917,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.07522395086480807
+        },
+        {
+          "p95": 0.09721936721842984,
+          "request_rate": 2.0096266666666667,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333622.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.33139534883720934,
+          "time": 1791333632.0601683,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.07161834563928529
+        },
+        {
+          "p95": 0.09724232294453808,
+          "request_rate": 2.0339016666666665,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333637.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.23938223938223938,
+          "time": 1791333638.386676,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.08130135627095035
+        },
+        {
+          "p95": 0.09602788909092334,
+          "request_rate": 1.9091049999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333637.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.23938223938223938,
+          "time": 1791333644.7504106,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.08168890579852713
+        },
+        {
+          "p95": 0.09583510286418986,
+          "request_rate": 1.955511111111111,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333637.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11764705882352942,
+          "time": 1791333651.022758,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.05646296977687472
+        },
+        {
+          "p95": 0.09693181818181817,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333652.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11965811965811966,
+          "time": 1791333657.2589293,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06198313941539216
+        },
+        {
+          "p95": 0.0966279069767442,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333652.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11965811965811966,
+          "time": 1791333663.5182788,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.05222566281311375
+        },
+        {
+          "p95": 0.0966279069767442,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333667.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11564625850340135,
+          "time": 1791333669.7994666,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.04639759899817775
+        },
+        {
+          "p95": 0.0962142857142857,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333667.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.08878504672897196,
+          "time": 1791333675.8827624,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06082690565805654
+        },
+        {
+          "p95": 0.09607142857142856,
+          "request_rate": 2.1111111111111107,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333667.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.08878504672897197,
+          "time": 1791333682.180612,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06082690565805654
+        },
+        {
+          "p95": 0.09607142857142856,
+          "request_rate": 2.1111111111111107,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333682.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.0879120879120879,
+          "time": 1791333688.5188708,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.051495655707244826
+        },
+        {
+          "p95": 0.09618055555555555,
+          "request_rate": 2.1111111111111107,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333682.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.0845771144278607,
+          "time": 1791333694.974971,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06329460740943868
+        },
+        {
+          "p95": 0.09638157894736842,
+          "request_rate": 2.1111111111111107,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333697.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.0845771144278607,
+          "time": 1791333701.1846018,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.05824211950727989
+        },
+        {
+          "p95": 0.09671052631578947,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791333697.154,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.0845771144278607,
+          "time": 1791333707.4157379,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.05448578693568015
+        }
+      ],
+      "passed": false,
+      "client_started_at": 1791333521.0408823,
+      "target_pod": "checkout-69c6bfd9f6-4r5mr",
+      "target_uid": "68c48430-dd94-415c-8a98-1ee4772ccc89",
+      "injected_at": 1791333581.6258547,
+      "fault_spec": {
+        "mode": "one",
+        "selector": {
+          "namespaces": [
+            "demo"
+          ],
+          "pods": {
+            "demo": [
+              "checkout-69c6bfd9f6-4r5mr"
+            ]
+          }
+        },
+        "action": "pod-kill"
+      },
+      "injection_confirmed": true,
+      "chaos_conditions": [
+        {
+          "status": "True",
+          "type": "Selected"
+        },
+        {
+          "status": "True",
+          "type": "AllInjected"
+        },
+        {
+          "status": "False",
+          "type": "AllRecovered"
+        },
+        {
+          "status": "False",
+          "type": "Paused"
+        }
+      ],
+      "client": {
+        "http_reqs": {
+          "count": 360,
+          "rate": 1.999986395448098
+        },
+        "http_req_duration": {
+          "min": 23.247739,
+          "med": 46.393223500000005,
+          "max": 164.318458,
+          "p(90)": 67.6792295,
+          "p(95)": 70.01949455,
+          "avg": 46.57409791666669
+        },
+        "http_req_failed": {
+          "rate": 0.002777777777777778,
+          "passes": 1,
+          "fails": 359
+        },
+        "dropped_iterations": {},
+        "checks": {
+          "rate": 0.9972222222222222,
+          "passes": 359,
+          "fails": 1
+        }
+      },
+      "alert_observed": true,
+      "slo_held_in_all_samples": true,
+      "pod_replaced": true
+    }
+  ],
+  "source_commit": "d21cf70023c1d305104320feb0fb9c2ce7abb94d",
+  "initial_incident": {
+    "checked_at": 1791333495.6612449,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "source_worktree_dirty": true,
+  "profile": {
+    "client_rps": 2,
+    "duration_per_case_seconds": 180,
+    "warmup_seconds": 60,
+    "replicas": 3,
+    "original_checkout_replicas": 2,
+    "payment_replicas": 2,
+    "network_action": "partition",
+    "network_scope": "Один checkout -> один payment; второй payment остается доступен",
+    "cpu_workers": 1,
+    "cpu_load_percent_of_core": 5,
+    "faults": [
+      "pod",
+      "network",
+      "cpu"
+    ]
+  },
+  "resources_per_replica": {
+    "limits": {
+      "cpu": "200m",
+      "memory": "256Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "64Mi"
+    }
+  },
+  "limitation": "Доказательство относится к указанной области отказа и короткому окну, не ко всем интенсивностям хаоса или месячному SLO. Полный сетевой разрыв и перегрузка сохраняют отрицательные результаты.",
+  "incident_before_client": {
+    "checked_at": 1791333513.1019194,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "error": "Удержание SLO не подтверждено: pod",
+  "original_checkout_replicas_restored": true,
+  "cleanup_errors": [],
+  "finished_at": "2026-10-07T00:41:52.590741+00:00"
+}
