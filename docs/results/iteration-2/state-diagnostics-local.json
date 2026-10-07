@@ -1,0 +1,460 @@
+{
+  "checked_at": "2026-10-07T01:44:18.609853+00:00",
+  "passed": false,
+  "initial_incident": {
+    "checked_at": 1791337470.2164469,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "webhook_attempts": [
+    {
+      "elapsed_seconds": 3.0994415283203125e-06,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 5.990704298019409,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 12.90928316116333,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 19.786083221435547,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 26.178476572036743,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 32.836421728134155,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 39.24219560623169,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 45.13052701950073,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 51.24154806137085,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 57.85726451873779,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 64.07178044319153,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 71.2164454460144,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 77.79636883735657,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 84.90910768508911,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 91.22910499572754,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 97.06732535362244,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 103.12502765655518,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 109.08166837692261,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 115.98385214805603,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 122.15669250488281,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 128.8772828578949,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 135.01507449150085,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 141.05217742919922,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 147.11623883247375,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 153.13281726837158,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 160.84709358215332,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 167.18996596336365,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 174.08462381362915,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 180.173663854599,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 186.0479440689087,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 192.1397783756256,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 198.84995007514954,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 206.00564122200012,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 212.15731143951416,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 220.00345659255981,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 227.83461999893188,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 234.06258368492126,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "escalate",
+          "diagnosis": "payment",
+          "result_class": "escalated"
+        }
+      ]
+    }
+  ],
+  "error": "Реальное удаление медленного пода не подтверждено",
+  "evidence_before_cleanup": {
+    "replicas": 2,
+    "request_rate": 3.0888888888888886,
+    "p95": 0.2925,
+    "revision_age_seconds": 4275.611245,
+    "error_ratio": 0.48920863309352514,
+    "redis_error_ratio": 0.0,
+    "payment_timeout_ratio": 0.0,
+    "payment_error_ratio": 0.48920863309352514,
+    "application_error_ratio": 0.0,
+    "synthetic_success": 1.0,
+    "synthetic_age_seconds": 12.490436514854082,
+    "telemetry_complete": true,
+    "telemetry_age_seconds": 4.774436673164018,
+    "collection_seconds": 1.4424366559978807,
+    "redis_ready": true,
+    "payment_ready": true,
+    "pods": [
+      {
+        "pod": "checkout-69c6bfd9f6-h2hdk",
+        "uid": "c252351e-383d-4571-9e5f-d5b45c1b8be8",
+        "p95": 0.29787878787878785,
+        "p95_recent": 0.29879999999999995,
+        "throttle": 0.052631578947368425
+      },
+      {
+        "pod": "checkout-69c6bfd9f6-r9g9w",
+        "uid": "73957f9a-66f2-4842-a116-26158d23842f",
+        "p95": 0.09138888888888883,
+        "p95_recent": 0.14250000000000002,
+        "throttle": 0.07886435331230283
+      }
+    ],
+    "error_present": false
+  }
+}

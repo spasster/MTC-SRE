@@ -1,0 +1,69 @@
+{
+  "checked_at": "2026-10-07T01:50:31.846050+00:00",
+  "passed": true,
+  "initial_incident": {
+    "checked_at": 1791337843.7934039,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "webhook_attempts": [
+    {
+      "elapsed_seconds": 4.291534423828125e-06,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 6.222662448883057,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 12.350799560546875,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 18.551834106445312,
+      "outcomes": [
+        {
+          "action": "delete_pod",
+          "mode": "auto",
+          "diagnosis": "slow_pod",
+          "result_class": "other"
+        }
+      ]
+    }
+  ],
+  "action": "delete_pod",
+  "action_budget_preserved": true,
+  "cooldown_preserved": true,
+  "journal_preserved": true,
+  "two_instances": true,
+  "single_holder": true,
+  "extra_processes_refused": true
+}

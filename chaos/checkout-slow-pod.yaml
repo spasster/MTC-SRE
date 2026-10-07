@@ -10,16 +10,17 @@ spec:
     pods:
       demo:
         - POD_NAME
-  # Envoy обращается к IP подов payment. Пробы kubelet не попадают под задержку.
+  # Замедляются два обращения выбранного checkout к Redis, без разрыва payment.
+  # Задержка ниже таймаута Redis; пробы kubelet не затрагиваются.
   direction: to
   target:
     mode: all
     selector:
       namespaces: [demo]
       labelSelectors:
-        app: payment
+        app: redis
   delay:
-    latency: 500ms
+    latency: 250ms
     correlation: "0"
     jitter: 0ms
   duration: 15m
