@@ -19,6 +19,9 @@ data:
             enabled: true
           tracesToLogsV2:
             datasourceUid: loki
+            # Журнал запроса может записываться сразу после завершения span.
+            spanStartTimeShift: '-2s'
+            spanEndTimeShift: '2s'
             filterByTraceID: false
             customQuery: true
             query: '{namespace="demo"} | json | trace_id="$${__trace.traceId}"'
