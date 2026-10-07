@@ -282,6 +282,7 @@ def main():
     parser.add_argument("--incident-chain-output", help="Проверить exemplar, трейс и лог медленного запроса в этом инциденте")
     parser.add_argument("--spike-duration", type=int, help="Длительность дополнительной нагрузки в секундах для короткой демонстрации")
     parser.add_argument("--spike-rate", type=int, help="Дополнительные запросы в секунду; профиль фиксируется до инъекции")
+    parser.add_argument("--spike-capacity", help="Завершенные замеры того же контура для выбора CPU-профиля")
     args = parser.parse_args()
     if args.natural_end and (args.scenario != "spike" or args.mode != "auto"):
         parser.error("--natural-end допустим только для auto spike")
@@ -289,6 +290,8 @@ def main():
         parser.error("--spike-duration допустим для spike и должен быть не менее 120 с")
     if args.spike_rate is not None and (args.scenario != "spike" or args.spike_rate <= 0):
         parser.error("--spike-rate допустим только для spike и должен быть положительным")
+    if args.spike_capacity and (args.scenario != "spike" or args.spike_rate is not None):
+        parser.error("--spike-capacity допустим только для spike без отдельного --spike-rate")
     if args.timeout <= 0 or args.manual_delay < 0:
         parser.error("Время опыта должно быть положительным, задержка оператора - неотрицательной")
     os.environ["CLUSTER"] = args.cluster
@@ -307,6 +310,8 @@ def main():
     healer_owner = OwnedDeployment("healer", "heal", original_healer, marker)
     checkout_owner = OwnedDeployment("checkout", "demo", original_checkout, marker)
     owned_resources = []
+    background_owner = None
+    background_restored = False
     token = None
     forward = None
     report = {"scenario": args.scenario, "mode": args.mode, "manual_delay_seconds": args.manual_delay,
@@ -317,6 +322,14 @@ def main():
     try:
         wait_healthy(args.prometheus)
         report["healer_precondition_before_preparation"] = wait_incident_closed()
+        if args.spike_capacity:
+            from cpu_profile import selected_profile
+            measured = json.loads(Path(args.spike_capacity).read_text(encoding="utf-8"))
+            profile = selected_profile(measured, args.cluster, report["source_commit"])
+            args.spike_rate = profile["total_rps"]
+            report["cpu_profile"] = profile
+            report["capacity_sha256"] = hashlib.sha256(Path(args.spike_capacity).read_bytes()).hexdigest()
+            background_owner = OwnedDeployment("k6-background", "demo", deployment("k6-background", "demo"), marker)
         image_check = str(Path(".runtime") / ("experiment-images-" + marker + ".json"))
         cmd(sys.executable, "scripts/local-images.py", "--cluster", args.cluster, "--component", "checkout", "payment",
             "--verify-only", "--output", image_check, timeout=300)
@@ -340,6 +353,8 @@ def main():
         report["healer_precondition_before_injection"] = wait_incident_closed()
         selected_pod = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"][0]
         selected = selected_pod["metadata"]["name"]
+        if background_owner is not None:
+            background_owner.mutate(0)
         report["injected_at"] = time.time()
         if args.scenario == "spike":
             manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
@@ -363,6 +378,16 @@ def main():
         while time.time() < deadline:
             sample = metrics(args.prometheus)
             report["samples"].append(sample)
+            if background_owner is not None and not background_restored:
+                job = owned_resources[0].current()
+                if job is None:
+                    raise RuntimeError("Собственный CPU Job исчез до завершения опыта")
+                if job.get("status", {}).get("succeeded") or job.get("status", {}).get("failed"):
+                    background_owner.cleanup()
+                    background_restored = True
+                    report["background_restored_after_job"] = True
+                    if not report.get("slo_restored_at"):
+                        raise RuntimeError("SLO не подтвержден до окончания CPU-нагрузки; эффект scale не доказан")
             if not healthy(sample) and report.get("detected_at") is None:
                 report["detected_at"] = sample["time"]
             if sample["alerts_firing"] and report.get("alert_firing_at") is None:
@@ -478,6 +503,8 @@ def main():
         for owned in reversed(owned_resources):
             cleanup(owned.kind + "/" + owned.name, owned.cleanup)
         cleanup("deployment/checkout", checkout_owner.cleanup)
+        if background_owner is not None:
+            cleanup("deployment/k6-background", background_owner.cleanup)
         if args.mode == "auto" and owned_resources:
             # Масштаб checkout принадлежит healer; опыт не присваивает эту запись себе.
             cleanup("закрытие инцидента healer", lambda: (wait_healthy(args.prometheus), wait_incident_closed()))

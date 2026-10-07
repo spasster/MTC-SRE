@@ -59,6 +59,7 @@ def main():
     owners = {key: OwnedDeployment(key[1], key[0], obj, marker) for key, obj in originals.items()}
     owned_jobs = []
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "source_commit": cmd("git", "rev-parse", "HEAD").strip(),
+              "cluster": args.cluster,
               "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               "duration_seconds": args.duration, "stages": [], "bounds": {}, "passed": False,
               "method": "Фоновая нагрузка и healer выключены на время серии; 2 и 5 реплик проверяются при одинаковом профиле. Каждый RPS держится не менее 90 с. Результаты относятся только к этому контуру.",

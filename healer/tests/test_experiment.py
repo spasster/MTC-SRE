@@ -334,3 +334,21 @@ def test_network_spec_change_still_blocks_cleanup_after_status_updates(monkeypat
     monkeypatch.setattr(experiment, "delete_identity", lambda *args: pytest.fail("Чужая перенастройка не удаляется"))
     with pytest.raises(RuntimeError, match="очистка запрещена"):
         owner.cleanup()
+
+
+def test_rejected_capacity_profile_preserves_json_without_any_mutation(monkeypatch, tmp_path):
+    capacity = tmp_path / "capacity.json"
+    capacity.write_text('{"passed": false}', encoding="utf-8")
+    output = tmp_path / "result.json"
+    commands = []
+    monkeypatch.setattr(sys, "argv", ["experiment", "--mode", "auto", "--scenario", "spike",
+                                     "--spike-capacity", str(capacity), "--output", str(output)])
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: commands.append(args) or json.dumps({"items": []}))
+    monkeypatch.setattr(experiment, "deployment", lambda name, namespace: {"spec": {"replicas": 2 if name == "checkout" else 1}})
+    monkeypatch.setattr(experiment, "wait_healthy", lambda *args: None)
+    monkeypatch.setattr(experiment, "wait_incident_closed", lambda: {"incident_closed": True})
+    with pytest.raises(SystemExit, match="Замеры мощности"):
+        experiment.main()
+    result = json.loads(output.read_text(encoding="utf-8"))
+    assert result["passed"] is False and result["cleanup_errors"] == [] and result["resource_intents"] == []
+    assert not any(args[0] == "kubectl" and any(verb in args for verb in ("delete", "patch", "scale", "apply", "create")) for args in commands)
