@@ -1,13 +1,33 @@
 """Измерить границу SLO для фиксированного числа реплик и сохранить ошибки клиента."""
 
 import argparse
+import hashlib
 import json
 import os
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from experiment import cmd, deployment, metrics, scalar, healthy
+from experiment import cmd, deployment, metrics, scalar, healthy, wait_incident_closed, OwnedDeployment, OwnedResource
+
+
+def job_summary(owned):
+    """Итог читается только у пода созданного этой ступенью Job."""
+    job = owned.current()
+    if job is None:
+        raise RuntimeError("Созданный Job исчез до чтения результата")
+    pods = json.loads(cmd("kubectl", "get", "pods", "-n", owned.namespace, "-l", "job-name=" + owned.name, "-o", "json"))["items"]
+    summaries = []
+    for pod in pods:
+        if any(owner.get("kind") == "Job" and owner.get("uid") == job["metadata"]["uid"] and owner.get("controller") is True
+               for owner in pod["metadata"].get("ownerReferences", [])):
+            logs = cmd("kubectl", "logs", "-n", owned.namespace, pod["metadata"]["name"], "-c", "k6", timeout=30)
+            summaries.extend(json.loads(line[len("MTC_SUMMARY "):]) for line in logs.splitlines() if line.startswith("MTC_SUMMARY "))
+    after = owned.current()
+    if after is None or after["metadata"]["uid"] != job["metadata"]["uid"] or len(summaries) != 1:
+        raise RuntimeError("Единственный итог собственного Job k6 не подтвержден")
+    return summaries[0]
 
 
 def main():
@@ -32,18 +52,23 @@ def main():
         raise SystemExit("В demo уже есть Job k6-spike")
     original_healer = deployment("healer", "heal")
     original_healer_image = next(row["image"] for row in original_healer["spec"]["template"]["spec"]["containers"] if row["name"] == "healer")
-    original = {("heal", "healer"): original_healer["spec"]["replicas"],
-                ("demo", "checkout"): deployment("checkout", "demo")["spec"]["replicas"],
-                ("demo", "k6-background"): deployment("k6-background", "demo")["spec"]["replicas"]}
+    originals = {("heal", "healer"): original_healer,
+                 ("demo", "checkout"): deployment("checkout", "demo"),
+                 ("demo", "k6-background"): deployment("k6-background", "demo")}
+    marker = uuid.uuid4().hex
+    owners = {key: OwnedDeployment(key[1], key[0], obj, marker) for key, obj in originals.items()}
+    owned_jobs = []
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "source_commit": cmd("git", "rev-parse", "HEAD").strip(),
+              "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               "duration_seconds": args.duration, "stages": [], "bounds": {}, "passed": False,
               "method": "Фоновая нагрузка и healer выключены на время серии; 2 и 5 реплик проверяются при одинаковом профиле. Каждый RPS держится не менее 90 с. Результаты относятся только к этому контуру.",
               "checkout_resources_per_replica": deployment("checkout", "demo")["spec"]["template"]["spec"]["containers"][0]["resources"]}
     try:
+        report["initial_incident"] = wait_incident_closed()
         for (namespace, name) in [("heal", "healer"), ("demo", "k6-background")]:
-            cmd("kubectl", "scale", "deployment/" + name, "-n", namespace, "--replicas=0")
+            owners[(namespace, name)].mutate(0)
         for replicas in replica_counts:
-            cmd("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(replicas))
+            owners[("demo", "checkout")].mutate(replicas)
             cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
             bound = {"highest_tested_passing_rps": None, "first_tested_failing_rps": None}
             report["bounds"][str(replicas)] = bound
@@ -53,30 +78,27 @@ def main():
                 manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
                 container = manifest["spec"]["template"]["spec"]["containers"][0]
                 container["env"] += [{"name": "RATE", "value": str(rate)}, {"name": "DURATION", "value": str(args.duration) + "s"}]
-                import subprocess
-                applied = subprocess.run(["kubectl", "apply", "-f", "-"], input=json.dumps(manifest), text=True, capture_output=True)
-                if applied.returncode:
-                    raise RuntimeError("Ступень нагрузки не создана")
-                stage = {"replicas": replicas, "planned_rps": rate, "samples": [], "passed": False}
+                owned = OwnedResource(manifest, marker)
+                owned_jobs.append(owned)
+                owned.create(timeout=30)
+                stage = {"replicas": replicas, "planned_rps": rate, "samples": [], "passed": False, "job_uid": owned.uid}
                 report["stages"].append(stage)
                 print(f"Измеряется {rate} RPS при {replicas} репликах", flush=True)
-                deadline = time.time() + args.duration + 90
-                while time.time() < deadline:
+                deadline = time.monotonic() + args.duration + 90
+                while time.monotonic() < deadline:
                     sample = metrics("http://127.0.0.1:19090")
                     sample["checkout_cpu_cores"] = scalar("http://127.0.0.1:19090", 'sum(rate(container_cpu_usage_seconds_total{namespace="demo",container="checkout",pod=~"checkout-.*"}[1m]))')
                     sample["checkout_ram_bytes"] = scalar("http://127.0.0.1:19090", 'sum(container_memory_working_set_bytes{namespace="demo",container="checkout",pod=~"checkout-.*"})')
                     stage["samples"].append(sample)
-                    job = json.loads(cmd("kubectl", "get", "job", "k6-spike", "-n", "demo", "-o", "json"))
+                    job = owned.current()
+                    if job is None or time.monotonic() >= deadline:
+                        raise RuntimeError("Собственный Job или своевременное завершение не подтверждены")
                     if job.get("status", {}).get("succeeded") or job.get("status", {}).get("failed"):
                         break
                     time.sleep(10)
                 else:
                     raise RuntimeError("Job ступени не завершился вовремя")
-                logs = cmd("kubectl", "logs", "job/k6-spike", "-n", "demo", "-c", "k6")
-                summaries = [json.loads(line[len("MTC_SUMMARY "):]) for line in logs.splitlines() if line.startswith("MTC_SUMMARY ")]
-                if not summaries:
-                    raise RuntimeError("Итог k6 не получен")
-                summary = stage["client"] = summaries[-1]
+                summary = stage["client"] = job_summary(owned)
                 sent = summary["http_reqs"].get("count", 0)
                 drops = summary["dropped_iterations"].get("count", 0)
                 errors = summary["http_req_failed"].get("rate", 1)
@@ -90,7 +112,7 @@ def main():
                 for field in ("checkout_cpu_cores", "checkout_ram_bytes"):
                     values = [sample[field] for sample in stage["samples"] if sample[field] is not None]
                     stage[field + "_max"] = max(values) if values else None
-                cmd("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--wait=true")
+                owned.cleanup()
                 Path(args.output).parent.mkdir(parents=True, exist_ok=True)
                 Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 if stage["passed"]:
@@ -102,11 +124,26 @@ def main():
     except Exception as exc:
         report["error"] = str(exc)
     finally:
-        cmd("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
-        if original[("heal", "healer")] > 0:
-            cmd("k3d", "image", "import", original_healer_image, "-c", args.cluster, "--mode", "direct", timeout=180)
-        for (namespace, name), replicas in original.items():
-            cmd("kubectl", "scale", "deployment/" + name, "-n", namespace, "--replicas=" + str(replicas))
+        cleanup_errors = []
+        def cleanup(operation, action):
+            try:
+                action()
+            except Exception as error:
+                cleanup_errors.append({"operation": operation, "error_type": type(error).__name__})
+        for owned in reversed(owned_jobs):
+            cleanup("job/" + owned.name, owned.cleanup)
+        healer_owner = owners[("heal", "healer")]
+        if healer_owner.changed and not healer_owner.unknown and original_healer["spec"]["replicas"] > 0:
+            cleanup("импорт исходного healer", lambda: cmd("k3d", "image", "import", original_healer_image,
+                                                            "-c", args.cluster, "--mode", "direct", timeout=180))
+        for (namespace, name), owner in reversed(list(owners.items())):
+            cleanup("deployment/" + namespace + "/" + name, owner.cleanup)
+        report["cleanup_errors"] = cleanup_errors
+        report["resource_intents"] = [{"kind": obj.kind, "name": obj.name, "namespace": obj.namespace,
+                                       "uid_confirmed": obj.uid, "generation_confirmed": obj.generation} for obj in owned_jobs]
+        if cleanup_errors:
+            report["passed"] = False
+            report.setdefault("error", "Очистка серии мощности не подтверждена")
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
         report["limitation"] = "Указаны проверенные прошедшие ступени и первые отказы. Если одной границы нет, интервал максимума не установлен. Точный максимум и минимальные CPU/RAM этим опытом не доказаны."
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
