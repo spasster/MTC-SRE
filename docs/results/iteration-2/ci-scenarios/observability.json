@@ -1,0 +1,21 @@
+{
+  "checked_at": "2026-10-07T01:11:00.972135+00:00",
+  "passed": true,
+  "trace_id": "00fa0f2b5e4e196e82e04b4454dfdd91",
+  "metric": "http_request_duration_seconds_bucket",
+  "metric_exemplar_found": true,
+  "trace_services": [
+    "checkout",
+    "payment"
+  ],
+  "log_services": [
+    "checkout",
+    "payment"
+  ],
+  "log_entries": 2,
+  "incident_since": null,
+  "request": {
+    "duration_seconds": 0.02919251600002326,
+    "request_at": 1791335350.157
+  }
+}

@@ -10,12 +10,47 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from experiment import cmd, deployment, wait_healthy
+from experiment import cmd, deployment, wait_healthy, wait_incident_closed
 
 
 def document():
     obj = json.loads(cmd("kubectl", "get", "configmap", "healer-state", "-n", "heal", "-o", "json"))
     return json.loads(obj.get("data", {}).get("state.json", "{}"))
+
+
+def webhook_outcome(body):
+    """Сохраняются классификации ответов, без detail, операторов и данных подтверждения."""
+    outcomes = []
+    for row in body.get("results", []):
+        allowed = {"action": {"none", "delete_pod", "scale", "rollback", "restart_redis"},
+                   "mode": {"ignore", "auto", "approval", "escalate"},
+                   "diagnosis": {"unknown", "settling", "slow_pod", "cpu", "redis", "payment", "partition", "bad_release"}}
+        outcome = {key: row.get(key) if row.get(key) in values else None for key, values in allowed.items()}
+        result = row.get("result", "")
+        prefixes = ("ignored:", "needs approval:", "waiting approval", "escalated", "failed:", "skipped:")
+        outcome["result_class"] = next((prefix.rstrip(":") for prefix in prefixes if result.startswith(prefix)), "other")
+        known_ignored = {"ignored: cooling down", "ignored: watching", "ignored: healthy", "ignored: recovering", "ignored: waiting approval"}
+        if result in known_ignored:
+            outcome["ignored_reason"] = result
+        outcomes.append(outcome)
+    return outcomes
+
+
+def diagnostic_evidence():
+    """Один снимок перед очисткой объясняет отказ, без записи через Kubernetes API."""
+    code = "import json; from app.evidence import gather; print(json.dumps(gather('demo')))"
+    evidence = json.loads(cmd("kubectl", "exec", "-n", "heal", "deployment/healer", "-c", "healer", "--", "python", "-c", code, timeout=30))
+    keys = ("replicas", "request_rate", "p95", "revision_age_seconds", "error_ratio", "redis_error_ratio", "payment_timeout_ratio",
+            "payment_error_ratio", "application_error_ratio", "synthetic_success", "synthetic_age_seconds", "telemetry_complete",
+            "telemetry_age_seconds", "collection_seconds", "redis_ready", "payment_ready")
+    safe = {key: evidence.get(key) for key in keys if evidence.get(key) is None or type(evidence[key]) in (int, float, bool)}
+    safe["pods"] = [{key: pod.get(key) for key in ("pod", "uid", "p95", "p95_recent", "throttle")} for pod in evidence.get("pods", [])]
+    safe["error_present"] = "error" in evidence
+    known_errors = {"Срок сбора телеметрии истек", "Нет рабочих подов текущей ревизии checkout", "Неполные метрики текущих подов checkout",
+                    "Метрики checkout недоступны или устарели", "К окончанию сбора метрики или синтетическая проверка устарели"}
+    if safe["error_present"]:
+        safe["error_reason"] = evidence["error"] if evidence["error"] in known_errors else "Внешняя или нераспознанная ошибка чтения"
+    return safe
 
 
 def main():
@@ -33,6 +68,8 @@ def main():
     token = base64.b64decode(json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))["data"]["token"]).decode()
     report = {"checked_at": datetime.now(timezone.utc).isoformat(), "passed": False}
     forward = None
+    injection_started = False
+    scale_started = False
 
     def post():
         payload = {"alerts": [{"status": "firing", "labels": {"service": "checkout", "alertname": "CheckoutSlow"},
@@ -44,17 +81,23 @@ def main():
 
     try:
         wait_healthy("http://127.0.0.1:19090", timeout=300)
+        report["initial_incident"] = wait_incident_closed()
         previous = {row["id"] for row in document().get("operations", [])}
         forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18084:8080"],
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        injection_started = True
         cmd("sh", "chaos/inject.sh", "slow-pod")
         started, deadline = time.time(), time.time() + 240
         saved = None
+        report["webhook_attempts"] = []
         while time.time() < deadline:
             try:
-                post()
-            except Exception:
-                pass
+                outcome = {"elapsed_seconds": time.time() - started, "outcomes": webhook_outcome(post())}
+            except Exception as error:
+                outcome = {"elapsed_seconds": time.time() - started, "exception_type": type(error).__name__}
+                if type(getattr(error, "code", None)) is int:
+                    outcome["http_status"] = error.code
+            report["webhook_attempts"].append(outcome)
             saved = document()
             operations = [row for row in saved.get("operations", []) if row["id"] not in previous and row["status"] == "applied"]
             if operations:
@@ -75,6 +118,7 @@ def main():
         if not any(row["id"] == operations[0]["id"] for row in restored["operations"]):
             raise RuntimeError("Замена пода потеряла журнал операции")
         report.update(action="delete_pod", action_budget_preserved=True, cooldown_preserved=True, journal_preserved=True)
+        scale_started = True
         cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=2")
         cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
         time.sleep(35)
@@ -95,11 +139,18 @@ def main():
         report.update(two_instances=True, single_holder=True, extra_processes_refused=True, passed=True)
     except Exception as exc:
         report["error"] = str(exc)
+        if injection_started:
+            try:
+                report["evidence_before_cleanup"] = diagnostic_evidence()
+            except Exception as error:
+                report["diagnostic_error_type"] = type(error).__name__
     finally:
         if forward:
             forward.terminate()
-        cmd("sh", "chaos/inject.sh", "clear")
-        cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original))
+        if injection_started:
+            cmd("sh", "chaos/inject.sh", "clear")
+        if scale_started:
+            cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original))
         target = Path(args.output)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
