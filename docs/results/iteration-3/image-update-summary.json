@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "generation_before": 4,
+  "generation_after": 4,
+  "pods_unchanged": true,
+  "sources_uniform": true,
+  "image_id": "sha256:dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+  "verifier_sha256": "498e96f81bac7cac4e70d73f3ace2218842f6c2d83535b68449be2a2a7bff778",
+  "scope": "Подготовленная копия только для payment в отдельном mtc-review; первоначальные результаты с лишним изменением generation сохранены. Все компоненты и чистый CI проверяются после переноса."
+}

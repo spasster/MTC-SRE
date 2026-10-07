@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-10-07T01:31:43.894226+00:00",
+  "prepared_source_commit": "1df081fa46e3bf408debfba4c406af60620adaf5",
+  "verifier_sha256": "6d664066d0f6004ef446465d1c4245db2bf498ae185c278cf4dadc821d1e95e7",
+  "scope": "Новые Job без подов и отдельный Deployment без Service; чужое изменение моделируется самим проверочным скриптом.",
+  "passed": true,
+  "cases": {
+    "recreated_job_preserved": true,
+    "operator_scale_preserved": true,
+    "delete_options_uid_resource_version": true
+  },
+  "cleanup_errors": [],
+  "finished_at": "2026-10-07T01:31:51.430436+00:00"
+}

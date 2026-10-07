@@ -1,0 +1,89 @@
+{
+  "checked_at": "2026-10-07T00:53:54.647145+00:00",
+  "source_commit": "24c22ec8f240e2cd78c614604b8635537edcdd5a",
+  "method": "Управляемые команды CLI и HTTP-транспорт, без мутаций настоящего кластера.",
+  "findings": [
+    {
+      "id": "cleanup-ownership",
+      "confirmed": true,
+      "location": "scripts/experiment.py: finally и cleanup",
+      "observation": {
+        "precondition_refused_before_preparation": true,
+        "fault_created_by_this_run": false,
+        "cleanup_mutations_despite_refusal": [
+          [
+            "kubectl",
+            "delete",
+            "networkchaos",
+            "checkout-slow-pod",
+            "-n",
+            "demo",
+            "--ignore-not-found"
+          ],
+          [
+            "kubectl",
+            "scale",
+            "deployment/checkout",
+            "-n",
+            "demo",
+            "--replicas=2"
+          ],
+          [
+            "kubectl",
+            "scale",
+            "deployment/healer",
+            "-n",
+            "heal",
+            "--replicas=1"
+          ]
+        ],
+        "result_passed": false
+      },
+      "effect": "Даже отказ до подготовки вызывает delete именованного хаоса и scale исходных Deployment. Нет проверки владения; изменения другого оператора после исходного чтения могут быть перезаписаны.",
+      "limit": "Воспроизведение использует команды-заглушки; настоящий ресурс не удалялся и чужой масштаб не изменялся."
+    },
+    {
+      "id": "payment-contract",
+      "confirmed": true,
+      "location": "apps/checkout/app/main.py: call_payment",
+      "observation": [
+        {
+          "response": "error_status",
+          "http_status": 200,
+          "payment_result": "ok"
+        },
+        {
+          "response": "empty_object",
+          "http_status": 200,
+          "payment_result": "ok"
+        },
+        {
+          "response": "non_json",
+          "http_status": 200,
+          "payment_result": "ok"
+        }
+      ],
+      "effect": "HTTP 200 с status=error, пустым объектом или не-JSON принимается за успешный платеж. checkout и синтетическая цепочка могут сообщить payment=ok без правильного результата зависимости.",
+      "limit": "Настоящий HTTP-клиент с MockTransport, без внешних запросов. Такой ответ живого payment в текущем опыте не наблюдался."
+    },
+    {
+      "id": "direct-subprocess-deadline",
+      "confirmed": true,
+      "location": "scripts/experiment.py: прямые subprocess.run при инъекции spike и проверке наблюдаемости",
+      "observation": {
+        "calls_without_timeout": [
+          {
+            "line": 193,
+            "function": "subprocess.run"
+          },
+          {
+            "line": 209,
+            "function": "subprocess.run"
+          }
+        ]
+      },
+      "effect": "Исправленная оболочка cmd ограничена по времени, но эти два вызова обходят ее. Зависший дочерний процесс не ограничивается сроком основного цикла и может не допустить сохранения результата.",
+      "limit": "Подтверждено разбором AST. Зависание этих двух настоящих команд в живом опыте не наблюдалось."
+    }
+  ]
+}

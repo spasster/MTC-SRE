@@ -1,0 +1,74 @@
+{
+  "checked_at": "2026-10-07T01:29:07.119435+00:00",
+  "baseline_commit": "24c22ec8f240e2cd78c614604b8635537edcdd5a",
+  "current_repository_commit": "d09338c73bab190dce1f683a4841762b7d766f36",
+  "current_worktree_dirty": true,
+  "components": {
+    "checkout": [
+      {
+        "pod": "checkout-69c6bfd9f6-h2hdk",
+        "pod_uid": "c252351e-383d-4571-9e5f-d5b45c1b8be8",
+        "image_id": "sha256:c4d09ef6cf7b31667daa84a468e966c3811f324d0cfb676385d67727e28b4faf",
+        "code_sha256": {
+          "app/main.py": "39a2e082121a8213df3b6036f492a4746c2f2ca2252c7119e63104f4f2e76b60",
+          "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267"
+        },
+        "matches_baseline": true
+      },
+      {
+        "pod": "checkout-69c6bfd9f6-r9g9w",
+        "pod_uid": "73957f9a-66f2-4842-a116-26158d23842f",
+        "image_id": "sha256:c4d09ef6cf7b31667daa84a468e966c3811f324d0cfb676385d67727e28b4faf",
+        "code_sha256": {
+          "app/main.py": "39a2e082121a8213df3b6036f492a4746c2f2ca2252c7119e63104f4f2e76b60",
+          "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267"
+        },
+        "matches_baseline": true
+      }
+    ],
+    "payment": [
+      {
+        "pod": "payment-6b58658f8d-745lh",
+        "pod_uid": "bbdd8880-0166-47a9-9e1f-a44971e22304",
+        "image_id": "sha256:e4b80c531ba5b4e2ecf3cd119628418d37390cb6c5b8fafc4645c9e84456a09e",
+        "code_sha256": {
+          "app/main.py": "1e5f8252753ab0a9a29bf8e50590fc893e627310b249f4d9f3640665cd6e4a2f",
+          "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267"
+        },
+        "matches_baseline": false
+      },
+      {
+        "pod": "payment-6b58658f8d-rr8kh",
+        "pod_uid": "cd547855-b3f9-4bb2-8ac1-4efa8f7faffd",
+        "image_id": "sha256:dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+        "code_sha256": {
+          "app/main.py": "bc4d07aa91ef2f4a6a6f0da392372490984cf894db4a71d0d8f7952b55d9efe7",
+          "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267"
+        },
+        "matches_baseline": true
+      }
+    ],
+    "healer": [
+      {
+        "pod": "healer-856c57c679-7h46x",
+        "pod_uid": "a2532b8e-9e23-443b-bfa0-9fdf9aba9e4a",
+        "image_id": "sha256:6cedf2244fd1ee5a49890aaa37edd26b620c7ee39c924a7a711a244e752c23f9",
+        "code_sha256": {
+          "app/main.py": "1c47f631a9f467e10e6d289db9147794bf459c3fe9eb8a2ae5de442a0ab48741",
+          "app/k8s.py": "aa1d8302f5a0aabf0d22a224f9138af127921539f5b41f612549a6ce4c1cf67e",
+          "app/evidence.py": "1e933b2aa9ab8ea9006ba2097e9f3ad67408015848be988b5b8e4205d0e53cb8",
+          "app/observability.py": "b154a678f4c9dc886ce702eb862d8bb84f8fa503a8552efa6a28b38345eb6dc6",
+          "app/state.py": "ea3548e396c1393ce484ae08ccb24689541ae92d89052872371dfff14a9508d5"
+        },
+        "matches_baseline": true
+      }
+    ]
+  },
+  "artifacts_sha256": {
+    "limited-client-reuse-network.json": "2edf29399b80b61a13a97f1ac628f7aeae7b200edc02d527103f4a2f0b4346a9",
+    "spike-client-reuse.json": "db07f1a96d711668847671cf0fdcc29aad044da12792fb31a26db07f706d80f2",
+    "capacity-client-reuse.json": "5ae728bbd538a9d3f5f31d96cf51a084b09caf563cc5f7a356b14517916a05f5"
+  },
+  "passed": false,
+  "note": "Снимок выполнен после локальных опытов до обновления healer. Checkout, payment и healer сверены с исходной версией 24c22ec. Код контейнера healer предшествует исправлениям 093b897 и d09338c. Текущее состояние репозитория и его новый CI указаны отдельно; исторические результаты не перезаписаны."
+}

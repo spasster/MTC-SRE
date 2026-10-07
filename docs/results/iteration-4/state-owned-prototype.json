@@ -1,0 +1,87 @@
+{
+  "checked_at": "2026-10-07T03:02:51.274895+00:00",
+  "passed": false,
+  "verifier_sha256": "fb1df70219307c1908c9e8bfa7d596598e92bbcc32cbd07a2045b630be2f5fbb",
+  "initial_incident": {
+    "checked_at": 1791342182.9355028,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "target_pod_uid": "906c6f7b-32ea-49af-9b3d-49e9527f3de9",
+  "webhook_attempts": [
+    {
+      "elapsed_seconds": 3.5762786865234375e-06,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 6.613743305206299,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 12.7315514087677,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 18.707104444503784,
+      "outcomes": [
+        {
+          "action": "delete_pod",
+          "mode": "auto",
+          "diagnosis": "slow_pod",
+          "result_class": "other"
+        }
+      ]
+    }
+  ],
+  "action": "delete_pod",
+  "action_budget_preserved": true,
+  "cooldown_preserved": true,
+  "journal_preserved": true,
+  "two_instances": true,
+  "single_holder": true,
+  "extra_processes_refused": true,
+  "cleanup_errors": [
+    {
+      "operation": "networkchaos/checkout-slow-pod",
+      "error_type": "RuntimeError"
+    }
+  ],
+  "resource_intents": [
+    {
+      "kind": "networkchaos",
+      "namespace": "demo",
+      "name": "checkout-slow-pod",
+      "uid_confirmed": "c3c398c9-25a6-454f-8926-463edf3efef6",
+      "generation_confirmed": 1
+    }
+  ],
+  "error": "Очистка проверки состояния не подтверждена"
+}

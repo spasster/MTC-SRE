@@ -1,0 +1,24 @@
+{
+  "pod": "payment-6b58658f8d-745lh",
+  "normalized_matches": false,
+  "only_metric_help_differs": true,
+  "diff": [
+    "--- source-24c22ec",
+    "+++ observed-payment",
+    "@@ -20,12 +20,12 @@",
+    " ",
+    " REQUESTS = Counter(",
+    "     \"http_requests_total\",",
+    "-    \"Количество HTTP-запросов\",",
+    "+    \"Total HTTP requests\",",
+    "     [\"method\", \"path\", \"status\"],",
+    " )",
+    " LATENCY = Histogram(",
+    "     \"http_request_duration_seconds\",",
+    "-    \"Длительность HTTP-запроса в секундах\",",
+    "+    \"HTTP request latency in seconds\",",
+    "     [\"method\", \"path\"],",
+    "     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 3, 5, 10, 30),",
+    " )"
+  ]
+}

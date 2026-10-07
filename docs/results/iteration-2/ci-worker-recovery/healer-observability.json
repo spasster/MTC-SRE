@@ -1,0 +1,61 @@
+{
+  "checked_at": "2026-10-07T02:58:50.900118+00:00",
+  "passed": true,
+  "healthy": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 1.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791341926.1740394,
+    "evidence_checked_timestamp_seconds": 1791341910.811494,
+    "evidence_age_seconds": 6.138965111782682,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 0.0
+  },
+  "missing": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 0.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791342014.8930223,
+    "evidence_checked_timestamp_seconds": 1791342009.8455179,
+    "evidence_age_seconds": null,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 0.0
+  },
+  "webhook_result": [
+    {
+      "result": "escalated",
+      "action": "none",
+      "mode": "escalate"
+    }
+  ],
+  "alert": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 0.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791342133.6961403,
+    "evidence_checked_timestamp_seconds": 1791342133.668336,
+    "evidence_age_seconds": null,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 1.0
+  },
+  "new_operations": 0,
+  "restored": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 1.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791342192.0032642,
+    "evidence_checked_timestamp_seconds": 1791342181.850532,
+    "evidence_age_seconds": 7.1787015203512965,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 0.0
+  },
+  "test_incident_closed": true
+}

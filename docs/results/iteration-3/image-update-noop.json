@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-10-07T02:04:24.035205+00:00",
+  "passed": true,
+  "components": {
+    "payment": {
+      "deployment_uid": "0b929ba0-de24-4e10-9f16-118de6335f1c",
+      "generation": 4,
+      "image_id": "sha256:dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+      "image_tag": "payment:local-dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+      "pods": [
+        {
+          "pod": "payment-5466cb444-4k4z5",
+          "uid": "b68c7cc1-92ae-4d7c-a0e5-add34a263586",
+          "image_id": "sha256:dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+          "source_sha256": {
+            "app/main.py": "bc4d07aa91ef2f4a6a6f0da392372490984cf894db4a71d0d8f7952b55d9efe7",
+            "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267",
+            "requirements.txt": "130d0a0641fb952b717cb38eba1de050bdc363ce8ce2454be9fea0694f19f5ab"
+          }
+        },
+        {
+          "pod": "payment-5466cb444-vjm7m",
+          "uid": "02e221ad-e9a4-44ea-b6c9-8db6416d9997",
+          "image_id": "sha256:dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+          "source_sha256": {
+            "app/main.py": "bc4d07aa91ef2f4a6a6f0da392372490984cf894db4a71d0d8f7952b55d9efe7",
+            "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267",
+            "requirements.txt": "130d0a0641fb952b717cb38eba1de050bdc363ce8ce2454be9fea0694f19f5ab"
+          }
+        }
+      ],
+      "passed": true
+    }
+  },
+  "verifier_sha256": "498e96f81bac7cac4e70d73f3ace2218842f6c2d83535b68449be2a2a7bff778"
+}
