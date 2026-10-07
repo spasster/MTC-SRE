@@ -112,7 +112,11 @@ jobs:
           name: sre-proof
           path: |
             .runtime/proof/*.json
-            .runtime/image-*.json
+            .runtime/image-apps.json
+            .runtime/image-healer.json
+            .runtime/image-assistant.json
+          # Разрешены только обезличенные JSON; остальные файлы .runtime не публикуются.
+          include-hidden-files: true
           if-no-files-found: error
       - name: Удалить тестовый контур
         if: always()

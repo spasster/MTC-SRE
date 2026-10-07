@@ -1,0 +1,11 @@
+{
+  "source_commit": "a2901e9e67e6fdeb671d8c3928648478a114fefb",
+  "passed": false,
+  "job_id": 112651303635,
+  "baseline_mttr_seconds_reported_in_log": 134.5,
+  "auto_mttr_seconds_reported_in_log": 117.7,
+  "cpu_profile_found": false,
+  "cpu_injection_started": false,
+  "artifacts_available": false,
+  "scope": "Значения получены из разрешенных строк журнала. Полные JSON ступеней и экспериментов отсутствуют, причины отклонения отдельных кандидатов не установлены."
+}
