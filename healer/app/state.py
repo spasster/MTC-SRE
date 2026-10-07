@@ -86,8 +86,10 @@ def validate_state(snapshot, allow_empty=True):
     history = snapshot["_last_recovery"]
     if history is not None:
         keys = {"incident", "started_at", "api_accepted_at", "slo_restored_at", "resolved_received_at"}
-        require_valid(isinstance(history, dict) and set(history) == keys and valid_text(history["incident"], nullable=True))
-        require_valid(all(valid_number(history[key], nullable=True) for key in keys - {"incident"}))
+        require_valid(isinstance(history, dict) and set(history) in (keys, keys | {"closed_at"})
+                      and valid_text(history["incident"], nullable=True))
+        # Старый журнал без closed_at сохраняется при обновлении приложения.
+        require_valid(all(valid_number(history[key], nullable=True) for key in set(history) - {"incident"}))
     pending = snapshot["_pending"]
     if pending is not None:
         keys = {"diagnosis", "mode", "action", "target", "detail", "deployment_identity", "approval_id", "approval_expires_at"}

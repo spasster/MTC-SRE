@@ -443,7 +443,7 @@ def mark_fixed() -> None:
         _fixed_at = time.time()
 
 
-def recovery_text(now=None) -> str:
+def recovery_text(now=None, resolved_received=True) -> str:
     if _broke_at is None:
         return ""
     if _fixed_at is None and not _escalated:
@@ -455,30 +455,35 @@ def recovery_text(now=None) -> str:
         if _applied_at is not None:
             lines.append(f"До принятия первой команды API {format_duration(_applied_at - _broke_at)}.")
         lines.append(f"До подтверждённого восстановления SLO {format_duration(_fixed_at - _broke_at)}.")
-        lines.append(f"Сообщение resolved получено через {format_duration(moment - _broke_at)}.")
+        if resolved_received:
+            lines.append(f"Сообщение resolved получено через {format_duration(moment - _broke_at)}.")
+        else:
+            lines.append(f"Инцидент закрыт после проверки SLO через {format_duration(moment - _broke_at)}.")
     else:
         lines.append("Автоматическое действие не выполнялось.")
         lines.append(f"Алерт погас через {format_duration(moment - _broke_at)}.")
     return "\n".join(lines)
 
 
-def notify_recovered() -> None:
+def notify_recovered(resolved_received=True) -> None:
     global _broke_at, _fixed_at, _incident_name, _mttr_sent, _last_recovery
     if _broke_at is None:
         return
     # Самостоятельное восстановление тоже закрывает состояние, независимо от уведомления.
-    text = recovery_text() or "Инцидент закрыт после проверки SLO. Автоматическое действие не выполнялось."
+    text = recovery_text(resolved_received=resolved_received) or "Инцидент закрыт после проверки SLO. Автоматическое действие не выполнялось."
+    closed_at = time.time()
     _last_recovery = {
         "incident": _incident_name,
         "started_at": _broke_at,
         "api_accepted_at": _applied_at,
         "slo_restored_at": _fixed_at,
-        "resolved_received_at": time.time(),
+        "resolved_received_at": closed_at if resolved_received else None,
+        "closed_at": closed_at,
     }
     if _fixed_at is not None:
         obs.RECOVERY.observe(max(0, _fixed_at - _broke_at))
     journal_event("incident_resolved", started_at=_broke_at, slo_restored_at=_fixed_at,
-                  api_accepted_at=_applied_at, resolved_received_at=_last_recovery["resolved_received_at"])
+                  api_accepted_at=_applied_at, resolved_received_at=_last_recovery["resolved_received_at"], closed_at=closed_at)
     bot = get_notifier()
     if bot.enabled():
         bot.send(text)
@@ -856,7 +861,7 @@ def recovery_ready(evidence, limits) -> bool:
 def check_recovery():
     global _busy
     with _lock:
-        if _busy or not (_recovery_pending or _resolved_pending):
+        if _busy or _uncertain or _action_intent or (_broke_at is None and not (_recovery_pending or _resolved_pending)):
             return None
         _busy = True
     try:
@@ -864,11 +869,8 @@ def check_recovery():
         obs.evidence(evidence)
         if not recovery_ready(evidence, get_rules()):
             return None
-        if _recovery_pending:
-            mark_fixed()
-        if _resolved_pending:
-            return _handle_resolved(evidence=evidence)
-        return {"result": "recovery confirmed"}
+        # Свежие метрики и готовность подов подтверждают восстановление без webhook resolved.
+        return _handle_resolved(evidence=evidence, resolved_received=_resolved_pending)
     finally:
         with _lock:
             _busy = False
@@ -1003,11 +1005,13 @@ def handle_resolved(evidence=None) -> dict:
             _busy = False
 
 
-def _handle_resolved(evidence=None) -> dict:
+def _handle_resolved(evidence=None, resolved_received=True) -> dict:
     global _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
     global _applied_at, _recovery_pending, _resolved_pending
     limits = get_rules()
-    _resolved_pending = True
+    _resolved_pending = _resolved_pending or resolved_received
+    if _uncertain or _action_intent:
+        return {"result": "ignored: operation unknown"}
     try:
         if evidence is None:
             evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
@@ -1018,7 +1022,7 @@ def _handle_resolved(evidence=None) -> dict:
         return {"result": "ignored: still unhealthy"}
     if _recovery_pending:
         mark_fixed()
-    notify_recovered()
+    notify_recovered(resolved_received=resolved_received)
     _applied_at = None
     _recovery_pending = False
     _resolved_pending = False

@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-10-07T02:41:32.268530+00:00",
+  "base_commit": "2377a8c2c734367f7ef34bf39566905e5caa2126",
+  "source_sha256": {
+    "healer/app/main.py": "6243dc0a6b4e52df72be9e5438ba39e24c075ed348bf214bca3b356b96055f8f",
+    "healer/app/state.py": "557b8d7e737b17767c092dfcf5a12373025cb6619bfbebb7b42927bcb9dbc6fb",
+    "healer/app/assistant.py": "a74e91ac96da0b1de6baddbf9c58eb0a2998ea095e1cede87919372cb69214f2",
+    "healer/tests/test_state.py": "002b2cdcbacf65bcfafff186f9d5f935f80c1a9ae0b1c9f76e30f2af532c9951",
+    "healer/tests/test_webhook.py": "1c5d7f4226849f2b1170c017e4e8a46aecf482b114134a0d8737e638cdc66812",
+    "healer/tests/test_assistant.py": "418773ac704347b9fb662cf77073f57e5f9250714f5e92355f094bed09e0b0d4"
+  },
+  "command": "python -m pytest tests -q --disable-warnings --junitxml=../.runtime/worker-recovery-tests.xml",
+  "working_directory": "healer",
+  "junit_sha256": "5f1256a06d84c142d8f32859e40d17ab6b0f70c403cd8d46a7894ac7991f2b1e",
+  "result": {
+    "tests": 282,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "passed": true,
+  "before_fix": {
+    "base_commit": "2377a8c2c734367f7ef34bf39566905e5caa2126",
+    "test": "test_worker_closes_recovered_incident_without_a_resolved_webhook",
+    "observed_result": "recovery confirmed",
+    "expected_result": "resolved",
+    "exit_code": 1,
+    "evidence_scope": "Регрессия на управляемом DurableMemory и FakeActuator; Kubernetes API не вызывался"
+  },
+  "verified_cases": [
+    "test_unknown_operation_requires_reconciliation_before_other_advice",
+    "test_worker_closes_recovered_incident_without_a_resolved_webhook",
+    "test_worker_does_not_close_an_unconfirmed_recovery[missing_probe]",
+    "test_worker_does_not_close_an_unconfirmed_recovery[not_ready]",
+    "test_worker_does_not_close_an_unconfirmed_recovery[unknown_operation]",
+    "test_worker_does_not_close_an_unconfirmed_recovery[evidence_error]",
+    "test_legacy_and_worker_recovery_history_survive_restore[None]",
+    "test_legacy_and_worker_recovery_history_survive_restore[1040]",
+    "test_resolved_webhook_does_not_clear_an_unknown_operation",
+    "test_worker_closes_a_settling_incident_without_a_resolved_webhook",
+    "test_mttr_waits_for_metrics_and_rollout"
+  ]
+}

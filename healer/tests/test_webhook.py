@@ -128,6 +128,22 @@ def test_self_recovered_settling_incident_closes_without_an_api_action(monkeypat
     assert main.actuator.calls == []
 
 
+def test_worker_closes_a_settling_incident_without_a_resolved_webhook(monkeypatch):
+    recent = [{"pod": "a", "p95": .5, "p95_recent": .05, "throttle": .1},
+              {"pod": "b", "p95": .5, "p95_recent": .05, "throttle": .1}]
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: evidence(p95=.5, pods=recent))
+    assert main.handle_alert(alert())["diagnosis"] == "settling"
+    assert not main._recovery_pending and not main._resolved_pending
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: evidence(pods=list(HEALTHY)))
+    assert main.check_recovery()["result"] == "resolved"
+    assert main._broke_at is None and main._actions == 0
+    assert main._last_recovery["api_accepted_at"] is None
+    assert main._last_recovery["slo_restored_at"] is None
+    assert main._last_recovery["resolved_received_at"] is None
+    assert main._last_recovery["closed_at"] is not None
+    assert main.actuator.calls == []
+
+
 def test_delayed_firing_does_not_start_an_incident_when_slo_is_healthy(monkeypatch):
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
     payload = alert()
@@ -790,6 +806,7 @@ def test_recovery_requires_a_recent_successful_synthetic_probe(success, age):
 def test_mttr_waits_for_metrics_and_rollout(monkeypatch):
     from app.diagnose import Decision
 
+    main.notifier = FakeTelegram()
     monkeypatch.setattr(main.time, "time", lambda: 1005)
     main._broke_at = 1000
     main.execute(Decision("cpu", "auto", "scale", "5", "Нагрузка"))
@@ -808,10 +825,13 @@ def test_mttr_waits_for_metrics_and_rollout(monkeypatch):
 
     monkeypatch.setattr(main.time, "time", lambda: 1025)
     monkeypatch.setattr(main.actuator, "deployment_ready", lambda namespace, name: True)
-    assert main.check_recovery()["result"] == "recovery confirmed"
-    assert main._fixed_at == 1025
-    assert "До принятия первой команды API 5 с." in main.recovery_text(now=1030)
-    assert "До подтверждённого восстановления SLO 25 с." in main.recovery_text(now=1030)
+    assert main.check_recovery()["result"] == "resolved"
+    assert main._last_recovery["slo_restored_at"] == 1025
+    assert main._last_recovery["resolved_received_at"] is None
+    text = main.notifier.messages[-1][0]
+    assert "До принятия первой команды API 5 с." in text
+    assert "До подтверждённого восстановления SLO 25 с." in text
+    assert "Инцидент закрыт после проверки SLO" in text and "Сообщение resolved" not in text
 
 
 def test_resolved_before_rollout_is_rechecked_by_worker(monkeypatch):

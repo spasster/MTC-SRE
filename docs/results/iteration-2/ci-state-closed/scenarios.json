@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-10-07T02:20:13.491764+00:00",
+  "cases": [
+    {
+      "scenario": "kill",
+      "replacement_observed": true,
+      "healthy_after": true,
+      "healer_action_applied": false,
+      "passed": true
+    },
+    {
+      "scenario": "partition",
+      "diagnosis": "payment",
+      "action": "none",
+      "result": "escalated",
+      "error_ratio": 0.25739991405637885,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true,
+      "passed": true
+    },
+    {
+      "scenario": "bad-release",
+      "diagnosis": "bad_release",
+      "action": "rollback",
+      "result": "needs approval: rollback",
+      "error_ratio": 0.3923233600005006,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true,
+      "passed": true
+    },
+    {
+      "scenario": "redis",
+      "diagnosis": "redis",
+      "action": "restart_redis",
+      "result": "needs approval: restart_redis",
+      "error_ratio": 0.4716715193786858,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

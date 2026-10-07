@@ -43,6 +43,18 @@ def test_postmortem_uses_proven_timings_and_excludes_untrusted_journal_fields():
     assert "40.0 с" in result["report_sections"]["recovery"]
 
 
+def test_postmortem_recognizes_worker_closure_without_a_resolved_webhook():
+    document = {"state": {"_last_recovery": {"started_at": 100, "slo_restored_at": 140,
+                                               "resolved_received_at": None, "closed_at": 140}},
+                "events": [{"time": 140, "event": "incident_resolved"},
+                           {"time": 145, "event": "decision"}]}
+    facts = assistant.incident_facts(document)
+    assert facts["scope"] == "latest_completed" and facts["status"] == "completed"
+    assert facts["mttr_seconds"] == 40 and facts["resolved_received_at"] is None
+    assert facts["closed_at"] == 140
+    assert len(facts["timeline"]) == 1
+
+
 @pytest.mark.parametrize("answer", [
     "Повторяющиеся вложенные списки вместо отчета.",
     json.dumps({"symptoms": "Нет данных"}),

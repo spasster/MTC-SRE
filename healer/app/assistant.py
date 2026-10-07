@@ -221,10 +221,11 @@ def incident_facts(document):
     start = number(history.get("started_at")) or number(state.get("_broke_at"))
     finish = number(history.get("slo_restored_at"))
     accepted = number(history.get("api_accepted_at"))
-    end = number(history.get("resolved_received_at"))
+    end = number(history.get("closed_at")) or number(history.get("resolved_received_at"))
     facts = {"scope": "latest_completed" if end else "current_or_unknown",
              "status": "completed" if end else "ongoing_or_unknown", "started_at": start,
-             "slo_restored_at": finish, "api_accepted_at": accepted, "resolved_received_at": end,
+             "slo_restored_at": finish, "api_accepted_at": accepted,
+             "resolved_received_at": number(history.get("resolved_received_at")), "closed_at": end,
              "mttr_seconds": finish - start if start is not None and finish is not None and finish >= start else None,
              "api_delay_seconds": accepted - start if start is not None and accepted is not None and accepted >= start else None,
              "operations": [], "timeline": [], "current_unknown_operation": state.get("_uncertain") is True}

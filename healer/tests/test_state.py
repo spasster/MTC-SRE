@@ -12,7 +12,7 @@ from kubernetes.client.rest import ApiException
 
 from app import main
 from app.state import KubernetesStore, MemoryStore, StateUnavailable, empty_document
-from test_webhook import FakeActuator, evidence, alert
+from test_webhook import FakeActuator, evidence, alert, HEALTHY
 
 
 class Backend:
@@ -222,6 +222,82 @@ def test_restart_preserves_action_budget_and_cooldown(controlled):
     assert result["result"] == "ignored: cooling down"
     assert main._actions == 1
     assert len(actor.calls) == 2
+
+
+def test_worker_closes_recovered_incident_without_a_resolved_webhook(controlled, monkeypatch):
+    monkeypatch.setattr(main.time, "time", lambda: 1000)
+    main.handle_alert(alert())
+    assert main._actions == 1 and main._recovery_pending and not main._resolved_pending
+    actor = main.actuator
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: evidence(pods=list(HEALTHY)))
+    monkeypatch.setattr(main.time, "time", lambda: 1025)
+
+    assert main.check_recovery()["result"] == "resolved"
+    saved = controlled.document["state"]
+    assert saved["_broke_at"] is None and saved["_actions"] == 0
+    assert not saved["_recovery_pending"] and not saved["_resolved_pending"]
+    assert saved["_cooldown_until"] == 0 and not saved["_recovery_targets"]
+    assert saved["_last_recovery"]["started_at"] == 1000
+    assert saved["_last_recovery"]["slo_restored_at"] == 1025
+    assert saved["_last_recovery"]["closed_at"] == 1025
+    assert saved["_last_recovery"]["resolved_received_at"] is None
+    assert len(actor.calls) == 2
+    assert main.check_recovery() is None
+    main.reset_state()
+    main._state_store, main.actuator = controlled, actor
+    main.check_recovery()
+    assert main._broke_at is None and main._actions == 0
+    assert controlled.document["operations"][0]["status"] == "applied"
+
+
+@pytest.mark.parametrize("reason", ["missing_probe", "not_ready", "unknown_operation", "evidence_error"])
+def test_worker_does_not_close_an_unconfirmed_recovery(controlled, monkeypatch, reason):
+    main.handle_alert(alert())
+    healthy = evidence(pods=list(HEALTHY))
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: healthy)
+    if reason == "missing_probe":
+        healthy["synthetic_success"] = None
+    elif reason == "not_ready":
+        monkeypatch.setattr(main.actuator, "deployment_ready", lambda *args: False)
+    elif reason == "unknown_operation":
+        main._uncertain = True
+        main.persist_state()
+    else:
+        def unavailable(*args, **kwargs):
+            raise TimeoutError("Чтение метрик не завершилось")
+        monkeypatch.setattr(main, "gather", unavailable)
+    if reason == "evidence_error":
+        with pytest.raises(TimeoutError):
+            main.check_recovery()
+    else:
+        assert main.check_recovery() is None
+    saved = controlled.document["state"]
+    assert saved["_broke_at"] is not None and saved["_actions"] == 1
+    assert saved["_recovery_pending"] and saved["_last_recovery"] is None
+    assert len(main.actuator.calls) == 2
+
+
+@pytest.mark.parametrize("closed_at", [None, 1040])
+def test_legacy_and_worker_recovery_history_survive_restore(closed_at):
+    snapshot = valid_snapshot()
+    history = {"incident": "Checkout", "started_at": 1000, "api_accepted_at": 1005,
+               "slo_restored_at": 1035, "resolved_received_at": None if closed_at else 1040}
+    if closed_at is not None:
+        history["closed_at"] = closed_at
+    snapshot["_last_recovery"] = history
+    main.restore_state(snapshot)
+    assert main.state_snapshot()["_last_recovery"] == history
+
+
+def test_resolved_webhook_does_not_clear_an_unknown_operation(controlled, monkeypatch):
+    main.handle_alert(alert())
+    main._uncertain = True
+    main.persist_state()
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: evidence(pods=list(HEALTHY)))
+    assert main.handle_resolved()["result"] == "ignored: operation unknown"
+    assert controlled.document["state"]["_actions"] == 1
+    assert controlled.document["state"]["_broke_at"] is not None
+    assert controlled.document["state"]["_resolved_pending"]
 
 
 def test_uncertain_api_result_is_reserved_and_not_repeated_after_restart(controlled, monkeypatch):
