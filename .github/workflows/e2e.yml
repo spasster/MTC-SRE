@@ -110,7 +110,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sre-proof
-          path: .runtime/proof/*.json
+          path: |
+            .runtime/proof/*.json
+            .runtime/image-*.json
           if-no-files-found: error
       - name: Удалить тестовый контур
         if: always()

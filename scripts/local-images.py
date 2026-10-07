@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from experiment import cmd, deployment, run_command
+from experiment import cmd as execute_command, deployment, run_command
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPONENTS = {
@@ -20,6 +20,23 @@ COMPONENTS = {
     "healer": ("healer", "heal", "healer", "healer", "k8s/healer.yaml"),
     "assistant": ("sre-assistant", "heal", "assistant", "healer", "k8s/assistant.yaml"),
 }
+
+
+class ImageCommandFailure(RuntimeError):
+    def __init__(self, program, operation, timeout):
+        super().__init__("Внешняя команда не подтвердила результат")
+        self.safe_command = {"program": program, "operation": operation, "timeout_seconds": timeout}
+
+
+def cmd(*args, timeout=60, input_text=None):
+    try:
+        return execute_command(*args, timeout=timeout, input_text=input_text)
+    except RuntimeError:
+        # Сохраняется только разрешенное имя команды; параметры, stdin и stderr исключены.
+        program = args[0] if args and args[0] in ("docker", "kubectl", "k3d", "sh") else "other"
+        allowed = {"image", "inspect", "run", "tag", "get", "apply", "patch", "create", "rollout", "exec"}
+        operation = args[1] if len(args) > 1 and args[1] in allowed else "other"
+        raise ImageCommandFailure(program, operation, timeout) from None
 
 
 def hashes(component):
@@ -206,6 +223,8 @@ def main():
         report["passed"] = True
     except Exception as error:
         report["error_type"] = type(error).__name__
+        if isinstance(error, ImageCommandFailure):
+            report["failed_command"] = error.safe_command
         # Ошибки собственных проверок объясняются, внешние ответы и аргументы не публикуются.
         report["error"] = str(error) if str(error).startswith(("Deployment", "Docker", "Собранный", "API", "Ответ API", "Рабочий",
             "Не все", "Не найден", "Список подов", "Готовый", "Код рабочего", "Манифест", "Три конфликта")) else "Внешняя команда не подтвердила результат"

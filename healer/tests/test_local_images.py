@@ -166,3 +166,25 @@ def test_failed_validation_keeps_unsuccessful_json(monkeypatch, tmp_path):
     saved = json.loads(target.read_text(encoding="utf-8"))
     assert saved["passed"] is False
     assert "закрытые" not in target.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("program,operation", [("docker", "run"), ("kubectl", "get")])
+def test_failed_external_command_keeps_stage_without_private_arguments(monkeypatch, tmp_path, program, operation):
+    target = tmp_path / "report.json"
+    private = "закрытое-значение-только-для-теста"
+    monkeypatch.setattr(sys, "argv", ["images", "--component", "payment", "--output", str(target)])
+
+    def execute(*args, **kwargs):
+        if args[0] == "sh":
+            return ""
+        raise RuntimeError(private + " " + " ".join(args) + str(kwargs))
+
+    monkeypatch.setattr(images, "execute_command", execute)
+    monkeypatch.setattr(images, "refresh", lambda *args: images.cmd(program, operation, private, timeout=30, input_text=private))
+    with pytest.raises(SystemExit) as failure:
+        images.main()
+    saved = json.loads(target.read_text(encoding="utf-8"))
+    assert saved["passed"] is False
+    assert saved["failed_command"] == {"program": program, "operation": operation, "timeout_seconds": 30}
+    assert private not in target.read_text(encoding="utf-8")
+    assert private not in str(failure.value)
