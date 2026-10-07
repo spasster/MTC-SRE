@@ -1,6 +1,8 @@
 """Удержание SLO проверяется независимо от числа готовых резервных подов."""
 
 import importlib.util
+import copy
+import json
 import sys
 from pathlib import Path
 from unittest.mock import Mock
@@ -17,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 spec = importlib.util.spec_from_file_location("limited_chaos", Path(__file__).resolve().parents[2] / "scripts/verify-limited-chaos.py")
 limited = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(limited)
+import experiment
 
 
 def test_reserve_replica_loss_does_not_replace_service_sli():
@@ -82,14 +85,51 @@ def test_unused_partition_cannot_prove_application_failover():
 def test_own_test_scale_cannot_overwrite_an_operator_change(monkeypatch, field, value):
     expected = {"uid": "checkout-current", "generation": 5, "replicas": 3}
     current = {**expected, field: value}
-    obj = {"metadata": {"uid": current["uid"], "generation": current["generation"], "resourceVersion": "7",
-                        "annotations": {"mtc-sre/slo-test": "owned"}}, "spec": {"replicas": current["replicas"]}}
-    monkeypatch.setattr(limited, "deployment", lambda *args: obj)
+    original = {"metadata": {"uid": expected["uid"], "generation": expected["generation"], "resourceVersion": "7",
+                             "annotations": {experiment.OWNER_ANNOTATION: "owned"}}, "spec": {"replicas": expected["replicas"]}}
+    obj = copy.deepcopy(original)
+    obj["metadata"].update(uid=current["uid"], generation=current["generation"])
+    obj["spec"]["replicas"] = current["replicas"]
+    owner = limited.OwnedDeployment("checkout", "demo", original, "owned")
+    owner.changed = True
+    monkeypatch.setattr(experiment, "deployment", lambda *args: obj)
     write = Mock()
-    monkeypatch.setattr(limited, "cmd", write)
+    monkeypatch.setattr(experiment, "run_command", write)
     with pytest.raises(RuntimeError):
-        limited.resize_checkout(expected, 2, "owned", remove_marker=True)
+        owner.cleanup()
     write.assert_not_called()
+
+
+@pytest.mark.parametrize("gate_failed", [True, False])
+def test_limited_cleanup_preserves_operator_background_after_rejection_or_unknown_write(monkeypatch, tmp_path, gate_failed):
+    objects = {name: {"metadata": {"uid": "original-" + name, "generation": 1, "resourceVersion": "10", "annotations": {}},
+                      "spec": {"replicas": 1 if name in ("healer", "k6-background") else 2,
+                               "template": {"spec": {"containers": [{"resources": {}}]}}}}
+               for name in ("checkout", "payment", "healer", "k6-background")}
+    target, writes, commands = tmp_path / "result.json", [], []
+    monkeypatch.setattr(sys, "argv", ["limited", "--output", str(target)])
+    read = lambda name, namespace: copy.deepcopy(objects[name])
+    monkeypatch.setattr(limited, "deployment", read)
+    monkeypatch.setattr(experiment, "deployment", read)
+    monkeypatch.setattr(limited, "cmd", lambda *args, **kwargs: commands.append(args) or json.dumps({"items": []}))
+    monkeypatch.setattr(limited, "wait_healthy", lambda *args, **kwargs: None)
+    def stop_before_mutation():
+        objects["k6-background"]["spec"]["replicas"] = 7
+        raise RuntimeError("Допуск не получен")
+    monkeypatch.setattr(limited, "wait_incident_closed", stop_before_mutation if gate_failed else lambda: {"incident_closed": True})
+    def lost_response(*args, **kwargs):
+        writes.append(args)
+        objects["k6-background"]["spec"]["replicas"] = 7
+        raise RuntimeError("Ответ первой записи потерян")
+    monkeypatch.setattr(experiment, "run_command", lost_response)
+
+    with pytest.raises(SystemExit):
+        limited.main()
+    saved = json.loads(target.read_text(encoding="utf-8"))
+    assert saved["passed"] is False and objects["k6-background"]["spec"]["replicas"] == 7
+    assert len(writes) == (0 if gate_failed else 1)
+    assert not any("delete" in args or "scale" in args for args in commands)
+    assert len(saved["cleanup_errors"]) == (0 if gate_failed else 1)
 
 
 def test_observer_requires_actual_injection_and_limits_api_reads():

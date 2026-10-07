@@ -301,8 +301,9 @@ def test_delete_conflict_rechecks_resource_ownership_before_retry(monkeypatch):
     assert writes == [True]
 
 
-def test_network_status_generation_does_not_block_owned_cleanup(monkeypatch):
-    owner = experiment.OwnedResource({"kind": "NetworkChaos", "metadata": {"name": "checkout-slow-pod", "namespace": "demo"},
+@pytest.mark.parametrize("kind", ["NetworkChaos", "PodChaos", "StressChaos"])
+def test_chaos_status_generation_does_not_block_owned_cleanup(monkeypatch, kind):
+    owner = experiment.OwnedResource({"kind": kind, "metadata": {"name": "checkout-slow-pod", "namespace": "demo"},
                                      "spec": {"selector": {"pods": {"demo": ["selected"]}}}}, "this-run")
     created = {"metadata": {"uid": "own-chaos", "generation": 1, "resourceVersion": "10",
                             "annotations": {experiment.OWNER_ANNOTATION: "this-run"}},

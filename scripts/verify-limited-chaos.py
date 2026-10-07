@@ -9,7 +9,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from experiment import cmd, deployment, metrics, scalar, wait_healthy, wait_incident_closed
+from experiment import cmd, deployment, metrics, scalar, wait_healthy, wait_incident_closed, OwnedDeployment, OwnedResource
+from capacity import job_summary
 
 PROM = "http://127.0.0.1:19090"
 KINDS = {"pod": "PodChaos", "network": "NetworkChaos", "cpu": "StressChaos"}
@@ -36,12 +37,6 @@ def fault_manifest(fault, pod, payment_pod=None):
         spec.update(duration="120s", containerNames=["checkout"], stressors={"cpu": {"workers": 1, "load": 5}})
     return {"apiVersion": "chaos-mesh.org/v1alpha1", "kind": KINDS[fault],
             "metadata": {"name": "checkout-limited-" + fault, "namespace": "demo"}, "spec": spec}
-
-
-def apply(manifest):
-    result = subprocess.run(["kubectl", "create", "-f", "-"], input=json.dumps(manifest), capture_output=True, text=True, timeout=30)
-    if result.returncode:
-        raise RuntimeError("Тестовый объект не создан: " + result.stderr[-500:])
 
 
 def client_passed(summary):
@@ -112,20 +107,6 @@ def network_mesh_proven(case):
             and after[alternate]["requests_succeeded"] > before[alternate]["requests_succeeded"])
 
 
-def scale_identity(obj):
-    return {"uid": obj["metadata"]["uid"], "generation": obj["metadata"]["generation"], "replicas": obj["spec"]["replicas"]}
-
-
-def resize_checkout(expected, replicas, marker, remove_marker=False):
-    current = deployment("checkout", "demo")
-    if scale_identity(current) != expected or (remove_marker and current["metadata"].get("annotations", {}).get("mtc-sre/slo-test") != marker):
-        raise RuntimeError("Масштаб checkout изменен после начала опыта; запись запрещена")
-    body = {"metadata": {"uid": expected["uid"], "resourceVersion": current["metadata"]["resourceVersion"],
-                         "annotations": {"mtc-sre/slo-test": None if remove_marker else marker}}, "spec": {"replicas": replicas}}
-    result = json.loads(cmd("kubectl", "patch", "deployment", "checkout", "-n", "demo", "--type=merge", "-p", json.dumps(body), "-o", "json"))
-    return scale_identity(result)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
@@ -142,26 +123,27 @@ def main():
     if (deployment("checkout", "demo")["spec"]["replicas"] != 2 or deployment("payment", "demo")["spec"]["replicas"] != 2
         or deployment("healer", "heal")["spec"]["replicas"] != 1):
         raise SystemExit("Для проверки нужны по две реплики checkout/payment и один healer")
-    wait_healthy(PROM, timeout=300)
-    initial = wait_incident_closed()
-    original_checkout = scale_identity(deployment("checkout", "demo"))
-    original_background = deployment("k6-background", "demo")["spec"]["replicas"]
+    original_checkout = deployment("checkout", "demo")
+    original_background = deployment("k6-background", "demo")
+    marker = uuid.uuid4().hex
+    checkout_owner = OwnedDeployment("checkout", "demo", original_checkout, marker)
+    background_owner = OwnedDeployment("k6-background", "demo", original_background, marker)
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "passed": False, "cases": [],
-              "source_commit": cmd("git", "rev-parse", "HEAD").strip(), "initial_incident": initial,
+              "source_commit": cmd("git", "rev-parse", "HEAD").strip(),
               "source_worktree_dirty": bool(cmd("git", "status", "--porcelain")),
               "profile": {"client_rps": 2, "duration_per_case_seconds": 180, "warmup_seconds": 60,
                           "complete_response_ratio_minimum": .995,
-                          "replicas": 3, "original_checkout_replicas": original_checkout["replicas"], "payment_replicas": 2, "network_action": "partition",
+                          "replicas": 3, "original_checkout_replicas": original_checkout["spec"]["replicas"], "payment_replicas": 2, "network_action": "partition",
                           "network_scope": "Один checkout -> один payment; второй payment остается доступен",
                           "cpu_workers": 1, "cpu_load_percent_of_core": 5, "faults": args.faults},
               "resources_per_replica": deployment("checkout", "demo")["spec"]["template"]["spec"]["containers"][0]["resources"],
               "limitation": "Доказательство относится к указанной области отказа и короткому окну, не ко всем интенсивностям хаоса или месячному SLO. Полный сетевой разрыв и перегрузка сохраняют отрицательные результаты."}
     owned = []
-    scale_owner = None
-    scale_marker = uuid.uuid4().hex
     try:
-        cmd("kubectl", "scale", "deployment/k6-background", "-n", "demo", "--replicas=0")
-        scale_owner = resize_checkout(original_checkout, 3, scale_marker)
+        wait_healthy(PROM, timeout=300)
+        report["initial_incident"] = wait_incident_closed()
+        background_owner.mutate(0)
+        checkout_owner.mutate(3)
         cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
         report["incident_before_client"] = wait_incident_closed()
         for fault in args.faults:
@@ -169,14 +151,19 @@ def main():
             manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
             manifest["metadata"]["name"] = name
             manifest["spec"]["template"]["spec"]["containers"][0]["args"] = ["run", "/scripts/limited.js"]
-            apply(manifest)
-            owned.append(("job", name))
-            case = {"fault": fault, "samples": [], "passed": False}
+            client = OwnedResource(manifest, marker)
+            owned.append(client)
+            client.create(timeout=30)
+            case = {"fault": fault, "samples": [], "passed": False, "client_job_uid": client.uid}
             report["cases"].append(case)
             deadline = time.time() + 90
             while time.time() < deadline:
                 pods = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "job-name=" + name, "-o", "json"))["items"]
-                running = [row for row in pods if any(status.get("name") == "k6" and status.get("state", {}).get("running")
+                if client.current() is None:
+                    raise RuntimeError("Собственный клиентский Job исчез")
+                running = [row for row in pods if any(owner.get("uid") == client.uid and owner.get("kind") == "Job"
+                           and owner.get("controller") is True for owner in row["metadata"].get("ownerReferences", []))
+                           and any(status.get("name") == "k6" and status.get("state", {}).get("running")
                            for status in row.get("status", {}).get("containerStatuses", []))]
                 if running:
                     break
@@ -208,15 +195,19 @@ def main():
             case["injected_at"] = time.time()
             chaos = fault_manifest(fault, case["target_pod"], payment_pod)
             case["fault_spec"] = chaos["spec"]
-            apply(chaos)
-            owned.append((KINDS[fault].lower(), chaos["metadata"]["name"]))
+            injection = OwnedResource(chaos, marker)
+            owned.append(injection)
+            injection.create(timeout=30)
+            case["chaos_uid"] = injection.uid
             deadline = time.time() + 180
             while time.time() < deadline:
                 sample = metrics(PROM)
                 sample["chaos_alert_firing"] = scalar(PROM, 'count(ALERTS{alertname="ChaosFaultObserved",fault="' + fault + '",alertstate="firing"}) or vector(0)')
                 sample["checkout_cpu_cores"] = scalar(PROM, 'sum(rate(container_cpu_usage_seconds_total{namespace="demo",container="checkout"}[1m]))')
                 case["samples"].append(sample)
-                obj = json.loads(cmd("kubectl", "get", KINDS[fault].lower(), chaos["metadata"]["name"], "-n", "demo", "-o", "json"))
+                obj = injection.current()
+                if obj is None:
+                    raise RuntimeError("Собственная инъекция исчезла до проверки")
                 conditions = obj.get("status", {}).get("conditions", [])
                 if any(row.get("type") == "AllInjected" and row.get("status") == "True" for row in conditions):
                     case["injection_confirmed"] = True
@@ -225,15 +216,13 @@ def main():
                         case["paths_during"] = payment_paths(case["target_pod"], payment_targets)
                     if fault == "network" and not network_mesh_proven(case):
                         case["mesh_during"] = payment_mesh(case["target_pod"])
-                job = json.loads(cmd("kubectl", "get", "job", name, "-n", "demo", "-o", "json"))
+                job = client.current()
+                if job is None:
+                    raise RuntimeError("Собственный клиентский Job исчез до результата")
                 if job.get("status", {}).get("succeeded") or job.get("status", {}).get("failed"):
                     break
                 time.sleep(5)
-            logs = cmd("kubectl", "logs", "job/" + name, "-n", "demo", "-c", "k6")
-            summaries = [json.loads(line[len("MTC_SUMMARY "):]) for line in logs.splitlines() if line.startswith("MTC_SUMMARY ")]
-            if not summaries:
-                raise RuntimeError("Итог клиента не получен")
-            case["client"] = summaries[-1]
+            case["client"] = job_summary(client)
             case["alert_observed"] = any(sample["chaos_alert_firing"] for sample in case["samples"])
             case["slo_held_in_all_samples"] = bool(case["samples"]) and all(slo_held(sample) for sample in case["samples"])
             current = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"]
@@ -244,9 +233,9 @@ def main():
                               and (fault != "network" or network_cut_proven(case))
                               and (fault != "network" or network_mesh_proven(case))
                               and case["samples"][-1]["rollout_ready"] and all(sample["replicas"] == 3 for sample in case["samples"]))
-            for kind, object_name in list(owned):
-                cmd("kubectl", "delete", kind, object_name, "-n", "demo", "--ignore-not-found", "--timeout=60s", timeout=75)
-                owned.remove((kind, object_name))
+            for owner in reversed(list(owned)):
+                owner.cleanup()
+                owned.remove(owner)
             print(f"Ограниченный отказ {fault}: SLO={case['slo_held_in_all_samples']}, алерт={case['alert_observed']}, результат={case['passed']}", flush=True)
             if not case["passed"]:
                 raise RuntimeError("Удержание SLO не подтверждено: " + fault)
@@ -255,24 +244,23 @@ def main():
         report["error"] = str(exc)
     finally:
         cleanup_errors = []
-        for kind, object_name in owned:
+        for owner in reversed(owned):
             try:
-                cmd("kubectl", "delete", kind, object_name, "-n", "demo", "--ignore-not-found", "--timeout=60s", timeout=75)
+                owner.cleanup()
             except Exception as error:
-                cleanup_errors.append({"resource": kind + "/" + object_name, "error_type": type(error).__name__})
-        if scale_owner is not None:
+                cleanup_errors.append({"resource": owner.kind + "/" + owner.name, "error_type": type(error).__name__})
+        for name, owner in (("checkout", checkout_owner), ("k6-background", background_owner)):
             try:
-                resize_checkout(scale_owner, original_checkout["replicas"], scale_marker, remove_marker=True)
-                cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
-                report["original_checkout_replicas_restored"] = scale_identity(deployment("checkout", "demo"))["replicas"] == original_checkout["replicas"]
+                owner.cleanup()
+                cmd("kubectl", "rollout", "status", "deployment/" + name, "-n", "demo", "--timeout=180s", timeout=210)
+                report["original_" + name.replace("k6-", "").replace("-", "_") + "_replicas_restored"] = (
+                    deployment(name, "demo")["spec"]["replicas"] == owner.original["spec"]["replicas"])
             except Exception as error:
-                cleanup_errors.append({"resource": "deployment/checkout", "error_type": type(error).__name__})
-        try:
-            cmd("kubectl", "scale", "deployment/k6-background", "-n", "demo", "--replicas=" + str(original_background))
-        except Exception as error:
-            cleanup_errors.append({"resource": "deployment/k6-background", "error_type": type(error).__name__})
+                cleanup_errors.append({"resource": "deployment/" + name, "error_type": type(error).__name__})
         report["cleanup_errors"] = cleanup_errors
-        report["passed"] = report["passed"] and not cleanup_errors and report.get("original_checkout_replicas_restored") is True
+        report["resource_intents"] = [{"kind": owner.kind, "name": owner.name, "uid_confirmed": owner.uid} for owner in owned]
+        report["passed"] = (report["passed"] and not cleanup_errors and report.get("original_checkout_replicas_restored") is True
+                            and report.get("original_background_replicas_restored") is True)
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
         target = Path(args.output)
         target.parent.mkdir(parents=True, exist_ok=True)

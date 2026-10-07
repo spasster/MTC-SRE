@@ -59,8 +59,9 @@ def deployment(name, namespace):
 
 
 OWNER_ANNOTATION = "mtc-sre/experiment"
-RESOURCE_PATHS = {"job": "/apis/batch/v1", "networkchaos": "/apis/chaos-mesh.org/v1alpha1", "pod": "/api/v1"}
-RESOURCE_PLURALS = {"job": "jobs", "networkchaos": "networkchaos", "pod": "pods"}
+RESOURCE_PATHS = {"job": "/apis/batch/v1", "pod": "/api/v1", **dict.fromkeys(
+    ("networkchaos", "podchaos", "stresschaos"), "/apis/chaos-mesh.org/v1alpha1")}
+RESOURCE_PLURALS = {"job": "jobs", "pod": "pods", "networkchaos": "networkchaos", "podchaos": "podchaos", "stresschaos": "stresschaos"}
 
 
 class RejectedConflict(RuntimeError):
@@ -110,10 +111,10 @@ class OwnedResource:
             return None
         metadata = current["metadata"]
         generation = self.generation if self.generation is not None else 1
-        # У NetworkChaos без status subresource контроллер увеличивает generation при записи статуса.
+        # У Chaos Mesh без status subresource контроллер увеличивает generation при записи статуса.
         # Только полный spec, подтвержденный ответом create, разрешает такой служебный рост.
         unchanged_spec = self.expected_spec is not None and current.get("spec") == self.expected_spec
-        status_generation = (self.kind == "networkchaos" and unchanged_spec and self.uid is not None
+        status_generation = (self.kind in ("networkchaos", "podchaos", "stresschaos") and unchanged_spec and self.uid is not None
                              and type(metadata.get("generation")) is int and metadata["generation"] >= generation)
         if (metadata.get("annotations", {}).get(OWNER_ANNOTATION) != self.marker
                 or self.uid is not None and metadata["uid"] != self.uid
