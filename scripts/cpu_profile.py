@@ -75,22 +75,8 @@ def selection_diagnostics(report):
     return [stage_diagnostics(stage, report.get("duration_seconds")) for stage in report["stages"]]
 
 
-def selected_profile(report, cluster, commit, now=None):
-    if (not isinstance(report, dict) or report.get("passed") is not True or report.get("cleanup_errors") != []
-            or report.get("cluster") != cluster or report.get("source_commit") != commit):
-        raise ValueError("Замеры мощности не подтверждены для текущего контура и версии")
-    try:
-        timestamp = datetime.fromisoformat(report["finished_at"])
-        if timestamp.tzinfo is None:
-            raise ValueError("Нет часового пояса")
-        ended = timestamp.timestamp()
-    except (KeyError, TypeError, ValueError):
-        raise ValueError("Замеры мощности не имеют подтвержденного времени завершения") from None
-    age = (datetime.now(timezone.utc).timestamp() if now is None else now) - ended
-    duration = report.get("duration_seconds")
-    if not 0 <= age <= 1800 or type(duration) is not int or duration < 90:
-        raise ValueError("Нужны свежие завершенные ступени длительностью не менее 90 секунд")
-    stages = report.get("stages", [])
+def measured_pair(stages, duration):
+    """Одна пара удовлетворяет тем же критериям при калибровке и при допуске инъекции."""
     for failed in stages:
         rate = failed.get("planned_rps")
         if (type(rate) is not int or rate <= 0 or failed.get("replicas") != 2 or failed.get("passed") is not False
@@ -107,10 +93,54 @@ def selected_profile(report, cluster, commit, now=None):
             if (healthy.get("replicas") == 5 and healthy.get("planned_rps") == rate and healthy.get("passed") is True
                     and complete_client(healthy, rate, duration) and healthy["client_p95_ms"] < 300
                     and restored and all(healthy_sample(row) for row in restored)):
-                return {"total_rps": rate, "background_rps_during_spike": 0,
-                        "capacity_source_commit": commit, "cluster": cluster,
-                        "capacity_finished_at": report["finished_at"],
-                        "two_replicas_client_p95_ms": failed.get("client_p95_ms"),
-                        "five_replicas_client_p95_ms": healthy["client_p95_ms"],
-                        "method": "Один и тот же поток проверен при двух и пяти репликах. В CPU-опыте фон временно выключен, весь поток создает собственный Job; эффект scale подтверждается отдельно до окончания нагрузки."}
+                return failed, healthy
+    return None
+
+
+def refinement_rate(report):
+    """Предложить только неизмеренный целый RPS внутри наблюдаемой границы двух реплик."""
+    if measured_pair(report["stages"], report["duration_seconds"]) is not None:
+        return None
+    rows = [row for row in selection_diagnostics(report) if row["replicas"] == 2]
+    measured = {row["planned_rps"] for row in rows if row["planned_rps"] is not None}
+    passing = [row["planned_rps"] for row in rows if row["stage_passed"] is True
+               and row["complete_client"] and row["valid_active_tail"] and row["healthy_in_tail"]]
+    intervals = []
+    for lower in passing:
+        upper = min((row["planned_rps"] for row in rows if row["planned_rps"] is not None
+                     and row["planned_rps"] > lower and row["stage_passed"] is False), default=None)
+        if upper is not None:
+            missing = [rate for rate in range(lower + 1, upper) if rate not in measured]
+            if missing:
+                intervals.append((upper - lower, lower, missing))
+    if not intervals:
+        return None
+    _, _, missing = min(intervals, key=lambda item: (item[0], -item[1]))
+    return missing[(len(missing) - 1) // 2]
+
+
+def selected_profile(report, cluster, commit, now=None):
+    if (not isinstance(report, dict) or report.get("passed") is not True or report.get("cleanup_errors") != []
+            or report.get("cluster") != cluster or report.get("source_commit") != commit):
+        raise ValueError("Замеры мощности не подтверждены для текущего контура и версии")
+    try:
+        timestamp = datetime.fromisoformat(report["finished_at"])
+        if timestamp.tzinfo is None:
+            raise ValueError("Нет часового пояса")
+        ended = timestamp.timestamp()
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("Замеры мощности не имеют подтвержденного времени завершения") from None
+    age = (datetime.now(timezone.utc).timestamp() if now is None else now) - ended
+    duration = report.get("duration_seconds")
+    if not 0 <= age <= 1800 or type(duration) is not int or duration < 90:
+        raise ValueError("Нужны свежие завершенные ступени длительностью не менее 90 секунд")
+    pair = measured_pair(report.get("stages", []), duration)
+    if pair is not None:
+        failed, healthy = pair
+        return {"total_rps": failed["planned_rps"], "background_rps_during_spike": 0,
+                "capacity_source_commit": commit, "cluster": cluster,
+                "capacity_finished_at": report["finished_at"],
+                "two_replicas_client_p95_ms": failed["client_p95_ms"],
+                "five_replicas_client_p95_ms": healthy["client_p95_ms"],
+                "method": "Один и тот же поток проверен при двух и пяти репликах. В CPU-опыте фон временно выключен, весь поток создает собственный Job; эффект scale подтверждается отдельно до окончания нагрузки."}
     raise ValueError("Не найден измеренный CPU-профиль: две реплики нарушают SLO, пять выдерживают тот же поток")

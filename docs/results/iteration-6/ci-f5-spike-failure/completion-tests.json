@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-07T10:03:03.901451+00:00",
+  "source_commit": "f5f009bd1c71c9a28be824b0e13408313579d267",
+  "passed": true,
+  "tests": 418,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "junit_sha256": "37ffc98b8f7dac51d89801ee33d04a95d753da850c0ae2422eb4a25b424b42ec",
+  "source_sha256": {
+    "scripts/cpu_profile.py": "1bcd4f7aefdcdbb105dff5058a03525c1606b7263815f7da776053c9cff3e7e4",
+    "scripts/capacity.py": "2d7f76a48435ecdfc79edc0b3ae220b4d26a473675b257e39e02b4c0d704b2c6",
+    "scripts/experiment.py": "f15bcd99afccf107af6139fb00ce288b687e9e9681f292f04850c10f2fb453e9",
+    "healer/tests/test_cpu_profile.py": "5b8096a33cb02a04627d9b39908f01e2fc330a4bcc4ffd5b9c69854b10e73058",
+    "healer/tests/test_experiment.py": "cc380ea06bcdd7e945e95aee71762700792a3f5dfcf48b2f5463cb61abb4e67a",
+    "healer/tests/test_capacity_script.py": "360896dece522f196448f7420dfd27121707185c269f4d8094e022820a9de95f",
+    ".github/workflows/e2e.yml": "86ae030177519d10762d1f00233daa04fc435e8338c9350656ff00e9bf83cbab"
+  },
+  "scope": "Сохранены все прежние проверки. Новые проверки сохраняют только числовой недопуск, запрещают позднее третье чтение, подтверждают собственную очистку и исходный контур после мощности, сохраняют чужое изменение и неизвестный результат. Критерии выбора CPU и восстановления не ослаблены. Это тесты healer и проверочных утилит, не полный CI."
+}

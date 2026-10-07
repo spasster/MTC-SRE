@@ -1,0 +1,53 @@
+{
+  "checked_at": "2026-10-07T10:34:17.490734+00:00",
+  "cases": [
+    {
+      "scenario": "kill",
+      "passed": true,
+      "injection_uid": "0c2a5f52-2965-4ca9-aa69-e899f8ed7bff",
+      "replacement_observed": true,
+      "healthy_after": true,
+      "healer_action_applied": false
+    },
+    {
+      "scenario": "partition",
+      "passed": true,
+      "injection_uid": "80179446-7a63-4c03-86b5-7439a1700467",
+      "diagnosis": "payment",
+      "action": "none",
+      "result": "escalated",
+      "error_ratio": 0.2589906971660965,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true
+    },
+    {
+      "scenario": "bad-release",
+      "passed": true,
+      "injection_uid": "8ae0535e-b472-48b7-811b-27db0bfa1320",
+      "diagnosis": "bad_release",
+      "action": "rollback",
+      "result": "needs approval: rollback",
+      "error_ratio": 0.6706345225137293,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true
+    },
+    {
+      "scenario": "redis",
+      "passed": true,
+      "injection_uid": "7c6c0f27-4a1b-4139-bb84-6f50b46b724b",
+      "diagnosis": "redis",
+      "action": "restart_redis",
+      "result": "needs approval: restart_redis",
+      "error_ratio": 0.2614263842834892,
+      "replicas": 2,
+      "pods_unchanged_after_detection": true
+    }
+  ],
+  "passed": true,
+  "cleanup_errors": [],
+  "source_commit": "f5f009bd1c71c9a28be824b0e13408313579d267",
+  "verifier_sha256": "685233b41764b79445db874cf705d7dcb9cf448426d22c3dde1008993b560b03",
+  "forward_stopped": true,
+  "unfinished_resources": [],
+  "finished_at": "2026-10-07T10:41:12.029401+00:00"
+}

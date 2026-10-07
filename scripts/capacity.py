@@ -11,7 +11,7 @@ from pathlib import Path
 
 from experiment import (cmd, deployment, metrics, scalar, healthy, wait_healthy, wait_incident_closed,
                         InitialHealthError, OWNER_ANNOTATION, OwnedDeployment, OwnedResource)
-from cpu_profile import stage_diagnostics
+from cpu_profile import stage_diagnostics, measured_pair, refinement_rate
 
 
 def job_summary(owned):
@@ -97,12 +97,92 @@ def confirm_baseline(owners, report):
                                    "health_checked": traffic_expected, "components": components}
 
 
+def measure_stage(args, report, owned_jobs, marker, replicas, rate):
+    """Один профиль измеряется собственным Job; критерии и очистка общие для всех ступеней."""
+    # Перед каждой ступенью убираются очереди предыдущего клиента.
+    time.sleep(20)
+    manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
+    container = manifest["spec"]["template"]["spec"]["containers"][0]
+    container["env"] += [{"name": "RATE", "value": str(rate)}, {"name": "DURATION", "value": str(args.duration) + "s"}]
+    owned = OwnedResource(manifest, marker)
+    owned_jobs.append(owned)
+    owned.create(timeout=30)
+    stage = {"replicas": replicas, "planned_rps": rate, "samples": [], "passed": False, "job_uid": owned.uid}
+    report["stages"].append(stage)
+    print(f"Измеряется {rate} RPS при {replicas} репликах", flush=True)
+    deadline = time.monotonic() + args.duration + 90
+    while time.monotonic() < deadline:
+        before = owned.current()
+        if before is None:
+            raise RuntimeError("Собственный Job исчез до измерения")
+        sample = metrics("http://127.0.0.1:19090")
+        sample["checkout_cpu_cores"] = scalar("http://127.0.0.1:19090", 'sum(rate(container_cpu_usage_seconds_total{namespace="demo",container="checkout",pod=~"checkout-.*"}[1m]))')
+        sample["checkout_ram_bytes"] = scalar("http://127.0.0.1:19090", 'sum(container_memory_working_set_bytes{namespace="demo",container="checkout",pod=~"checkout-.*"})')
+        job = owned.current()
+        if job is None or time.monotonic() >= deadline:
+            raise RuntimeError("Собственный Job или своевременное завершение не подтверждены")
+        # Окно относится к нагрузке, только если свой Job активен до и после чтения.
+        sample["load_active"] = all(obj.get("status", {}).get("active", 0) > 0
+                                    and not obj.get("status", {}).get("succeeded")
+                                    and not obj.get("status", {}).get("failed") for obj in (before, job))
+        stage["samples"].append(sample)
+        if job.get("status", {}).get("succeeded") or job.get("status", {}).get("failed"):
+            break
+        time.sleep(10)
+    else:
+        raise RuntimeError("Job ступени не завершился вовремя")
+    summary = stage["client"] = job_summary(owned)
+    sent = summary["http_reqs"].get("count", 0)
+    drops = summary["dropped_iterations"].get("count", 0)
+    errors = summary["http_req_failed"].get("rate", 1)
+    duration = summary["http_req_duration"].get("p(95)")
+    recent = stage["samples"][-3:]
+    stage.update(planned_iterations=rate * args.duration, sent=sent, dropped=drops,
+                 actual_client_rps=sent / args.duration, client_p95_ms=duration,
+                 passed=(not job.get("status", {}).get("failed") and sent >= rate * args.duration * .99
+                         and drops == 0 and errors <= .005 and duration is not None and duration < 300
+                         and len(recent) == 3 and all(healthy(sample) for sample in recent)))
+    for field in ("checkout_cpu_cores", "checkout_ram_bytes"):
+        values = [sample[field] for sample in stage["samples"] if sample[field] is not None]
+        stage[field + "_max"] = max(values) if values else None
+    print("Измерена ступень: " + json.dumps(stage_diagnostics(stage, args.duration), ensure_ascii=False), flush=True)
+    owned.cleanup()
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    bound = report["bounds"][str(replicas)]
+    if stage["passed"]:
+        bound["highest_tested_passing_rps"] = max(rate, bound["highest_tested_passing_rps"] or 0)
+    else:
+        bound["first_tested_failing_rps"] = min(rate, bound["first_tested_failing_rps"] or rate)
+    return stage
+
+
+def refine_profile(args, report, owners, owned_jobs, marker):
+    """Не более трех промежуточных RPS; каждый проверяется при двух и пяти репликах."""
+    result = report["cpu_refinement"] = {"max_additional_rates": 3, "attempted_rates": [], "profile_found": False}
+    for _ in range(result["max_additional_rates"]):
+        rate = refinement_rate(report)
+        if rate is None:
+            break
+        result["attempted_rates"].append(rate)
+        for replicas in (2, 5):
+            owners[("demo", "checkout")].mutate(replicas)
+            cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
+            measure_stage(args, report, owned_jobs, marker, replicas, rate)
+    pair = measured_pair(report["stages"], args.duration)
+    result["profile_found"] = pair is not None
+    result["selected_rps"] = pair[0]["planned_rps"] if pair is not None else None
+    if pair is None:
+        raise RuntimeError("CPU-профиль не подтвержден в исходной сетке и ограниченном уточнении")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
     parser.add_argument("--rates", default="1,3,4,6,8,12")
     parser.add_argument("--replicas", default="2,5", help="Проверяемые варианты: 2, 5 или 2,5")
     parser.add_argument("--continue-after-failure", action="store_true", help="Проверить все ступени для калибровки CPU-демо")
+    parser.add_argument("--refine-cpu-profile", action="store_true", help="Измерить до трех промежуточных RPS, если исходная сетка не дала CPU-профиль")
     parser.add_argument("--duration", type=int, default=120)
     parser.add_argument("--output", default="docs/results/capacity.json")
     args = parser.parse_args()
@@ -112,6 +192,8 @@ def main():
         parser.error("Разрешены варианты с двумя и пятью репликами")
     if rates != sorted(set(rates)) or rates[0] <= 0 or args.duration < 90:
         parser.error("Нужны возрастающие положительные RPS и длительность не менее 90 с")
+    if args.refine_cpu_profile and (replica_counts != [2, 5] or not args.continue_after_failure):
+        parser.error("Уточнение CPU-профиля требует --replicas 2,5 и --continue-after-failure")
     os.environ["CLUSTER"] = args.cluster
     cmd("sh", "scripts/require-context.sh", args.cluster)
     if json.loads(cmd("kubectl", "get", "networkchaos,podchaos", "-n", "demo", "-o", "json"))["items"]:
@@ -143,63 +225,11 @@ def main():
             bound = {"highest_tested_passing_rps": None, "first_tested_failing_rps": None}
             report["bounds"][str(replicas)] = bound
             for rate in rates:
-                # Перед каждой ступенью убираются очереди предыдущего клиента.
-                time.sleep(20)
-                manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
-                container = manifest["spec"]["template"]["spec"]["containers"][0]
-                container["env"] += [{"name": "RATE", "value": str(rate)}, {"name": "DURATION", "value": str(args.duration) + "s"}]
-                owned = OwnedResource(manifest, marker)
-                owned_jobs.append(owned)
-                owned.create(timeout=30)
-                stage = {"replicas": replicas, "planned_rps": rate, "samples": [], "passed": False, "job_uid": owned.uid}
-                report["stages"].append(stage)
-                print(f"Измеряется {rate} RPS при {replicas} репликах", flush=True)
-                deadline = time.monotonic() + args.duration + 90
-                while time.monotonic() < deadline:
-                    before = owned.current()
-                    if before is None:
-                        raise RuntimeError("Собственный Job исчез до измерения")
-                    sample = metrics("http://127.0.0.1:19090")
-                    sample["checkout_cpu_cores"] = scalar("http://127.0.0.1:19090", 'sum(rate(container_cpu_usage_seconds_total{namespace="demo",container="checkout",pod=~"checkout-.*"}[1m]))')
-                    sample["checkout_ram_bytes"] = scalar("http://127.0.0.1:19090", 'sum(container_memory_working_set_bytes{namespace="demo",container="checkout",pod=~"checkout-.*"})')
-                    job = owned.current()
-                    if job is None or time.monotonic() >= deadline:
-                        raise RuntimeError("Собственный Job или своевременное завершение не подтверждены")
-                    # Окно относится к нагрузке, только если свой Job активен до и после чтения.
-                    sample["load_active"] = all(obj.get("status", {}).get("active", 0) > 0
-                                                and not obj.get("status", {}).get("succeeded")
-                                                and not obj.get("status", {}).get("failed") for obj in (before, job))
-                    stage["samples"].append(sample)
-                    if job.get("status", {}).get("succeeded") or job.get("status", {}).get("failed"):
-                        break
-                    time.sleep(10)
-                else:
-                    raise RuntimeError("Job ступени не завершился вовремя")
-                summary = stage["client"] = job_summary(owned)
-                sent = summary["http_reqs"].get("count", 0)
-                drops = summary["dropped_iterations"].get("count", 0)
-                errors = summary["http_req_failed"].get("rate", 1)
-                duration = summary["http_req_duration"].get("p(95)")
-                recent = stage["samples"][-3:]
-                stage.update(planned_iterations=rate * args.duration, sent=sent, dropped=drops,
-                             actual_client_rps=sent / args.duration, client_p95_ms=duration,
-                             passed=(not job.get("status", {}).get("failed") and sent >= rate * args.duration * .99
-                                     and drops == 0 and errors <= .005 and duration is not None and duration < 300
-                                     and len(recent) == 3 and all(healthy(sample) for sample in recent)))
-                for field in ("checkout_cpu_cores", "checkout_ram_bytes"):
-                    values = [sample[field] for sample in stage["samples"] if sample[field] is not None]
-                    stage[field + "_max"] = max(values) if values else None
-                print("Измерена ступень: " + json.dumps(stage_diagnostics(stage, args.duration), ensure_ascii=False), flush=True)
-                owned.cleanup()
-                Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-                Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-                if stage["passed"]:
-                    bound["highest_tested_passing_rps"] = rate
-                else:
-                    if bound["first_tested_failing_rps"] is None:
-                        bound["first_tested_failing_rps"] = rate
-                    if not args.continue_after_failure:
-                        break
+                stage = measure_stage(args, report, owned_jobs, marker, replicas, rate)
+                if not stage["passed"] and not args.continue_after_failure:
+                    break
+        if args.refine_cpu_profile:
+            refine_profile(args, report, owners, owned_jobs, marker)
         report["passed"] = all(bound["highest_tested_passing_rps"] is not None for bound in report["bounds"].values())
     except Exception as exc:
         report["error"] = str(exc)

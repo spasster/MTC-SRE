@@ -1,0 +1,94 @@
+{
+  "checked_at": "2026-10-07T10:30:00.510267+00:00",
+  "source_commit": "f5f009bd1c71c9a28be824b0e13408313579d267",
+  "passed": true,
+  "first_five": [
+    {
+      "commit": "bfe6ea9ea47a29d5558865773a90b9bafb969911",
+      "subject": "Исправлен порядок установки приложений и CRD мониторинга",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "0120f36279a02bc339a9c6e65ac572640288a207",
+      "subject": "Подтверждения Telegram привязаны к запросу и сроку действия",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "f8a271a03ed1563e0a0ac17fd83645e3e162551f",
+      "subject": "Ошибки и пропуски действий Kubernetes отделены от успешного применения",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "6fe44e909bda0604814016a9214e12091fec7ad6",
+      "subject": "Восстановление запрещено при отсутствующих и некорректных метриках",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "2e89a2d8042af9b5bf77f1e407564a1a71ef31e9",
+      "subject": "MTTR завершается после проверки метрик и готовности Deployment",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    }
+  ],
+  "closing_fixes": [
+    {
+      "commit": "9a94279425724e40cc6fae2fc2658559d468baf1",
+      "subject": "Повторно сверять Deployment и готовность после проверки кода всех реплик",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "3e7736885516cc06a2beba74dff3ac0886ec3937",
+      "subject": "Защитить фон и собственные объекты всех ограниченных отказов при очистке",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "b0f3a5b29f148fcdfb5de0cdfcc7b2bb02d6f69b",
+      "subject": "Сохранять неуспешный отчет сценариев и очищать только собственную инъекцию и релиз",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "20aa4f11defc729c454437d5d6ef735958fdccd9",
+      "subject": "Сохранять логи всего запроса при переходе из span с запасом времени",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "a2901e9e67e6fdeb671d8c3928648478a114fefb",
+      "subject": "Сохранять безопасный этап ошибки применения образов в результатах CI",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "4464b0031b54db5bd12ccf06cd134868f66a1f62",
+      "subject": "Сохранять обезличенные JSON из скрытого каталога в CI",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "3f49a38a140db757534e4720cb8ea83d37df1127",
+      "subject": "Собирать устойчивые окна CPU и причины отклонения профиля",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "bed17237f58ea58b8b00238516537d431d7a46c0",
+      "subject": "Сохранять условия недопуска и запрещать позднее начало инъекции",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    },
+    {
+      "commit": "f5f009bd1c71c9a28be824b0e13408313579d267",
+      "subject": "Подтверждать возврат исходного контура после серии мощности",
+      "ancestor_of_source": true,
+      "russian_subject": true
+    }
+  ],
+  "scope": "Подтверждены отдельные существующие коммиты первых пяти и девяти заключительных исправлений и их присутствие в рабочей ветке. История авторов не менялась; распределение ролей не считается доказательством индивидуального авторства."
+}

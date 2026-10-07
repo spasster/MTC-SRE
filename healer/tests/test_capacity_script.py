@@ -280,3 +280,55 @@ def test_capacity_failed_baseline_keeps_precondition_samples(monkeypatch):
         capacity.confirm_baseline(owners, report)
     assert report["baseline_health_samples"] == [{"p95": 2, "slo_healthy": False}]
     assert "baseline_restored" not in report
+
+
+def refinement_grid():
+    path = Path(__file__).resolve().parents[2] / "docs/results/iteration-6/ci-f5-spike-failure/cpu-capacity.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_refinement_measures_both_replica_counts_and_stops_on_a_proven_pair(monkeypatch):
+    report, calls = refinement_grid(), []
+    owner = SimpleNamespace(mutate=lambda replicas: calls.append(("scale", replicas)))
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: "")
+    def measure(args, result, jobs, marker, replicas, rate):
+        calls.append(("measure", replicas, rate))
+        sample = {"time": 110, "synthetic_time": 100, "synthetic_success": 1, "error_ratio": 0,
+                  "request_rate": rate, "load_active": True, "rollout_ready": True,
+                  "p95": .6 if replicas == 2 else .1, "cpu_throttle": .7 if replicas == 2 else .2}
+        result["stages"].append({"replicas": replicas, "planned_rps": rate, "passed": replicas == 5,
+            "sent": rate * args.duration, "dropped": 0, "client_p95_ms": 600 if replicas == 2 else 100,
+            "client": {"http_req_failed": {"rate": 0}}, "samples": [{**sample, "time": 110 + i * 10} for i in range(3)]})
+    monkeypatch.setattr(capacity, "measure_stage", measure)
+    capacity.refine_profile(SimpleNamespace(duration=120), report, {("demo", "checkout"): owner}, [], "owned")
+    assert calls == [("scale", 2), ("measure", 2, 21), ("scale", 5), ("measure", 5, 21)]
+    assert report["cpu_refinement"] == {"max_additional_rates": 3, "attempted_rates": [21], "profile_found": True, "selected_rps": 21}
+
+
+def test_refinement_has_a_finite_budget_and_keeps_failed_measurements(monkeypatch):
+    report, calls = refinement_grid(), []
+    # Широкий интервал нужен, чтобы доказать остановку именно по бюджету, а не исчерпанию сетки.
+    report["stages"] = [row for row in report["stages"] if row["replicas"] == 2 and row["planned_rps"] in (3, 24)]
+    report["stages"][1]["planned_rps"] = 100
+    owner = SimpleNamespace(mutate=lambda replicas: calls.append(replicas))
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: "")
+    def incomplete(args, result, jobs, marker, replicas, rate):
+        result["stages"].append({"replicas": replicas, "planned_rps": rate, "passed": False,
+            "sent": rate * args.duration, "dropped": 1, "client_p95_ms": 500,
+            "client": {"http_req_failed": {"rate": 0}}, "samples": []})
+    monkeypatch.setattr(capacity, "measure_stage", incomplete)
+    with pytest.raises(RuntimeError, match="не подтвержден"):
+        capacity.refine_profile(SimpleNamespace(duration=120), report, {("demo", "checkout"): owner}, [], "owned")
+    assert len(report["cpu_refinement"]["attempted_rates"]) == 3 and calls == [2, 5, 2, 5, 2, 5]
+    assert report["cpu_refinement"]["profile_found"] is False
+    assert len(report["stages"]) == 8 and all(row["dropped"] == 1 for row in report["stages"][2:])
+
+
+@pytest.mark.parametrize("arguments", [["--replicas", "2", "--continue-after-failure"], ["--replicas", "2,5"]])
+def test_refinement_rejects_an_unpaired_or_incomplete_plan_before_any_write(monkeypatch, arguments):
+    monkeypatch.setattr(sys, "argv", ["capacity", "--refine-cpu-profile", *arguments])
+    calls = []
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: calls.append(args))
+    with pytest.raises(SystemExit) as error:
+        capacity.main()
+    assert error.value.code == 2 and calls == []

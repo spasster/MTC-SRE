@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-from cpu_profile import selected_profile, selection_diagnostics
+from cpu_profile import selected_profile, selection_diagnostics, measured_pair, refinement_rate
 
 
 def measured():
@@ -122,3 +122,40 @@ def test_partial_warmup_window_is_visible_and_cannot_define_a_profile():
     assert diagnostics[0]["tail_min_observed_rps"] == 4
     with pytest.raises(ValueError):
         selected_profile(report, "mtc-ci", "current", now=NOW)
+
+
+def failed_ci_grid():
+    path = Path(__file__).resolve().parents[2] / "docs/results/iteration-6/ci-f5-spike-failure/cpu-capacity.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_real_ci_gap_requires_a_new_measurement_and_cannot_accept_dropped_iterations():
+    report = failed_ci_grid()
+    assert measured_pair(report["stages"], report["duration_seconds"]) is None
+    assert refinement_rate(report) == 21
+    failed = next(row for row in report["stages"] if row["replicas"] == 2 and row["planned_rps"] == 24)
+    assert failed["dropped"] == 2
+    assert next(row for row in selection_diagnostics(report) if row["replicas"] == 2 and row["planned_rps"] == 24)["complete_client"] is False
+
+
+def test_existing_measured_pair_does_not_start_refinement():
+    assert refinement_rate(measured()) is None
+
+
+def test_refinement_without_a_measured_upper_failure_is_forbidden():
+    report = failed_ci_grid()
+    report["stages"] = [row for row in report["stages"] if row["planned_rps"] < 24]
+    assert refinement_rate(report) is None
+
+
+@pytest.mark.parametrize("field,value", [("dropped", 1), ("load_active", False), ("request_rate", 1)])
+def test_unproven_lower_boundary_does_not_start_refinement(field, value):
+    report = measured()
+    healthy = report["stages"][1]
+    healthy["replicas"], healthy["planned_rps"] = 2, 3
+    if field == "dropped":
+        healthy[field] = value
+    else:
+        for sample in healthy["samples"]:
+            sample[field] = value
+    assert refinement_rate(report) is None

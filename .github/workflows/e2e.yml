@@ -40,7 +40,8 @@ jobs:
   stack:
     name: Чистая установка, mTLS и доставка журналов
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # До шести дополнительных ступеней по 120 с уточняют наблюдаемую границу CPU.
+    timeout-minutes: 120
     env:
       CLUSTER: mtc-ci
     steps:
@@ -99,7 +100,7 @@ jobs:
           python scripts/experiment.py --cluster "$CLUSTER" --scenario slow-pod --mode baseline --incident-chain-output .runtime/proof/incident-chain.json --output .runtime/proof/mttr-baseline.json
           python scripts/experiment.py --cluster "$CLUSTER" --scenario slow-pod --mode auto --output .runtime/proof/mttr-auto.json
       - name: Измерить область мощности текущего контура
-        run: python scripts/capacity.py --cluster "$CLUSTER" --rates 3,9,12,15,16,18,24 --duration 120 --continue-after-failure --output .runtime/proof/cpu-capacity.json
+        run: python scripts/capacity.py --cluster "$CLUSTER" --rates 3,9,12,15,16,18,24 --duration 120 --continue-after-failure --refine-cpu-profile --output .runtime/proof/cpu-capacity.json
       - name: Проверить CPU spike и самостоятельный возврат масштаба
         run: python scripts/experiment.py --cluster "$CLUSTER" --scenario spike --mode auto --natural-end --spike-capacity .runtime/proof/cpu-capacity.json --timeout 660 --output .runtime/proof/spike-lifecycle.json
       - name: Сохранить состояние подов и причины событий

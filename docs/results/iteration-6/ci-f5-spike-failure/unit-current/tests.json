@@ -1,0 +1,15 @@
+{
+  "checked_at": "2026-10-07T10:50:59.149567+00:00",
+  "source_commit": "f5f009bd1c71c9a28be824b0e13408313579d267",
+  "run_id": 37605768656,
+  "job_id": 112740735985,
+  "package": "healer",
+  "passed": true,
+  "tests_passed": 418,
+  "failures": 0,
+  "skipped": 0,
+  "errors": 0,
+  "warnings": 5,
+  "private_log_sha256": "e6a6de6cb1fb9062f63fc4c94c2c26f2fad75d6b276bd2dc2a8917dd74f73407",
+  "scope": "Числовой итог pytest извлечен из единственной итоговой строки завершенного задания healer на Linux. Исходный журнал сохранен только в закрытом .runtime; команды, ответы и строки журнала не публикуются."
+}
