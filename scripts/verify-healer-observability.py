@@ -97,6 +97,26 @@ def wait(predicate, timeout):
     raise RuntimeError("Условие наблюдаемости не подтвердилось в срок")
 
 
+def close_test_incident(payload, token, report):
+    """Поздний resolved допустим после закрытия worker; итог проверяется в сохраненном состоянии."""
+    report["test_incident_closed"] = False
+    wait_healthy(PROM, timeout=180)
+    resolved = copy.deepcopy(payload)
+    resolved["alerts"][0]["status"] = "resolved"
+    request = Request("http://127.0.0.1:18085/webhook", data=json.dumps(resolved).encode(),
+                      headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+    with urlopen(request, timeout=30) as response:
+        result = json.load(response)
+    report["resolved_webhook_result"] = [{key: row.get(key) for key in ("result", "action", "mode")}
+                                         for row in result.get("results", [])]
+    acknowledgements = report["resolved_webhook_result"]
+    if (len(acknowledgements) != 1
+            or acknowledgements[0]["result"] not in ("resolved", "ignored: no active incident")):
+        raise RuntimeError("Webhook не подтвердил обработку завершения тестового инцидента")
+    report["closed_state"] = wait_incident_closed(timeout=180)
+    report["test_incident_closed"] = True
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
@@ -140,25 +160,21 @@ def main():
         report["error"] = str(exc)
     finally:
         if monitor_owner is not None:
+            restore_phase = "возврат ServiceMonitor"
             try:
                 was_changed = monitor_owner.changed
                 monitor_owner.cleanup()
                 if was_changed:
+                    restore_phase = "подтверждение восстановления сбора"
                     report["restored"] = wait(lambda row: row["evidence_complete"] == 1 and row["evidence_alert_firing"] == 0, 180)
                 if fired:
-                    wait_healthy(PROM, timeout=180)
-                    payload["alerts"][0]["status"] = "resolved"
-                    request = Request("http://127.0.0.1:18085/webhook", data=json.dumps(payload).encode(),
-                                      headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
-                    with urlopen(request, timeout=30) as response:
-                        cleanup = json.load(response)
-                    report["test_incident_closed"] = any(row.get("result") == "resolved" for row in cleanup.get("results", []))
-                    if not report["test_incident_closed"]:
-                        raise RuntimeError("Тестовый инцидент не закрыт после восстановления данных")
-                    report["closed_state"] = wait_incident_closed(timeout=180)
-            except Exception:
+                    restore_phase = "подтверждение закрытия инцидента"
+                    close_test_incident(payload, token, report)
+            except Exception as exc:
                 report["passed"] = False
-                report["restore_error"] = "Восстановление сбора не подтверждено; проверить ServiceMonitor demo/checkout"
+                report["restore_failed_phase"] = restore_phase
+                report["restore_error_type"] = type(exc).__name__
+                report["restore_error"] = f"Не завершен этап: {restore_phase}"
         if forward:
             try:
                 forward.terminate()

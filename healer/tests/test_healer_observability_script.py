@@ -1,6 +1,7 @@
 """Пауза сбора сохраняет UID ServiceMonitor и чужие изменения при очистке."""
 import copy
 import importlib.util
+import io
 import json
 import sys
 from pathlib import Path
@@ -118,3 +119,62 @@ def test_monitor_condition_after_deadline_is_rejected(monkeypatch):
     monkeypatch.setattr(observability, "sample", delayed)
     with pytest.raises(RuntimeError, match="в срок"):
         observability.wait(lambda row: True, timeout=5)
+
+
+def incident_completion(monkeypatch, acknowledgement):
+    calls = []
+    monkeypatch.setattr(observability, "wait_healthy", lambda *args, **kwargs: calls.append("healthy"))
+    def webhook(request, timeout):
+        assert json.loads(request.data)["alerts"][0]["status"] == "resolved" and timeout == 30
+        calls.append("webhook")
+        return io.StringIO(json.dumps({"results": [{"result": acknowledgement}]}))
+    monkeypatch.setattr(observability, "urlopen", webhook)
+    def closed(**kwargs):
+        assert kwargs["timeout"] == 180
+        calls.append("closed-state")
+        return {"incident_closed": True}
+    monkeypatch.setattr(observability, "wait_incident_closed", closed)
+    return calls
+
+
+@pytest.mark.parametrize("acknowledgement", ["resolved", "ignored: no active incident"])
+def test_completion_checks_saved_state_for_worker_and_webhook_closure(monkeypatch, acknowledgement):
+    calls = incident_completion(monkeypatch, acknowledgement)
+    payload = {"alerts": [{"status": "firing"}]}
+    report = {}
+    observability.close_test_incident(payload, "test-only", report)
+    assert calls == ["healthy", "webhook", "closed-state"]
+    assert report["test_incident_closed"] is True and report["closed_state"]["incident_closed"] is True
+    assert report["resolved_webhook_result"][0]["result"] == acknowledgement
+    assert payload["alerts"][0]["status"] == "firing"
+
+
+@pytest.mark.parametrize("acknowledgement", ["resolved", "ignored: no active incident"])
+def test_webhook_acknowledgement_does_not_replace_saved_closure(monkeypatch, acknowledgement):
+    incident_completion(monkeypatch, acknowledgement)
+    def still_active(**kwargs):
+        raise RuntimeError("Сохраненный инцидент еще активен")
+    monkeypatch.setattr(observability, "wait_incident_closed", still_active)
+    report = {}
+    with pytest.raises(RuntimeError, match="еще активен"):
+        observability.close_test_incident({"alerts": [{"status": "firing"}]}, "test-only", report)
+    assert report["test_incident_closed"] is False and "closed_state" not in report
+
+
+def test_completion_without_healthy_evidence_does_not_send_resolved(monkeypatch):
+    calls = incident_completion(monkeypatch, "resolved")
+    def unknown_health(*args, **kwargs):
+        raise RuntimeError("Здоровое состояние не подтверждено")
+    monkeypatch.setattr(observability, "wait_healthy", unknown_health)
+    report = {}
+    with pytest.raises(RuntimeError, match="не подтверждено"):
+        observability.close_test_incident({"alerts": [{"status": "firing"}]}, "test-only", report)
+    assert calls == [] and report["test_incident_closed"] is False
+
+
+def test_completion_rejects_an_unexpected_webhook_result(monkeypatch):
+    calls = incident_completion(monkeypatch, "pending: unhealthy")
+    report = {}
+    with pytest.raises(RuntimeError, match="не подтвердил обработку"):
+        observability.close_test_incident({"alerts": [{"status": "firing"}]}, "test-only", report)
+    assert calls == ["healthy", "webhook"] and report["test_incident_closed"] is False
