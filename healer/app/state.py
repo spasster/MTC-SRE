@@ -27,6 +27,7 @@ STATE_KEYS = set(STATE_FLAGS + STATE_TIMES + ("_actions", "_acted_alert", "_cool
                  "_last_recovery", "_scale_owner", "_action_intent", "_closed", "_recovery_targets", "_pending"))
 OPERATION_ACTIONS = {"scale", "scale_down", "delete_pod", "restart_redis", "rollback"}
 OPERATION_STATUSES = {"prepared", "applied", "failed", "unknown", "observed_after_restart"}
+PENDING_ACTIONS = {"redis": ("restart_redis", "redis"), "bad_release": ("rollback", "checkout")}
 
 
 def require_valid(condition):
@@ -92,9 +93,8 @@ def validate_state(snapshot, allow_empty=True):
         keys = {"diagnosis", "mode", "action", "target", "detail", "deployment_identity", "approval_id", "approval_expires_at"}
         require_valid(isinstance(pending, dict) and keys <= set(pending) <= keys | {"cart_seq"})
         require_valid(all(valid_text(pending[key]) for key in ("diagnosis", "mode", "action", "target"))
-                      and pending["mode"] == "approval" and pending["diagnosis"] in {"redis", "bad_release"}
-                      and pending["action"] in {"restart_redis", "rollback"}
-                      and pending["target"] == {"restart_redis": "redis", "rollback": "checkout"}[pending["action"]]
+                      and pending["mode"] == "approval" and pending["diagnosis"] in PENDING_ACTIONS
+                      and (pending["action"], pending["target"]) == PENDING_ACTIONS[pending["diagnosis"]]
                       and valid_text(pending["detail"]) and valid_text(pending["approval_id"])
                       and valid_number(pending["approval_expires_at"]))
         validate_identity(pending["deployment_identity"])

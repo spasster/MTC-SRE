@@ -2,6 +2,7 @@
 
 import copy
 import json
+import time
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -96,6 +97,37 @@ def test_invalid_restored_snapshot_cannot_change_live_state(key, value):
     with pytest.raises(StateUnavailable):
         main.restore_state(broken)
     assert main.state_snapshot() == before
+
+
+@pytest.mark.parametrize("diagnosis,action,target", [("redis", "rollback", "checkout"), ("bad_release", "restart_redis", "redis")])
+def test_contradictory_approval_cannot_restore_or_persist(diagnosis, action, target):
+    snapshot = valid_snapshot()
+    snapshot["_pending"] = {"diagnosis": diagnosis, "mode": "approval", "action": action, "target": target,
+        "detail": "Управляемая проверка противоречия", "deployment_identity": {"uid": "controlled", "generation": 1, "revision": "1"},
+        "approval_id": "controlled", "approval_expires_at": time.time() + 300}
+    main._actions = 2
+    before = copy.deepcopy(main.state_snapshot())
+    with pytest.raises(StateUnavailable):
+        main.restore_state(snapshot)
+    assert main.state_snapshot() == before
+    backend = Backend()
+    store = backend.store("holder")
+    store.acquire()
+    store.load()
+    with pytest.raises(StateUnavailable):
+        store.save(snapshot)
+    backend.core.patch_namespaced_config_map.assert_not_called()
+    assert store.document["state"] == {}
+
+
+@pytest.mark.parametrize("diagnosis,action,target", [("redis", "restart_redis", "redis"), ("bad_release", "rollback", "checkout")])
+def test_consistent_approval_survives_restore(diagnosis, action, target):
+    snapshot = valid_snapshot()
+    snapshot["_pending"] = {"diagnosis": diagnosis, "mode": "approval", "action": action, "target": target,
+        "detail": "Управляемая проверка сохранения", "deployment_identity": {"uid": "controlled", "generation": 1, "revision": "1"},
+        "approval_id": "controlled", "approval_expires_at": time.time() + 300}
+    main.restore_state(snapshot)
+    assert (main._pending.diagnosis, main._pending.action, main._pending.target) == (diagnosis, action, target)
 
 
 @pytest.mark.parametrize("encoded", ["null", "false", "[]", "{}"])
