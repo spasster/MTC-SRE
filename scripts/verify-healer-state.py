@@ -2,15 +2,26 @@
 
 import argparse
 import base64
+import hashlib
 import json
 import os
 import subprocess
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from experiment import cmd, deployment, wait_healthy, wait_incident_closed
+from experiment import cmd, deployment, wait_healthy, wait_incident_closed, OwnedDeployment, OwnedResource
+
+
+def stop_forward(forward):
+    forward.terminate()
+    try:
+        forward.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        forward.kill()
+        forward.wait(timeout=10)
 
 
 def document():
@@ -62,14 +73,17 @@ def main():
     cmd("sh", "scripts/require-context.sh", args.cluster)
     if json.loads(cmd("kubectl", "get", "networkchaos,podchaos", "-n", "demo", "-o", "json"))["items"]:
         raise SystemExit("В demo уже есть Chaos Mesh; проверка не начата")
-    original = deployment("healer", "heal")["spec"]["replicas"]
-    if original != 1:
+    original = deployment("healer", "heal")
+    if original["spec"]["replicas"] != 1:
         raise SystemExit("Для проверки требуется один исходный экземпляр healer")
     token = base64.b64decode(json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))["data"]["token"]).decode()
-    report = {"checked_at": datetime.now(timezone.utc).isoformat(), "passed": False}
+    report = {"checked_at": datetime.now(timezone.utc).isoformat(), "passed": False,
+              "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    marker = uuid.uuid4().hex
+    healer_owner = OwnedDeployment("healer", "heal", original, marker)
+    owned_resources = []
     forward = None
     injection_started = False
-    scale_started = False
 
     def post():
         payload = {"alerts": [{"status": "firing", "labels": {"service": "checkout", "alertname": "CheckoutSlow"},
@@ -85,8 +99,19 @@ def main():
         previous = {row["id"] for row in document().get("operations", [])}
         forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18084:8080"],
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        pods = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"]
+        ready = [pod for pod in pods if not pod["metadata"].get("deletionTimestamp")
+                 and any(row.get("name") == "checkout" and row.get("ready") is True for row in pod.get("status", {}).get("containerStatuses", []))]
+        if not ready:
+            raise RuntimeError("Рабочий под checkout для инъекции не найден")
+        selected = ready[0]
+        manifest = json.loads(cmd("kubectl", "create", "-f", "chaos/checkout-slow-pod.yaml", "--dry-run=client", "-o", "json"))
+        manifest["spec"]["selector"]["pods"]["demo"] = [selected["metadata"]["name"]]
+        injection = OwnedResource(manifest, marker)
+        owned_resources.append(injection)
         injection_started = True
-        cmd("sh", "chaos/inject.sh", "slow-pod")
+        injection.create(timeout=30)
+        report["target_pod_uid"] = selected["metadata"]["uid"]
         started, deadline = time.time(), time.time() + 240
         saved = None
         report["webhook_attempts"] = []
@@ -108,9 +133,9 @@ def main():
         state = saved["state"]
         if state["_actions"] < 1 or state["_cooldown_until"] <= time.time():
             raise RuntimeError("Лимит и cooldown не сохранены после действия")
-        forward.terminate()
+        stop_forward(forward)
         forward = None
-        cmd("kubectl", "rollout", "restart", "deployment/healer", "-n", "heal")
+        healer_owner.mutate(1, restart=True)
         cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
         restored = document()
         if restored["state"]["_actions"] != state["_actions"] or restored["state"]["_cooldown_until"] != state["_cooldown_until"]:
@@ -118,8 +143,7 @@ def main():
         if not any(row["id"] == operations[0]["id"] for row in restored["operations"]):
             raise RuntimeError("Замена пода потеряла журнал операции")
         report.update(action="delete_pod", action_budget_preserved=True, cooldown_preserved=True, journal_preserved=True)
-        scale_started = True
-        cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=2")
+        healer_owner.mutate(2)
         cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
         time.sleep(35)
         statuses = []
@@ -145,12 +169,29 @@ def main():
             except Exception as error:
                 report["diagnostic_error_type"] = type(error).__name__
     finally:
+        cleanup_errors = []
+        def cleanup(operation, action):
+            try:
+                action()
+            except Exception as error:
+                cleanup_errors.append({"operation": operation, "error_type": type(error).__name__})
         if forward:
-            forward.terminate()
-        if injection_started:
-            cmd("sh", "chaos/inject.sh", "clear")
-        if scale_started:
-            cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original))
+            cleanup("port-forward", lambda: stop_forward(forward))
+        for owned in reversed(owned_resources):
+            cleanup(owned.kind + "/" + owned.name, owned.cleanup)
+        cleanup("deployment/healer", healer_owner.cleanup)
+        if report["passed"] and not cleanup_errors:
+            def verify_closed_state():
+                cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
+                wait_healthy("http://127.0.0.1:19090", timeout=180)
+                report["closed_state"] = wait_incident_closed(timeout=180)
+            cleanup("закрытое состояние после возврата", verify_closed_state)
+        report["cleanup_errors"] = cleanup_errors
+        report["resource_intents"] = [{"kind": obj.kind, "namespace": obj.namespace, "name": obj.name,
+                                       "uid_confirmed": obj.uid, "generation_confirmed": obj.generation} for obj in owned_resources]
+        if cleanup_errors:
+            report["passed"] = False
+            report.setdefault("error", "Очистка проверки состояния не подтверждена")
         target = Path(args.output)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
