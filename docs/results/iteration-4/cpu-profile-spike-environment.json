@@ -1,0 +1,23 @@
+{
+  "started_at": "2026-10-07T04:37:07.362683+00:00",
+  "source_commit": "3e1df769f0e8d9dcca7c91a41cc3717e271f7c97",
+  "profile": {
+    "total_rps": 16,
+    "background_rps_during_spike": 0,
+    "capacity_source_commit": "3e1df769f0e8d9dcca7c91a41cc3717e271f7c97",
+    "cluster": "mtc-review",
+    "capacity_finished_at": "2026-10-07T04:35:27.256186+00:00",
+    "two_replicas_client_p95_ms": 941.254985,
+    "five_replicas_client_p95_ms": 115.121946,
+    "method": "Один и тот же поток проверен при двух и пяти репликах. В CPU-опыте фон временно выключен, весь поток создает собственный Job; эффект scale подтверждается отдельно до окончания нагрузки."
+  },
+  "cluster_allowed_cpus": [
+    0,
+    1
+  ],
+  "passed": true,
+  "cleanup_confirmed": true,
+  "method": "Тот же собственный кластер, версия, список CPU и нагрузка, что в завершенном замере мощности. Job завершается естественно; возвращает масштаб сам healer. Видео обрезается по настоящим временам инъекции и окончания, скорость не меняется.",
+  "experiment_exit_code": 0,
+  "finished_at": "2026-10-07T04:42:32.105790+00:00"
+}
