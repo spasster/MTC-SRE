@@ -25,15 +25,19 @@ PROMQL = {
 }
 
 
-def cmd(*args, timeout=60):
+def run_command(*args, timeout=60, input_text=None):
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("Команде нужен конечный положительный таймаут")
     if args and args[0] == "kubectl" and not any(str(arg).startswith("--request-timeout") for arg in args):
         args = (args[0], "--request-timeout=" + format(min(timeout, 10), ".6f") + "s", *args[1:])
     try:
-        result = subprocess.run(args, capture_output=True, text=True, check=False, timeout=timeout)
+        return subprocess.run(args, input=input_text, capture_output=True, text=True, check=False, timeout=timeout)
     except subprocess.TimeoutExpired:
         raise RuntimeError("Команда " + str(args[0]) + " не завершилась за отведенное время") from None
+
+
+def cmd(*args, timeout=60, input_text=None):
+    result = run_command(*args, timeout=timeout, input_text=input_text)
     if result.returncode:
         raise RuntimeError("Команда не выполнена: " + " ".join(args) + "\n" + result.stderr[-1500:])
     return result.stdout
@@ -145,6 +149,8 @@ def main():
         parser.error("--spike-duration допустим для spike и должен быть не менее 120 с")
     if args.spike_rate is not None and (args.scenario != "spike" or args.spike_rate <= 0):
         parser.error("--spike-rate допустим только для spike и должен быть положительным")
+    if args.timeout <= 0 or args.manual_delay < 0:
+        parser.error("Время опыта должно быть положительным, задержка оператора - неотрицательной")
     os.environ["CLUSTER"] = args.cluster
     cmd("sh", "scripts/require-context.sh", args.cluster)
     existing = json.loads(cmd("kubectl", "get", "networkchaos,podchaos", "-n", "demo", "-o", "json"))
@@ -190,7 +196,7 @@ def main():
                 report["spike_duration_seconds"] = args.spike_duration
             if args.spike_rate:
                 environment.append({"name": "RATE", "value": str(args.spike_rate)})
-            subprocess.run(["kubectl", "apply", "-f", "-"], input=json.dumps(manifest), text=True, capture_output=True, check=True)
+            cmd("kubectl", "apply", "-f", "-", input_text=json.dumps(manifest), timeout=min(60, args.timeout))
         else:
             cmd("sh", "chaos/inject.sh", args.scenario)
         report["injection_api_accepted_at"] = time.time()
@@ -206,8 +212,11 @@ def main():
             if sample["alerts_firing"] and report.get("alert_firing_at") is None:
                 report["alert_firing_at"] = sample["time"]
             if args.incident_chain_output and not report.get("incident_chain_verified") and sample["p95"] and sample["p95"] > .3:
-                result = subprocess.run([sys.executable, "scripts/verify-observability.py", "--since", str(report["injected_at"]),
-                                         "--min-duration", ".3", "--output", args.incident_chain_output], capture_output=True)
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    raise RuntimeError("Время опыта истекло до проверки наблюдаемости")
+                result = run_command(sys.executable, "scripts/verify-observability.py", "--since", str(report["injected_at"]),
+                                     "--min-duration", ".3", "--output", args.incident_chain_output, timeout=min(90, remaining))
                 report["incident_chain_verified"] = result.returncode == 0
             if args.mode == "baseline" and report.get("alert_firing_at") and not report.get("api_accepted_at"):
                 if sample["time"] >= report["alert_firing_at"] + args.manual_delay:

@@ -1,6 +1,7 @@
 """Новый опыт допускается только после закрытого инцидента."""
 
 import json
+import ast
 import sys
 from pathlib import Path
 
@@ -84,3 +85,29 @@ def test_cleanup_failure_keeps_a_failed_result(monkeypatch, tmp_path):
     result = json.loads((tmp_path / "result.json").read_text(encoding="utf-8"))
     assert not result["passed"] and result["cleanup_errors"]
     assert "не закрыт" in result["error"]
+
+
+def test_no_direct_child_process_can_bypass_the_deadline():
+    tree = ast.parse(Path(experiment.__file__).read_text(encoding="utf-8"))
+    calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+             and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
+             and node.func.value.id == "subprocess" and node.func.attr == "run"]
+    assert calls and all(any(keyword.arg == "timeout" for keyword in call.keywords) for call in calls)
+
+
+def test_unknown_json_injection_is_not_repeated_or_disclosed(monkeypatch):
+    calls = []
+    def stalled(args, **kwargs):
+        calls.append((args, kwargs))
+        raise experiment.subprocess.TimeoutExpired(args, kwargs["timeout"], output="закрытые данные")
+    monkeypatch.setattr(experiment.subprocess, "run", stalled)
+    with pytest.raises(RuntimeError, match="не завершилась") as failure:
+        experiment.cmd("kubectl", "apply", "-f", "-", input_text='{"private":"закрытые данные"}', timeout=12)
+    assert len(calls) == 1 and calls[0][1]["timeout"] == 12
+    assert "--request-timeout=10.000000s" in calls[0][0]
+    assert "закрытые данные" not in str(failure.value)
+
+
+def test_observability_timeout_has_a_finite_process_budget():
+    with pytest.raises(RuntimeError, match="не завершилась"):
+        experiment.run_command(sys.executable, "-c", "import time; time.sleep(30)", timeout=.1)
