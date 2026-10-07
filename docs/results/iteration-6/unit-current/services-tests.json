@@ -1,0 +1,27 @@
+{
+  "checked_at": "2026-10-07T11:43:43.378721+00:00",
+  "source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "run_id": 37615665865,
+  "passed": true,
+  "scope": "Числовые итоги pytest извлечены из единственных итоговых строк завершенных заданий текущего Linux CI. Исходные журналы остаются только в закрытом .runtime; строки журналов не публикуются.",
+  "packages": {
+    "checkout": {
+      "job_id": 112773263887,
+      "tests_passed": 25,
+      "failures": 0,
+      "skipped": 0,
+      "errors": 0,
+      "warnings": 1,
+      "private_log_sha256": "6bbbc8b027cd9a9579cfe7b4a38e6b950f680262293599fe3d686de97d7c5310"
+    },
+    "payment": {
+      "job_id": 112773263907,
+      "tests_passed": 6,
+      "failures": 0,
+      "skipped": 0,
+      "errors": 0,
+      "warnings": 1,
+      "private_log_sha256": "102bea7dc6bd0fbb372d1478bb31ab4a89b87326273351fba0832cafe97b0d35"
+    }
+  }
+}

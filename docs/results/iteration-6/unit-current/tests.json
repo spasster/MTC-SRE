@@ -1,0 +1,15 @@
+{
+  "checked_at": "2026-10-07T11:43:43.378721+00:00",
+  "source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "run_id": 37615665865,
+  "passed": true,
+  "scope": "Числовые итоги pytest извлечены из единственных итоговых строк завершенных заданий текущего Linux CI. Исходные журналы остаются только в закрытом .runtime; строки журналов не публикуются.",
+  "package": "healer",
+  "job_id": 112773263872,
+  "tests_passed": 428,
+  "failures": 0,
+  "skipped": 0,
+  "errors": 0,
+  "warnings": 5,
+  "private_log_sha256": "3d5250147a6cef46b91ea873cd27d567960e5ee1ed6f548a329675ebe847b638"
+}

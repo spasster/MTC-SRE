@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-10-07T13:24:39.169518+00:00",
+  "source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "run_id": 37615665833,
+  "job_id": 112773262550,
+  "cluster": "mtc-ci",
+  "passed": true,
+  "cluster_removal_confirmed": true,
+  "marker_count": 1,
+  "confirmation_times": [
+    1791379069.938293
+  ],
+  "step_started_at": "2026-10-07T13:17:40Z",
+  "step_completed_at": "2026-10-07T13:17:49Z",
+  "private_log_sha256": "c1da792176e037b01bae783336e6d9e4b0f026859bcdfb3ecd2d71080c412da9",
+  "scope": "Успех стадии с защитным || true сам по себе не доказывает удаление. Подтверждение требует единственного сообщения k3d об успешном удалении именно mtc-ci внутри временного интервала финальной стадии. Строки и полный журнал не публикуются."
+}

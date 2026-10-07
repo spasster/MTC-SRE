@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-07T11:42:43.309963+00:00",
+  "source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "passed": true,
+  "tests": 428,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "junit_sha256": "aa2f8d84019e96442665c8fb516ae2c2fce50f2b6a699088e8bdcb4771a4758c",
+  "source_sha256": {
+    "scripts/cpu_profile.py": "7b44a4353073de539f407bc7e905ca6b53c4325269c55b42d8282025f15dfa2e",
+    "scripts/capacity.py": "a5c4466d8a10e6a6ebe56c704c68239b7d1e467ef7e1eb3d0924224c4697fc32",
+    "scripts/experiment.py": "f15bcd99afccf107af6139fb00ce288b687e9e9681f292f04850c10f2fb453e9",
+    "healer/tests/test_cpu_profile.py": "e9c4b5802e34824f528993e0c5cc19ad1dcd806820abddb7fdc3b9fc6d2ce595",
+    "healer/tests/test_experiment.py": "cc380ea06bcdd7e945e95aee71762700792a3f5dfcf48b2f5463cb61abb4e67a",
+    "healer/tests/test_capacity_script.py": "3a03a96493c6c457e87c39ad027eace8ef23051b42d9e65a37b546977501fba6",
+    ".github/workflows/e2e.yml": "cc80a5f8c6b9f51ba430d2eaa78936f693bd5ba3511250e3d517577c6b8e4d75"
+  },
+  "scope": "Сохранены все прежние проверки. Новые проверки сохраняют только числовой недопуск, запрещают позднее третье чтение, подтверждают собственную очистку и исходный контур после мощности, сохраняют чужое изменение и неизвестный результат. Еще десять проверок воспроизводят сохраненный отказ CI с промежутком 18-24 RPS, запрещают приемку пропущенного потока, требуют парные замеры и ограничивают уточнение тремя дополнительными RPS. Критерии выбора CPU и восстановления не ослаблены. Это тесты healer и проверочных утилит, не полный CI."
+}

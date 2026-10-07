@@ -1,0 +1,432 @@
+{
+  "checked_at": "2026-10-07T13:27:47.056597+00:00",
+  "source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "auditor_sha256": "d755409782b580df55e95ed8aedd44ed0d3a94987ad2120e90dcb4f836c27f18",
+  "documentation_head_before_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Полный CI завершен успешно на проверяемой версии",
+      "passed": true
+    },
+    {
+      "name": "Все обязательные стадии, сохранение результатов и удаление контура завершены",
+      "passed": true
+    },
+    {
+      "name": "Удаление mtc-ci подтверждено сообщением k3d внутри финальной стадии",
+      "passed": true
+    },
+    {
+      "name": "Полученный архив совпадает с опубликованным SHA-256",
+      "passed": true
+    },
+    {
+      "name": "Текущие код и инфраструктура совпадают с версией полного CI",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: node-logs.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: observability.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: scale-guard.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: rules.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: healer-rbac.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: limited-chaos.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: healer-observability.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: scenarios.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: healer-state.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: incident-chain.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: mttr-baseline.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: mttr-auto.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: cpu-capacity.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: spike-lifecycle.json",
+      "passed": true
+    },
+    {
+      "name": "Результат и очистка: runtime-images.json",
+      "passed": true
+    },
+    {
+      "name": "Получены реальные контрольные события rsyslog и auditd",
+      "passed": true
+    },
+    {
+      "name": "Все три ограниченных воздействия подтвердили SLO и алерт",
+      "passed": true
+    },
+    {
+      "name": "Исходный масштаб ограниченного хаоса возвращен",
+      "passed": true
+    },
+    {
+      "name": "NoData не создал операцию и инцидент закрыт",
+      "passed": true
+    },
+    {
+      "name": "Четыре сценария завершены и процесс остановлен",
+      "passed": true
+    },
+    {
+      "name": "Бюджет, cooldown и журнал сохранены после смены пода",
+      "passed": true
+    },
+    {
+      "name": "Два экземпляра healer сохраняют одного владельца Lease",
+      "passed": true
+    },
+    {
+      "name": "Метрика, трейс и оба журнала относятся к медленному запросу этой инъекции",
+      "passed": true
+    },
+    {
+      "name": "Хронология MTTR baseline",
+      "passed": true
+    },
+    {
+      "name": "Хронология MTTR auto",
+      "passed": true
+    },
+    {
+      "name": "Мощность измерена на этой версии и в текущем CI-контуре",
+      "passed": true
+    },
+    {
+      "name": "Исходная сетка сохранена, уточнение ограничено тремя парными RPS",
+      "passed": true
+    },
+    {
+      "name": "После мощности подтвержден исходный контур и свежий SLO",
+      "passed": true
+    },
+    {
+      "name": "Профиль spike связан с неизменным исходным отчетом",
+      "passed": true
+    },
+    {
+      "name": "Один поток измерен при двух и пяти репликах",
+      "passed": true
+    },
+    {
+      "name": "Калибровка завершена не более чем за 30 минут до инъекции",
+      "passed": true
+    },
+    {
+      "name": "Полный клиент выбранных ступеней доставил заданный поток",
+      "passed": true
+    },
+    {
+      "name": "Последние три активных окна подтверждают поток: 2",
+      "passed": true
+    },
+    {
+      "name": "Деградация двух реплик подтверждена активными окнами",
+      "passed": true
+    },
+    {
+      "name": "Последние три активных окна подтверждают поток: 5",
+      "passed": true
+    },
+    {
+      "name": "Пять реплик удержали SLO в активных окнах",
+      "passed": true
+    },
+    {
+      "name": "Причины выбора всех измеренных ступеней сохранены",
+      "passed": true
+    },
+    {
+      "name": "CPU восстановился до конца нагрузки и масштаб снят самостоятельно",
+      "passed": true
+    },
+    {
+      "name": "Полный клиентский итог CPU сохранен",
+      "passed": true
+    },
+    {
+      "name": "В полном CI проверены все три обязательных рабочих компонента",
+      "passed": true
+    },
+    {
+      "name": "Код всех рабочих реплик: checkout",
+      "passed": true
+    },
+    {
+      "name": "Код всех рабочих реплик: payment",
+      "passed": true
+    },
+    {
+      "name": "Код всех рабочих реплик: healer",
+      "passed": true
+    },
+    {
+      "name": "Проверочная утилита совпадает: verify-limited-chaos.py",
+      "passed": true
+    },
+    {
+      "name": "Проверочная утилита совпадает: verify-scenarios.py",
+      "passed": true
+    },
+    {
+      "name": "Проверочная утилита совпадает: capacity.py",
+      "passed": true
+    },
+    {
+      "name": "Проверочная утилита совпадает: experiment.py",
+      "passed": true
+    },
+    {
+      "name": "Проверочная утилита совпадает: verify-healer-observability.py",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный набор 428 тестов относится к текущему коду",
+      "passed": true
+    },
+    {
+      "name": "Исходники сохраненного набора тестов совпадают с рабочей веткой",
+      "passed": true
+    },
+    {
+      "name": "Тесты и сборка четырех заданий CI прошли на той же версии",
+      "passed": true
+    },
+    {
+      "name": "Те же 428 тестов healer прошли на Linux без пропусков",
+      "passed": true
+    },
+    {
+      "name": "На той же версии прошли 25 тестов checkout и 6 тестов payment",
+      "passed": true
+    },
+    {
+      "name": "Первые пять и десять заключительных исправлений имеют отдельные русские коммиты",
+      "passed": true
+    },
+    {
+      "name": "Собственный контур готов, CPU и временные воздействия возвращены",
+      "passed": true
+    },
+    {
+      "name": "Настоящий локальный повтор новой очистки связан с исходниками",
+      "passed": true
+    },
+    {
+      "name": "После уточнения в локальном повторе подтверждены профиль, база и SLO",
+      "passed": true
+    },
+    {
+      "name": "Среда после локального повтора возвращена и связана с исходным снимком",
+      "passed": true
+    },
+    {
+      "name": "Четыре локальных компонента подтверждены реальными подами",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: checkout",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: payment",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: healer",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: assistant",
+      "passed": true
+    },
+    {
+      "name": "Браузерная ссылка показывает оба сервиса без ручного изменения окна",
+      "passed": true
+    },
+    {
+      "name": "Реальная LLM-генерация не применяла действия и защищена API/RBAC",
+      "passed": true
+    },
+    {
+      "name": "Видео до пяти минут совпадает с проверенным файлом",
+      "passed": true
+    },
+    {
+      "name": "Обзор критичных исходников связан с текущей версией",
+      "passed": true
+    }
+  ],
+  "baseline_mttr_seconds": 135.03394103050232,
+  "auto_mttr_seconds": 121.82452869415283,
+  "cpu_mttr_seconds": 147.79356217384338,
+  "cpu_profile_rps": 11,
+  "linux_tests_passed": 459,
+  "capacity_bounds": {
+    "2": {
+      "highest_tested_passing_rps": 10,
+      "first_tested_failing_rps": 11
+    },
+    "5": {
+      "highest_tested_passing_rps": 12,
+      "first_tested_failing_rps": 15
+    }
+  },
+  "cpu_client": {
+    "http_reqs": {
+      "count": 3910,
+      "rate": 10.857603926405137
+    },
+    "http_req_duration": {
+      "p(95)": 6438.771544249998,
+      "avg": 1023.9188147312002,
+      "min": 29.432513,
+      "med": 114.009376,
+      "max": 10003.625519,
+      "p(90)": 4500.556853699998
+    },
+    "http_req_failed": {
+      "fails": 3871,
+      "rate": 0.009974424552429667,
+      "passes": 39
+    },
+    "dropped_iterations": {
+      "count": 51,
+      "rate": 0.14162092077919744
+    },
+    "checks": {
+      "rate": 0.9900255754475703,
+      "passes": 3871,
+      "fails": 39
+    }
+  },
+  "verifier_provenance": [
+    {
+      "result": "limited-chaos.json",
+      "script": "scripts/verify-limited-chaos.py",
+      "method": "SHA Git из исходного отчета, чистое дерево CI и точные байты файла этого коммита",
+      "passed": true,
+      "result_source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+      "result_verifier_sha256": null,
+      "git_blob_sha256": "9e98564f5a23d0eb3a606e3135eb9bb5e294612f0895024f9025fb09c212a64b",
+      "current_file_sha256": "9e98564f5a23d0eb3a606e3135eb9bb5e294612f0895024f9025fb09c212a64b"
+    },
+    {
+      "result": "scenarios.json",
+      "script": "scripts/verify-scenarios.py",
+      "method": "SHA-256 утилиты из исходного отчета, точные байты рабочего файла и Git",
+      "passed": true,
+      "result_source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+      "result_verifier_sha256": "685233b41764b79445db874cf705d7dcb9cf448426d22c3dde1008993b560b03",
+      "git_blob_sha256": "685233b41764b79445db874cf705d7dcb9cf448426d22c3dde1008993b560b03",
+      "current_file_sha256": "685233b41764b79445db874cf705d7dcb9cf448426d22c3dde1008993b560b03"
+    },
+    {
+      "result": "cpu-capacity.json",
+      "script": "scripts/capacity.py",
+      "method": "SHA-256 утилиты из исходного отчета, точные байты рабочего файла и Git",
+      "passed": true,
+      "result_source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+      "result_verifier_sha256": "a5c4466d8a10e6a6ebe56c704c68239b7d1e467ef7e1eb3d0924224c4697fc32",
+      "git_blob_sha256": "a5c4466d8a10e6a6ebe56c704c68239b7d1e467ef7e1eb3d0924224c4697fc32",
+      "current_file_sha256": "a5c4466d8a10e6a6ebe56c704c68239b7d1e467ef7e1eb3d0924224c4697fc32"
+    },
+    {
+      "result": "spike-lifecycle.json",
+      "script": "scripts/experiment.py",
+      "method": "SHA-256 утилиты из исходного отчета, точные байты рабочего файла и Git",
+      "passed": true,
+      "result_source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+      "result_verifier_sha256": "f15bcd99afccf107af6139fb00ce288b687e9e9681f292f04850c10f2fb453e9",
+      "git_blob_sha256": "f15bcd99afccf107af6139fb00ce288b687e9e9681f292f04850c10f2fb453e9",
+      "current_file_sha256": "f15bcd99afccf107af6139fb00ce288b687e9e9681f292f04850c10f2fb453e9"
+    },
+    {
+      "result": "healer-observability.json",
+      "script": "scripts/verify-healer-observability.py",
+      "method": "SHA-256 утилиты из исходного отчета, точные байты рабочего файла и Git",
+      "passed": true,
+      "result_source_commit": null,
+      "result_verifier_sha256": "ac7744d85d4c0676c255ba6dc68f686a7bdb1d48bcdfad677930fda5a8779be2",
+      "git_blob_sha256": "ac7744d85d4c0676c255ba6dc68f686a7bdb1d48bcdfad677930fda5a8779be2",
+      "current_file_sha256": "ac7744d85d4c0676c255ba6dc68f686a7bdb1d48bcdfad677930fda5a8779be2"
+    }
+  ],
+  "external_evidence_sha256": {
+    "docs/results/iteration-6/completion-tests.json": "69e9199ca4a7d74273e964f7a4b8904058add95cf3ed0e282231b199dcde1317",
+    "docs/results/iteration-6/runtime-completion.json": "da292d417b9cd99ab38eff3a68116a40eeca58068a5ff7c974b0e0e6c27d0864",
+    "docs/results/iteration-6/grafana-fixed-browser.json": "efc47ca94b40b60faa30d96ea33d5bb7d313b2b15b448dadab8ac1f9dde993ce",
+    "docs/results/iteration-4/postmortem-current.json": "791ab8e4417d4ad8c5f4885a3128e1078aca8c5d53c7dd5bb2c42c3697ce517e",
+    "docs/results/iteration-4/demo-current-video.json": "3cfa7d9659f8c7bc685de67c289638420e263202d5b80f82de6d6ce7d31c7446",
+    "docs/results/iteration-6/source-review.json": "3835e148a3369357266b055493c9271aa1526340784314fb914339818b906cf3",
+    "docs/results/iteration-6/unit-current/run.json": "691efbb26eff29f837a7a90c34d38c56539924d2fc95ffa89401450c79eeea61",
+    "docs/results/iteration-6/unit-current/tests.json": "e51fcd5d054430470d117bb5bd0b90c019f10686639c2d4c4a90e14b83e2214e",
+    "docs/results/iteration-6/unit-current/services-tests.json": "93f982fd134a89200a21cfc339fb37090e79fdf4bb8b645d7e086de442a06a41",
+    "docs/results/iteration-6/closing-lab.json": "e6c0cf4930e4d5adf260177a346000f307eafef15eb6b50bdf9861956c7496bd",
+    "docs/results/iteration-6/commit-review.json": "89ca1f28f7f45308cd9b6cbc16d072e7924ea2fe078ddf4856cb9151eeecdc91",
+    "docs/results/iteration-6/baseline-refinement/capacity.json": "37d3d5ce27faaf636bc7bf146036819a922aa536af7945e391c69305427a83a2",
+    "docs/results/iteration-6/baseline-refinement/reproduction.json": "b87274c1d4c66e33df6c31dfd0793ebd8baa20e32b057c9875b7a54437e20fcf",
+    "docs/results/iteration-6/baseline-refinement/environment.json": "d8dfb79edac92ddc6a075ed664c116bc95f722c429980a45b101dcd49bfe3ea6"
+  },
+  "artifacts_sha256": {
+    "cleanup.json": "41d70ae6b8179efddd72bdc5ead14c52b83cfac2e058904962c03b22a5690978",
+    "cpu-capacity.json": "f7e26bf62f65260fffdb41762826c4c86e101f04a7c9a110ed54812cf684dd46",
+    "delivery.json": "6bcef0d4e74401c1695cb79e0b6c62c01e829ac7c352d423051a8113a4b0670d",
+    "diagnostics.json": "8dcc09928e39e3e4373c135caccac96d2f911108c685328f04c3302b99d061e1",
+    "healer-observability.json": "3f984e426616464ff276c3f97467b6d6ef4469b77b4df375a39d32c272e8e5e4",
+    "healer-rbac.json": "80aad6f81a8283a8a12eca31fd3f8b18e20e12e9aae0fe1661f6ae31f066ffe2",
+    "healer-state.json": "307438e2cb5d6bb895d4d391200d6bf8535a5a29144f83ca9e65110946cfd69f",
+    "image-apps.json": "6eb2e956d2ef6325a7f1fe25edfe69820274a6419e315c2bd509b7ae4fa61f86",
+    "image-healer.json": "c8507a2b03c2d100d671f1dbe9a08eaab760aa561cc9f5e5c6a4c26d9e9dca00",
+    "incident-chain.json": "e0d845e9e8e8e637e9f2e3b98c1e8fee46c7ccb3d390eac34541efe30593ef89",
+    "limited-chaos.json": "4f80f813799b7c1b41c0d222e0f6b07e53a7c0cef0de0be33b9feb4e3b1a02bd",
+    "mttr-auto.json": "e77bad547303ff2e7f0da387ce5c5d65da9a4617d3d2cc91634744c1190da838",
+    "mttr-baseline.json": "2910588765ca8ed3e47dd93d067c91f17bf74511734b4eec639471751669aa79",
+    "node-logs.json": "42a53ab4c790a9e3f3df2123ff518203d5e59aff83bf4fee6df3e7cd8c283c3f",
+    "observability.json": "42a7da04cc39d6b2d84f3fa8d98fc1dddd09aa2a48eb7a21d7390da2d131e338",
+    "rules.json": "f5743417bdfe8954785a5dfc8ead48b5dd0e95308105f0b4f686e1e4bd3089fb",
+    "run.json": "21fb0de2f2754c7e8a646a5d155388ac0052120878d015791bec3010bc263886",
+    "runtime-images.json": "40a9d0baf0a81509f7ea0ec2ea5af38d9337291f6d1813e5bd78d66d55cff411",
+    "scale-guard.json": "8cf20a3be03fee14b71f255bc8a90c45b8d4a697bd448e2df1d5fcb788efb428",
+    "scenarios.json": "8bbac09f5ecb4cd8a35b6c881d0f669f669be6d9436128770c010bdb48975197",
+    "spike-lifecycle.json": "0137666445ba1cc13c2d9c693e54db72d102f7984c1db2fa166b0ff4f89ab08c"
+  },
+  "scope": "Независимая сверка сохраненных JSON, исходников рабочих реплик, хронологии и версии текущего полного CI. Браузер, LLM, видео и четыре локальных компонента проверены отдельно в собственном контуре, их результаты не объявляются стадиями CI. Короткие опыты не доказывают месячный SLO, промышленный максимум или причинное превосходство автоматизации."
+}

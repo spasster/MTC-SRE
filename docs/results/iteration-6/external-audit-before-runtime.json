@@ -1,0 +1,101 @@
+{
+  "checked_at": "2026-10-07T11:59:10.857087+00:00",
+  "source_commit": "dae8ac7a1bd90dc01e0612a7b9a217c52c7fc1e8",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Сохраненный набор 428 тестов относится к текущему коду",
+      "passed": true
+    },
+    {
+      "name": "Исходники сохраненного набора тестов совпадают с рабочей веткой",
+      "passed": true
+    },
+    {
+      "name": "Тесты и сборка четырех заданий CI прошли на той же версии",
+      "passed": true
+    },
+    {
+      "name": "Те же 428 тестов healer прошли на Linux без пропусков",
+      "passed": true
+    },
+    {
+      "name": "На той же версии прошли 25 тестов checkout и 6 тестов payment",
+      "passed": true
+    },
+    {
+      "name": "Первые пять и десять заключительных исправлений имеют отдельные русские коммиты",
+      "passed": true
+    },
+    {
+      "name": "Собственный контур готов, CPU и временные воздействия возвращены",
+      "passed": true
+    },
+    {
+      "name": "Настоящий локальный повтор новой очистки связан с исходниками",
+      "passed": true
+    },
+    {
+      "name": "После уточнения в локальном повторе подтверждены профиль, база и SLO",
+      "passed": true
+    },
+    {
+      "name": "Среда после локального повтора возвращена и связана с исходным снимком",
+      "passed": true
+    },
+    {
+      "name": "Четыре локальных компонента подтверждены реальными подами",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: checkout",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: payment",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: healer",
+      "passed": true
+    },
+    {
+      "name": "Сохраненный локальный исходник совпадает: assistant",
+      "passed": true
+    },
+    {
+      "name": "Браузерная ссылка показывает оба сервиса без ручного изменения окна",
+      "passed": true
+    },
+    {
+      "name": "Реальная LLM-генерация не применяла действия и защищена API/RBAC",
+      "passed": true
+    },
+    {
+      "name": "Видео до пяти минут совпадает с проверенным файлом",
+      "passed": true
+    },
+    {
+      "name": "Обзор критичных исходников связан с текущей версией",
+      "passed": true
+    }
+  ],
+  "source_auditor_sha256": "f3252a896b55622c335dc969732458a3dc2488e886e576e2030ea2f7acbd3a94",
+  "evidence_sha256": {
+    "docs/results/iteration-6/completion-tests.json": "69e9199ca4a7d74273e964f7a4b8904058add95cf3ed0e282231b199dcde1317",
+    "docs/results/iteration-6/runtime-current.json": "cf79bbfb7f6026f7a466cc63034d209cc0e84f697511141ca3960a6742b6c8ca",
+    "docs/results/iteration-6/grafana-fixed-browser.json": "efc47ca94b40b60faa30d96ea33d5bb7d313b2b15b448dadab8ac1f9dde993ce",
+    "docs/results/iteration-4/postmortem-current.json": "791ab8e4417d4ad8c5f4885a3128e1078aca8c5d53c7dd5bb2c42c3697ce517e",
+    "docs/results/iteration-4/demo-current-video.json": "3cfa7d9659f8c7bc685de67c289638420e263202d5b80f82de6d6ce7d31c7446",
+    "docs/results/iteration-6/source-review.json": "3835e148a3369357266b055493c9271aa1526340784314fb914339818b906cf3",
+    "docs/results/iteration-6/unit-current/run.json": "691efbb26eff29f837a7a90c34d38c56539924d2fc95ffa89401450c79eeea61",
+    "docs/results/iteration-6/unit-current/tests.json": "e51fcd5d054430470d117bb5bd0b90c019f10686639c2d4c4a90e14b83e2214e",
+    "docs/results/iteration-6/unit-current/services-tests.json": "93f982fd134a89200a21cfc339fb37090e79fdf4bb8b645d7e086de442a06a41",
+    "docs/results/iteration-6/closing-lab.json": "d8dfb79edac92ddc6a075ed664c116bc95f722c429980a45b101dcd49bfe3ea6",
+    "docs/results/iteration-6/commit-review.json": "89ca1f28f7f45308cd9b6cbc16d072e7924ea2fe078ddf4856cb9151eeecdc91",
+    "docs/results/iteration-6/baseline-refinement/capacity.json": "37d3d5ce27faaf636bc7bf146036819a922aa536af7945e391c69305427a83a2",
+    "docs/results/iteration-6/baseline-refinement/reproduction.json": "b87274c1d4c66e33df6c31dfd0793ebd8baa20e32b057c9875b7a54437e20fcf",
+    "docs/results/iteration-6/baseline-refinement/environment.json": "d8dfb79edac92ddc6a075ed664c116bc95f722c429980a45b101dcd49bfe3ea6"
+  },
+  "scope": "Сверены готовые тесты Windows/Linux, русские коммиты, новый реальный локальный повтор, возврат среды, исходники рабочих реплик, настоящий браузерный переход, LLM и видео. Полный Ubuntu CI продолжает выполняться и не включен в этот результат. Общая приемка не объявляется."
+}

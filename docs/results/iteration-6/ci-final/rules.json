@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "image": "quay.io/prometheus/prometheus:v3.15.0-distroless",
+  "syntax_checked": [
+    "rules-rules.yml",
+    "healer-rules-rules.yml",
+    "slo-budget-rules.yml",
+    "chaos-rules-rules.yml"
+  ],
+  "tests": [
+    "fast_burn_after_full_window",
+    "slow_burn_after_full_window",
+    "insufficient_history",
+    "missing_data",
+    "short_window_recovery"
+  ]
+}

@@ -4,7 +4,7 @@
 
 Каждое требование кейса связано с реализацией, проверкой и ограничениями в [docs/requirements.md](docs/requirements.md). Назначение LLM - анализ текущей ситуации и черновик отчета об инциденте по журналу действий.
 
-В рабочей ветке `fix/sre-case-completion` сохранены отдельные исправления, [текущий аудит](docs/audit.md), [новое видео 4:12](docs/demo.md) и реальные результаты CPU-цикла при двух доступных CPU с MTTR 88.2 с. NoData и postmortem проверены повторно. Общая приемка текущей итерации ожидает завершения полного Ubuntu CI; локальный успех не заменяет его результат.
+В рабочей ветке `fix/sre-case-completion` завершена последняя итерация: [полный Ubuntu CI dae8ac7](https://github.com/spasster/MTC-SRE/actions/runs/37615665833) прошел, [459 тестов Linux CI](docs/results/iteration-6/unit-current/run.json) успешны, результаты и [итоговый аудит](docs/audit.md) сохранены. Дополнительно 428 тестов healer прошли на Windows. В контрольной паре медленного пода MTTR 135.0 -> 121.8 с; CPU-профиль 11 RPS текущего CI восстановил SLO за 147.8 с во время нагрузки и вернул масштаб самостоятельно. [Видео 4:12](docs/demo.md), NoData, браузерная связка и postmortem проверены отдельно в собственном контуре. Новые самостоятельные итерации отключены.
 
 `checkout` записывает корзину в Redis и вызывает две реплики `payment`. Istio обеспечивает резервный путь при отказе установления соединения. Фоновый k6 создаёт 3 запроса в секунду. Правила healer различают медленный под, нехватку CPU, ошибку релиза и отказ зависимости. Диагноз строится по данным, без LLM.
 
@@ -143,15 +143,15 @@ sh chaos/inject.sh clear
 ```sh
 python scripts/experiment.py --mode baseline --output docs/results/slow-pod-baseline.json
 python scripts/experiment.py --mode auto --output docs/results/slow-pod-auto.json
-python scripts/experiment.py --scenario spike --mode auto --spike-rate 18 --output docs/results/spike-auto.json
-python scripts/experiment.py --scenario spike --mode auto --natural-end --spike-rate 18 --timeout 660 --output docs/results/spike-lifecycle.json
+python scripts/capacity.py --rates 3,9,12,15,16,18,24 --duration 120 --continue-after-failure --refine-cpu-profile --output .runtime/cpu-capacity.json
+python scripts/experiment.py --scenario spike --mode auto --natural-end --spike-capacity .runtime/cpu-capacity.json --timeout 660 --output .runtime/spike-lifecycle.json
 python scripts/benchmark.py --pairs 5 --output-dir docs/results/repeated-mttr
 python scripts/capacity.py --duration 120 --output docs/results/capacity-stages.json
 ```
 
 Baseline отключает healer и задаёт задержку оператора 30 секунд после firing. Это контролируемая модель, не замер скорости человека. Скрипт сохраняет метрики, момент внесения сбоя, детект, принятие команды API и три последовательных здоровых измерения. MTTR отсчитывается от внесения сбоя до этих измерений. Встроенный таймер healer начинается с startsAt алерта, поэтому его значение отличается от внешнего таймера эксперимента.
 
-После переиспользования HTTP-клиента checkout профиль полного CPU-демо задается явно до запуска: 18 дополнительных запросов/с поверх трех фоновых, всего 21 RPS. Итог требует нарушения SLO, принятого scale, восстановления во время продолжающейся нагрузки и самостоятельного возврата к двум репликам. Старые ступени мощности и видео сохраняют прежний образ приложения и профиль; это отдельная история измерений.
+Профиль полного CPU-демо выбирается по свежим парным замерам текущего контура и версии. При необходимости измеряются до трех промежуточных RPS; пропуски клиента запрещают выбор. После серии подтверждаются исходные Deployment, SLO и закрытый инцидент. В CPU-опыте фон временно выключен, весь выбранный поток создает собственный Job. Итог требует нарушения SLO, принятого scale, восстановления во время продолжающейся нагрузки и самостоятельного возврата к двум репликам. [Методика и история отказов](docs/cpu-profile.md) сохраняют прежние образы и профили; их RPS не переносятся в новый контур автоматически.
 
 Результаты и ограничения сравнения находятся в [docs/experiments.md](docs/experiments.md). Старые цифры 4-5 октября измеряли в основном принятие команды и не используются как доказательство MTTR. Во время сравнения LLM выключен.
 
@@ -163,7 +163,7 @@ Baseline отключает healer и задаёт задержку операт
 
 Версии инфраструктуры закреплены в [versions.mk](versions.mk): k3s 1.35.5-k3s1, kube-prometheus-stack 91.9.0, Loki chart 7.3.0, Alloy chart 1.13.0 / образ 1.20.0, Istio 1.30.5, Blackbox chart 11.19.1 / образ 0.28.0, Chaos Mesh 2.8.4. Tempo 2.9.0, k6 0.57.0, Redis 7-alpine. Python base закреплён digest; зависимости сервисов закреплены в requirements.txt.
 
-На push проверяются тесты трех сервисов и сборка образов. Полный CI запускается для изменений кода и инфраструктуры во всех ветках и pull request. Он устанавливает стек через Ansible на чистом Ubuntu и проверяет mTLS, журналы, связку наблюдаемости одного инцидента, правила Prometheus, права healer, удержание SLO в заданном профиле ограниченного хаоса, отказы зависимостей, сохранение состояния, baseline/auto, мощность и самостоятельный возврат масштаба. CPU-профиль выбирается по завершенным замерам того же контура и версии, а восстановление должно произойти во время нагрузки. Ограничение выполнения - 90 минут. Результаты аудита: [docs/audit.md](docs/audit.md). Общий план и назначение LLM: [docs/plan.md](docs/plan.md). Текущая итерация: [docs/iteration-2.md](docs/iteration-2.md), дополнительные исправления: [docs/iteration-3.md](docs/iteration-3.md), [docs/iteration-4.md](docs/iteration-4.md) и [docs/iteration-5.md](docs/iteration-5.md). Заключительный этап последней итерации: [docs/iteration-6.md](docs/iteration-6.md). Описание исправлений: [docs/changes.md](docs/changes.md). Материалы демонстрации: [docs/demo.md](docs/demo.md).
+На push проверяются тесты трех сервисов и сборка образов. Полный CI запускается для изменений кода и инфраструктуры во всех ветках и pull request. Он устанавливает стек через Ansible на чистом Ubuntu и проверяет mTLS, журналы, связку наблюдаемости одного инцидента, правила Prometheus, права healer, удержание SLO в заданном профиле ограниченного хаоса, отказы зависимостей, сохранение состояния, baseline/auto, мощность и самостоятельный возврат масштаба. CPU-профиль выбирается по завершенным замерам того же контура и версии, а восстановление должно произойти во время нагрузки. Ограничение выполнения - 120 минут с учетом ограниченного уточнения сетки мощности. Результаты аудита: [docs/audit.md](docs/audit.md). Общий план и назначение LLM: [docs/plan.md](docs/plan.md). История выполненных итераций: [docs/iteration-2.md](docs/iteration-2.md), [docs/iteration-3.md](docs/iteration-3.md), [docs/iteration-4.md](docs/iteration-4.md) и [docs/iteration-5.md](docs/iteration-5.md). Заключительный этап последней итерации: [docs/iteration-6.md](docs/iteration-6.md). Описание исправлений: [docs/changes.md](docs/changes.md). Материалы демонстрации: [docs/demo.md](docs/demo.md).
 
 ## Команда и ограничения
 

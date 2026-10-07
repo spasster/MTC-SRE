@@ -1,0 +1,8 @@
+{
+  "artifact_id": 11484627239,
+  "declared_digest": "sha256:15e9e5ef92f1c6cf019cabbc56dfae5bfff76ce7ead6f645c091a132c9cfbc9c",
+  "downloaded_digest": "sha256:15e9e5ef92f1c6cf019cabbc56dfae5bfff76ce7ead6f645c091a132c9cfbc9c",
+  "digest_verified": true,
+  "incomplete_json_count": 0,
+  "scope": "Полученный ZIP проверен по опубликованному SHA-256; разрешенные JSON сохранены без изменения исходных байтов."
+}

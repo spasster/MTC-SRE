@@ -1,0 +1,58 @@
+{
+  "started_at": "2026-10-07T10:01:24.504993+00:00",
+  "cluster": "mtc-review",
+  "cpus_during_test": [
+    0,
+    1
+  ],
+  "source_commit": "f5f009bd1c71c9a28be824b0e13408313579d267",
+  "source_sha256": {
+    "scripts/capacity.py": "2d7f76a48435ecdfc79edc0b3ae220b4d26a473675b257e39e02b4c0d704b2c6",
+    "scripts/experiment.py": "f15bcd99afccf107af6139fb00ce288b687e9e9681f292f04850c10f2fb453e9"
+  },
+  "capacity_returncode": 0,
+  "samples_after_capacity": [
+    {
+      "time": 1791367642.8776062,
+      "p95": 0.15292283242211666,
+      "request_rate": 2.7050914814814817,
+      "error_ratio": 0.0,
+      "synthetic_success": 1.0,
+      "synthetic_time": 1791367641.017,
+      "rollout_ready": true,
+      "replicas": 2,
+      "alerts_active": 0.0,
+      "cpu_throttle": 0.15217391304347827
+    },
+    {
+      "time": 1791367648.3913398,
+      "p95": 0.14972343719190065,
+      "request_rate": 2.908887037037037,
+      "error_ratio": 0.0,
+      "synthetic_success": 1.0,
+      "synthetic_time": 1791367641.017,
+      "rollout_ready": true,
+      "replicas": 2,
+      "alerts_active": 0.0,
+      "cpu_throttle": 0.15217391304347827
+    },
+    {
+      "time": 1791367653.7947476,
+      "p95": 0.15566666666666662,
+      "request_rate": 2.955555555555555,
+      "error_ratio": 0.0,
+      "synthetic_success": 1.0,
+      "synthetic_time": 1791367641.017,
+      "rollout_ready": true,
+      "replicas": 2,
+      "alerts_active": 0.0,
+      "cpu_throttle": 0.17956656346749225
+    }
+  ],
+  "baseline_healthy_confirmed_at": 1791367653.7947476,
+  "finished_at": "2026-10-07T10:07:33.794957+00:00",
+  "capacity_sha256": "50f501aca2f919b7a9c8250c4a688ebfd1bc0e9a5507093c4cad403076e57082",
+  "baseline_healthy": true,
+  "scope": "Собственный mtc-review на f5f009b: пять реплик, ступени 3 и 36 RPS по 90 секунд, временно два CPU. Новая очистка подтвердила завершение собственных процессов checkout, исходные Deployment, свежие здоровые чтения без алертов и закрытый инцидент. После выхода серии дополнительно получены три здоровых чтения примерно через 0.5, 6 и 11.5 секунды. Это другой контур и профиль, а не воспроизведение неизвестной причины отказа прежнего GitHub CI. Исходные 22 CPU и готовность четырех компонентов проверены отдельно.",
+  "closing_environment_sha256": "fd62d5ad9aca6773d19fe3246c86a379c0a71db7d84c9698b458907110217d90"
+}

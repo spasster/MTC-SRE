@@ -20,7 +20,7 @@
 
 ```sh
 python scripts/demo-server.py --cluster mtc
-python scripts/capacity.py --cluster mtc --rates 3,9,15,16,18,24 --duration 90 --continue-after-failure --output .runtime/cpu-capacity.json
+python scripts/capacity.py --cluster mtc --rates 3,9,12,15,16,18,24 --duration 120 --continue-after-failure --refine-cpu-profile --output .runtime/cpu-capacity.json
 python scripts/experiment.py --cluster mtc --scenario spike --mode auto --natural-end --spike-capacity .runtime/cpu-capacity.json --spike-duration 210 --timeout 660 --output .runtime/demo-result.json
 ```
 
