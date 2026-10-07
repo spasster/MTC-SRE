@@ -73,7 +73,7 @@ def test_rollback_removes_controller_label_and_uses_dry_run():
     instance = actor(3)
     previous = SimpleNamespace(
         metadata=SimpleNamespace(
-            owner_references=[SimpleNamespace(kind="Deployment", name="checkout", uid="checkout-uid")],
+            owner_references=[SimpleNamespace(kind="Deployment", name="checkout", uid="checkout-uid", controller=True)],
             annotations={"deployment.kubernetes.io/revision": "2"},
         ),
         spec=SimpleNamespace(template=client.V1PodTemplateSpec(
@@ -87,9 +87,10 @@ def test_rollback_removes_controller_label_and_uses_dry_run():
     assert call.args[2]["spec"]["template"]["metadata"]["labels"] == {"app": "checkout"}
 
 
-def replica_set(uid, revision, age):
+def replica_set(uid, revision, age, controller=True):
     return SimpleNamespace(metadata=SimpleNamespace(
-        owner_references=[SimpleNamespace(kind="Deployment", name="checkout", uid=uid)],
+        uid="replica-" + str(revision),
+        owner_references=[SimpleNamespace(kind="Deployment", name="checkout", uid=uid, controller=controller)],
         annotations={"deployment.kubernetes.io/revision": str(revision)},
         creation_timestamp=datetime.now(timezone.utc) - timedelta(seconds=age),
     ))
@@ -120,6 +121,35 @@ def test_missing_current_replicaset_has_unknown_age():
     instance.apps.list_namespaced_replica_set.return_value = SimpleNamespace(
         items=[replica_set("deleted-deployment", 3, 5), replica_set("checkout-uid", 2, 10)])
     assert instance.revision_age_seconds("demo", "checkout") is None
+
+
+@pytest.mark.parametrize("controller", [False, None])
+def test_ordinary_owner_cannot_supply_revision_or_rollback(controller):
+    instance = actor(3)
+    candidate = replica_set("checkout-uid", 3, 10, controller)
+    candidate.metadata.owner_references.append(SimpleNamespace(kind="Deployment", uid="other-controller", controller=True))
+    instance.apps.list_namespaced_replica_set.return_value = SimpleNamespace(items=[candidate])
+    assert instance.revision_age_seconds("demo", "checkout") is None
+    candidate.metadata.annotations["deployment.kubernetes.io/revision"] = "2"
+    with pytest.raises(ActionSkipped):
+        instance.rollback("demo", "checkout")
+    instance.apps.patch_namespaced_deployment.assert_not_called()
+
+
+@pytest.mark.parametrize("rs_controller,pod_controller,expected", [
+    (True, True, True), (False, True, False), (None, True, False),
+    (True, False, False), (True, None, False),
+])
+def test_telemetry_requires_both_managing_controllers(rs_controller, pod_controller, expected):
+    instance = actor(3)
+    candidate = replica_set("checkout-uid", 3, 10, rs_controller)
+    instance.apps.list_namespaced_replica_set.return_value = SimpleNamespace(items=[candidate])
+    instance.core = Mock()
+    instance.core.list_namespaced_pod.return_value = SimpleNamespace(items=[SimpleNamespace(
+        metadata=SimpleNamespace(name="checkout-test", uid="pod-current", deletion_timestamp=None,
+            owner_references=[SimpleNamespace(kind="ReplicaSet", uid=candidate.metadata.uid, controller=pod_controller)]),
+        status=SimpleNamespace(phase="Running"))])
+    assert instance.telemetry_pods("demo", "checkout") == ({"checkout-test": "pod-current"} if expected else {})
 
 
 @pytest.mark.parametrize("method,args", [

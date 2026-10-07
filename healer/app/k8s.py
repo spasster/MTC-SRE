@@ -117,19 +117,26 @@ class K8sActuator:
         """Рабочие поды текущей ревизии, принадлежащие указанному Deployment."""
         deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
         revision = (deployment.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
+        if not deployment.metadata.uid or revision is None:
+            return {}
         owners = set()
         for replica_set in self.apps.list_namespaced_replica_set(namespace, _request_timeout=5).items:
             if ((replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision") == revision
-                and any(owner.kind == "Deployment" and owner.uid == deployment.metadata.uid
-                        for owner in replica_set.metadata.owner_references or [])):
+                and self._controlled_by(replica_set.metadata, "Deployment", deployment.metadata.uid)):
                 owners.add(replica_set.metadata.uid)
         selected = self.core.list_namespaced_pod(namespace, label_selector=f"app={name}", _request_timeout=5)
         return {
             pod.metadata.name: pod.metadata.uid for pod in selected.items
             if not pod.metadata.deletion_timestamp and pod.status.phase == "Running"
-            and any(owner.kind == "ReplicaSet" and owner.uid in owners
-                    for owner in pod.metadata.owner_references or [])
+            and any(self._controlled_by(pod.metadata, "ReplicaSet", uid) for uid in owners)
         }
+
+    @staticmethod
+    def _controlled_by(metadata, kind, uid):
+        """Обычный владелец для сборки мусора не подтверждает управление объектом."""
+        return bool(uid) and any(getattr(owner, "kind", None) == kind and getattr(owner, "uid", None) == uid
+                                and getattr(owner, "controller", None) is True
+                                for owner in metadata.owner_references or [])
 
     def revision_age_seconds(self, namespace: str, name: str):
         deployment = self.apps.read_namespaced_deployment(name, namespace, _request_timeout=5)
@@ -139,8 +146,7 @@ class K8sActuator:
         newest = None
         listed = self.apps.list_namespaced_replica_set(namespace, _request_timeout=5)
         for replica_set in listed.items:
-            owners = replica_set.metadata.owner_references or []
-            owned = any(owner.kind == "Deployment" and owner.uid == deployment.metadata.uid for owner in owners)
+            owned = self._controlled_by(replica_set.metadata, "Deployment", deployment.metadata.uid)
             if not owned or replica_set.metadata.creation_timestamp is None:
                 continue
             rev = (replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision")
@@ -251,8 +257,7 @@ class K8sActuator:
             return None
         listed = self.apps.list_namespaced_replica_set(namespace, _request_timeout=5)
         for replica_set in listed.items:
-            owners = replica_set.metadata.owner_references or []
-            owned = any(owner.kind == "Deployment" and owner.uid == deployment_uid for owner in owners)
+            owned = self._controlled_by(replica_set.metadata, "Deployment", deployment_uid)
             if not owned:
                 continue
             rev = int((replica_set.metadata.annotations or {}).get("deployment.kubernetes.io/revision", "0"))
