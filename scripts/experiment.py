@@ -2,15 +2,18 @@
 
 import argparse
 import base64
+import copy
+import hashlib
 import json
 import math
 import os
 import subprocess
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 PROMQL = {
@@ -53,6 +56,143 @@ def api(url, params=None, token=None):
 
 def deployment(name, namespace):
     return json.loads(cmd("kubectl", "get", "deployment", name, "-n", namespace, "-o", "json"))
+
+
+OWNER_ANNOTATION = "mtc-sre/experiment"
+RESOURCE_PATHS = {"job": "/apis/batch/v1", "networkchaos": "/apis/chaos-mesh.org/v1alpha1", "pod": "/api/v1"}
+RESOURCE_PLURALS = {"job": "jobs", "networkchaos": "networkchaos", "pod": "pods"}
+
+
+class RejectedConflict(RuntimeError):
+    """API явно отклонил запись по CAS; неизвестный результат сюда не относится."""
+
+
+def resource(kind, name, namespace):
+    raw = cmd("kubectl", "get", kind, name, "-n", namespace, "--ignore-not-found", "-o", "json")
+    return json.loads(raw) if raw.strip() else None
+
+
+def delete_identity(kind, name, namespace, current):
+    """DELETE проверяет UID и resourceVersion атомарно, включая замену по тому же имени."""
+    metadata = current["metadata"]
+    path = RESOURCE_PATHS[kind] + "/namespaces/" + quote(namespace, safe="") + "/" + RESOURCE_PLURALS[kind] + "/" + quote(name, safe="")
+    options = {"apiVersion": "v1", "kind": "DeleteOptions", "propagationPolicy": "Foreground",
+               "preconditions": {"uid": metadata["uid"], "resourceVersion": metadata["resourceVersion"]}}
+    response = run_command("kubectl", "delete", "--raw=" + path, "-f", "-", input_text=json.dumps(options), timeout=30)
+    if response.returncode:
+        if "Error from server (Conflict)" in response.stderr:
+            raise RejectedConflict("Удаление отклонено из-за конфликта CAS")
+        raise RuntimeError("API не подтвердил удаление объекта; повтор неизвестного результата запрещен")
+
+
+class OwnedResource:
+    """Намерение создания записывается до API; неизвестный POST не повторяется."""
+
+    def __init__(self, manifest, marker):
+        self.manifest, self.marker = manifest, marker
+        self.kind = manifest["kind"].lower()
+        self.name, self.namespace = manifest["metadata"]["name"], manifest["metadata"]["namespace"]
+        self.uid, self.generation = None, None
+        self.expected_spec = None
+        manifest["metadata"].setdefault("annotations", {})[OWNER_ANNOTATION] = marker
+
+    def create(self, timeout):
+        result = json.loads(cmd("kubectl", "create", "-f", "-", "-o", "json",
+                                input_text=json.dumps(self.manifest), timeout=timeout))
+        self.uid, self.generation = result["metadata"]["uid"], result["metadata"]["generation"]
+        self.expected_spec = copy.deepcopy(result["spec"])
+        if result["metadata"].get("annotations", {}).get(OWNER_ANNOTATION) != self.marker:
+            raise RuntimeError("API не подтвердил владение созданным объектом")
+
+    def current(self):
+        current = resource(self.kind, self.name, self.namespace)
+        if current is None:
+            return None
+        metadata = current["metadata"]
+        generation = self.generation if self.generation is not None else 1
+        # У NetworkChaos без status subresource контроллер увеличивает generation при записи статуса.
+        # Только полный spec, подтвержденный ответом create, разрешает такой служебный рост.
+        unchanged_spec = self.expected_spec is not None and current.get("spec") == self.expected_spec
+        status_generation = (self.kind == "networkchaos" and unchanged_spec and self.uid is not None
+                             and type(metadata.get("generation")) is int and metadata["generation"] >= generation)
+        if (metadata.get("annotations", {}).get(OWNER_ANNOTATION) != self.marker
+                or self.uid is not None and metadata["uid"] != self.uid
+                or self.expected_spec is not None and not unchanged_spec
+                or metadata["generation"] != generation and not status_generation):
+            raise RuntimeError("Объект опыта заменен или изменен; очистка запрещена")
+        return current
+
+    def cleanup(self):
+        for _ in range(3):
+            current = self.current()
+            if current is None:
+                return
+            uid = current["metadata"]["uid"]
+            try:
+                delete_identity(self.kind, self.name, self.namespace, current)
+                break
+            except RejectedConflict:
+                continue
+        else:
+            raise RuntimeError("Три конфликта удаления; объект опыта сохранен")
+        deadline = time.monotonic() + 75
+        while time.monotonic() < deadline:
+            remaining = resource(self.kind, self.name, self.namespace)
+            if remaining is None or remaining["metadata"]["uid"] != uid:
+                return
+            time.sleep(2)
+        raise RuntimeError("Удаление собственного объекта опыта не подтверждено")
+
+
+class OwnedDeployment:
+    """Возвращается только подтвержденное собственное изменение, с повторной проверкой CAS."""
+
+    def __init__(self, name, namespace, original, marker):
+        self.name, self.namespace, self.marker = name, namespace, marker
+        self.original, self.expected = original, original
+        self.changed, self.unknown = False, False
+
+    def mutate(self, replicas, restart=False, restore=False):
+        for _ in range(3):
+            current = deployment(self.name, self.namespace)
+            expected = self.expected
+            annotation = current["metadata"].get("annotations", {}).get(OWNER_ANNOTATION)
+            if (current["metadata"]["uid"] != expected["metadata"]["uid"]
+                    or current["metadata"]["generation"] != expected["metadata"]["generation"]
+                    or current["spec"] != expected["spec"]
+                    or annotation != (self.marker if self.changed else None)):
+                raise RuntimeError("Deployment изменен другим участником; запись запрещена")
+            body = {"metadata": {"uid": current["metadata"]["uid"], "resourceVersion": current["metadata"]["resourceVersion"],
+                                  "annotations": {OWNER_ANNOTATION: None if restore else self.marker}}, "spec": {"replicas": replicas}}
+            requested_spec = copy.deepcopy(current["spec"])
+            requested_spec["replicas"] = replicas
+            if restart:
+                body["spec"]["template"] = {"metadata": {"annotations": {"mtc-sre/experiment-restart": self.marker}}}
+                requested_spec["template"].setdefault("metadata", {}).setdefault("annotations", {})["mtc-sre/experiment-restart"] = self.marker
+            self.unknown = True
+            response = run_command("kubectl", "patch", "deployment", self.name, "-n", self.namespace,
+                                   "--type=merge", "-p", json.dumps(body), "-o", "json", timeout=30)
+            if response.returncode:
+                if "Error from server (Conflict)" in response.stderr:
+                    self.unknown = False
+                    continue
+                raise RuntimeError("API не подтвердил изменение Deployment; повтор запрещен")
+            result = json.loads(response.stdout)
+            generation = result["metadata"].get("generation")
+            if (result["metadata"]["uid"] != current["metadata"]["uid"] or result["spec"] != requested_spec
+                    or type(generation) is not int or generation < current["metadata"]["generation"]
+                    or requested_spec != current["spec"] and generation == current["metadata"]["generation"]
+                    or result["metadata"].get("annotations", {}).get(OWNER_ANNOTATION) != (None if restore else self.marker)):
+                raise RuntimeError("Ответ API не подтвердил ожидаемое изменение Deployment")
+            self.expected, self.changed, self.unknown = result, not restore, False
+            return
+        raise RuntimeError("Три конфликта CAS; Deployment сохранен без дополнительной записи")
+
+    def cleanup(self):
+        if self.unknown:
+            raise RuntimeError("Результат изменения Deployment неизвестен; автоматический возврат запрещен")
+        if self.changed:
+            self.mutate(self.original["spec"]["replicas"], restore=True)
 
 
 def scalar(base, query):
@@ -159,14 +299,20 @@ def main():
     jobs = json.loads(cmd("kubectl", "get", "jobs", "-n", "demo", "-o", "json"))["items"]
     if any(item["metadata"]["name"] == "k6-spike" for item in jobs):
         raise SystemExit("В demo уже есть k6-spike. Сначала завершить его.")
-    original_healer = deployment("healer", "heal")["spec"]["replicas"]
-    original_checkout = deployment("checkout", "demo")["spec"]["replicas"]
-    if original_checkout != 2:
+    original_healer = deployment("healer", "heal")
+    original_checkout = deployment("checkout", "demo")
+    if original_checkout["spec"]["replicas"] != 2:
         raise SystemExit("Для сравнения требуется исходное состояние с двумя репликами checkout")
+    marker = uuid.uuid4().hex
+    healer_owner = OwnedDeployment("healer", "heal", original_healer, marker)
+    checkout_owner = OwnedDeployment("checkout", "demo", original_checkout, marker)
+    owned_resources = []
     token = None
     forward = None
     report = {"scenario": args.scenario, "mode": args.mode, "manual_delay_seconds": args.manual_delay,
               "created_at": datetime.now(timezone.utc).isoformat(), "samples": [], "passed": False,
+              "source_commit": cmd("git", "rev-parse", "HEAD").strip(),
+              "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               "baseline_note": "Задержка оператора задаётся явно; это контролируемый baseline, не измерение работы человека."}
     try:
         wait_healthy(args.prometheus)
@@ -176,9 +322,8 @@ def main():
             # Исходный образ остается в Docker; подготовка заканчивается до внесения сбоя.
             report["healer_image_id"] = cmd("docker", "image", "inspect", "healer:dev", "--format", "{{.Id}}").strip()
             cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct")
-        cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + ("0" if args.mode == "baseline" else "1"))
+        healer_owner.mutate(0 if args.mode == "baseline" else 1, restart=args.mode == "auto")
         if args.mode == "auto":
-            cmd("kubectl", "rollout", "restart", "deployment/healer", "-n", "heal")
             cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
             secret = json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))
             token = base64.b64decode(secret["data"]["token"]).decode()
@@ -186,9 +331,10 @@ def main():
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         wait_healthy(args.prometheus)
         report["healer_precondition_before_injection"] = wait_incident_closed()
-        selected = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"][0]["metadata"]["name"]
+        selected_pod = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"][0]
+        selected = selected_pod["metadata"]["name"]
         report["injected_at"] = time.time()
-        if args.spike_duration or args.spike_rate:
+        if args.scenario == "spike":
             manifest = json.loads(cmd("kubectl", "create", "-f", "k8s/k6-spike.yaml", "--dry-run=client", "-o", "json"))
             environment = manifest["spec"]["template"]["spec"]["containers"][0]["env"]
             if args.spike_duration:
@@ -196,9 +342,12 @@ def main():
                 report["spike_duration_seconds"] = args.spike_duration
             if args.spike_rate:
                 environment.append({"name": "RATE", "value": str(args.spike_rate)})
-            cmd("kubectl", "apply", "-f", "-", input_text=json.dumps(manifest), timeout=min(60, args.timeout))
         else:
-            cmd("sh", "chaos/inject.sh", args.scenario)
+            manifest = json.loads(cmd("kubectl", "create", "-f", "chaos/checkout-slow-pod.yaml", "--dry-run=client", "-o", "json"))
+            manifest["spec"]["selector"]["pods"]["demo"] = [selected]
+        injection = OwnedResource(manifest, marker)
+        owned_resources.append(injection)
+        injection.create(timeout=min(60, args.timeout))
         report["injection_api_accepted_at"] = time.time()
         if args.scenario == "spike":
             report["additional_rps"] = args.spike_rate or 3
@@ -221,9 +370,19 @@ def main():
             if args.mode == "baseline" and report.get("alert_firing_at") and not report.get("api_accepted_at"):
                 if sample["time"] >= report["alert_firing_at"] + args.manual_delay:
                     if args.scenario == "slow-pod":
-                        cmd("kubectl", "delete", "pod", selected, "-n", "demo", "--wait=false")
+                        for _ in range(3):
+                            current = resource("pod", selected, "demo")
+                            if current is None or current["metadata"]["uid"] != selected_pod["metadata"]["uid"]:
+                                raise RuntimeError("Выбранный под заменен; ручное удаление запрещено")
+                            try:
+                                delete_identity("pod", selected, "demo", current)
+                                break
+                            except RejectedConflict:
+                                continue
+                        else:
+                            raise RuntimeError("Удаление пода трижды отклонено по CAS")
                     else:
-                        cmd("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=5")
+                        checkout_owner.mutate(5)
                     report["api_accepted_at"] = time.time()
             elif args.mode == "auto":
                 status = api("http://127.0.0.1:18081/status", token=token)
@@ -277,11 +436,11 @@ def main():
         report["error"] = "Эксперимент остановлен оператором; восстановление не подтверждено"
     finally:
         cleanup_errors = []
-        def cleanup(*args):
+        def cleanup(operation, action):
             try:
-                cmd(*args)
+                action()
             except Exception as error:
-                cleanup_errors.append({"operation": " ".join(args[:3]), "error_type": type(error).__name__})
+                cleanup_errors.append({"operation": operation, "error_type": type(error).__name__})
         if forward is not None:
             try:
                 forward.terminate()
@@ -294,29 +453,36 @@ def main():
                     cleanup_errors.append({"operation": "port-forward", "error_type": type(error).__name__})
             except Exception as error:
                 cleanup_errors.append({"operation": "port-forward", "error_type": type(error).__name__})
-        if args.scenario == "slow-pod":
-            cleanup("kubectl", "delete", "networkchaos", "checkout-slow-pod", "-n", "demo", "--ignore-not-found")
-        else:
+        if owned_resources and args.scenario == "spike":
             try:
+                owned_job = owned_resources[-1].current()
                 pods = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "job-name=k6-spike", "-o", "json"))["items"]
-                if pods:
-                    pod = pods[0]["metadata"]["name"]
-                    subprocess.run(["kubectl", "exec", "-n", "demo", pod, "-c", "k6", "--", "sh", "-c", "kill -INT 1"],
-                                   capture_output=True, timeout=10)
-                    for _ in range(10):
-                        logs = cmd("kubectl", "logs", "-n", "demo", pod, "-c", "k6")
+                for pod in pods:
+                    if owned_job is not None and any(owner.get("kind") == "Job" and owner.get("uid") == owned_job["metadata"]["uid"]
+                        and owner.get("controller") is True for owner in pod["metadata"].get("ownerReferences", [])):
+                        logs = cmd("kubectl", "logs", "-n", "demo", pod["metadata"]["name"], "-c", "k6")
                         for line in logs.splitlines():
                             if line.startswith("MTC_SUMMARY "):
                                 report["k6_summary"] = json.loads(line[len("MTC_SUMMARY "):])
-                        if "k6_summary" in report:
-                            break
-                        time.sleep(2)
+                if "k6_summary" not in report:
+                    report["k6_summary_error"] = "Полный итог клиента k6 не получен до удаления собственного Job"
             except Exception:
                 report["k6_summary_error"] = "Итог клиента k6 не получен"
-            cleanup("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
-        cleanup("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(original_checkout))
-        cleanup("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original_healer))
+        for owned in reversed(owned_resources):
+            cleanup(owned.kind + "/" + owned.name, owned.cleanup)
+        cleanup("deployment/checkout", checkout_owner.cleanup)
+        if args.mode == "auto" and owned_resources:
+            # Масштаб checkout принадлежит healer; опыт не присваивает эту запись себе.
+            cleanup("закрытие инцидента healer", lambda: (wait_healthy(args.prometheus), wait_incident_closed()))
+        if healer_owner.changed and not healer_owner.unknown and original_healer["spec"]["replicas"] > 0:
+            cleanup("импорт исходного healer", lambda: cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct"))
+        if args.mode == "auto" and original_healer["spec"]["replicas"] == 0 and cleanup_errors:
+            cleanup_errors.append({"operation": "deployment/healer", "error_type": "Инцидент не закрыт; healer оставлен работающим"})
+        else:
+            cleanup("deployment/healer", healer_owner.cleanup)
         report["cleanup_errors"] = cleanup_errors
+        report["resource_intents"] = [{"kind": obj.kind, "namespace": obj.namespace, "name": obj.name,
+                                        "uid_confirmed": obj.uid, "generation_confirmed": obj.generation} for obj in owned_resources]
         if cleanup_errors:
             report["passed"] = False
             report.setdefault("error", "Очистка опыта не подтверждена")

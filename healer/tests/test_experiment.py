@@ -2,8 +2,10 @@
 
 import json
 import ast
+import copy
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -46,6 +48,7 @@ def test_guard_timeout_prevents_fault_injection(monkeypatch, tmp_path):
     with pytest.raises(SystemExit, match="не закрыт"):
         experiment.main()
     assert not any(args[:3] == ("sh", "chaos/inject.sh", "slow-pod") for args in commands)
+    assert not any(args[0] == "kubectl" and any(verb in args for verb in ("delete", "patch", "scale", "apply", "create")) for args in commands)
     assert not json.loads((tmp_path / "result.json").read_text(encoding="utf-8"))["passed"]
 
 
@@ -72,14 +75,21 @@ def test_stalled_process_is_terminated_without_echoing_arguments():
 
 def test_cleanup_failure_keeps_a_failed_result(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["experiment", "--mode", "baseline", "--output", str(tmp_path / "result.json")])
-    def fail_cleanup(*args, **kwargs):
-        if args[:3] == ("kubectl", "delete", "networkchaos"):
-            raise RuntimeError("Очистка не подтверждена")
-        return json.dumps({"items": []})
-    monkeypatch.setattr(experiment, "cmd", fail_cleanup)
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: json.dumps({"items": []}))
     monkeypatch.setattr(experiment, "deployment", lambda name, namespace: {"spec": {"replicas": 2 if name == "checkout" else 1}})
     monkeypatch.setattr(experiment, "wait_healthy", lambda *args: None)
-    monkeypatch.setattr(experiment, "wait_incident_closed", lambda: (_ for _ in ()).throw(RuntimeError("Предыдущий инцидент не закрыт")))
+    calls = [0]
+    def closed_once():
+        calls[0] += 1
+        if calls[0] == 1:
+            return {"incident_closed": True}
+        raise RuntimeError("Предыдущий инцидент не закрыт")
+    monkeypatch.setattr(experiment, "wait_incident_closed", closed_once)
+    monkeypatch.setattr(experiment.OwnedDeployment, "mutate", lambda self, *args, **kwargs: setattr(self, "changed", True))
+    def failed_restore(self):
+        if self.changed:
+            raise RuntimeError("Очистка не подтверждена")
+    monkeypatch.setattr(experiment.OwnedDeployment, "cleanup", failed_restore)
     with pytest.raises(SystemExit):
         experiment.main()
     result = json.loads((tmp_path / "result.json").read_text(encoding="utf-8"))
@@ -111,3 +121,192 @@ def test_unknown_json_injection_is_not_repeated_or_disclosed(monkeypatch):
 def test_observability_timeout_has_a_finite_process_budget():
     with pytest.raises(RuntimeError, match="не завершилась"):
         experiment.run_command(sys.executable, "-c", "import time; time.sleep(30)", timeout=.1)
+
+
+def controlled_deployment(monkeypatch):
+    current = {"metadata": {"uid": "deployment-owned", "generation": 4, "resourceVersion": "10", "annotations": {}},
+               "spec": {"replicas": 2, "template": {"metadata": {"annotations": {}}, "spec": {"containers": []}}}}
+    writes = []
+    monkeypatch.setattr(experiment, "deployment", lambda *args: copy.deepcopy(current))
+    def patch(args, **kwargs):
+        writes.append((args, kwargs))
+        body = json.loads(args[args.index("-p") + 1])
+        assert body["metadata"]["uid"] == current["metadata"]["uid"]
+        assert body["metadata"]["resourceVersion"] == current["metadata"]["resourceVersion"]
+        if body["spec"]["replicas"] != current["spec"]["replicas"]:
+            current["metadata"]["generation"] += 1
+        current["spec"]["replicas"] = body["spec"]["replicas"]
+        marker = body["metadata"]["annotations"][experiment.OWNER_ANNOTATION]
+        if marker is None:
+            current["metadata"]["annotations"].pop(experiment.OWNER_ANNOTATION, None)
+        else:
+            current["metadata"]["annotations"][experiment.OWNER_ANNOTATION] = marker
+        current["metadata"]["resourceVersion"] = str(int(current["metadata"]["resourceVersion"]) + 1)
+        return SimpleNamespace(returncode=0, stdout=json.dumps(current), stderr="")
+    monkeypatch.setattr(experiment, "run_command", lambda *args, **kwargs: patch(args, **kwargs))
+    return current, writes, patch
+
+
+@pytest.mark.parametrize("foreign_change", ["replicas", "generation", "uid", "marker", "template"])
+def test_cleanup_preserves_foreign_deployment_changes(monkeypatch, foreign_change):
+    current, writes, _ = controlled_deployment(monkeypatch)
+    owner = experiment.OwnedDeployment("checkout", "demo", copy.deepcopy(current), "this-run")
+    owner.mutate(5)
+    if foreign_change == "replicas":
+        current["spec"]["replicas"] = 7
+    elif foreign_change == "generation":
+        current["metadata"]["generation"] += 2
+    elif foreign_change == "uid":
+        current["metadata"]["uid"] = "replacement"
+    elif foreign_change == "marker":
+        current["metadata"]["annotations"][experiment.OWNER_ANNOTATION] = "other-run"
+    else:
+        current["spec"]["template"]["spec"]["containers"] = [{"name": "operator"}]
+    untouched = copy.deepcopy(current)
+    with pytest.raises(RuntimeError, match="другим участником"):
+        owner.cleanup()
+    assert current == untouched and len(writes) == 1
+
+
+def test_only_rejected_cas_can_be_retried(monkeypatch):
+    current, writes, patch = controlled_deployment(monkeypatch)
+    owner = experiment.OwnedDeployment("checkout", "demo", copy.deepcopy(current), "this-run")
+    conflicts = []
+    def conflict_once(*args, **kwargs):
+        if not conflicts:
+            conflicts.append(True)
+            current["metadata"]["resourceVersion"] = "11"
+            return SimpleNamespace(returncode=1, stdout="", stderr="Error from server (Conflict)")
+        return patch(args, **kwargs)
+    monkeypatch.setattr(experiment, "run_command", conflict_once)
+    owner.mutate(5)
+    owner.cleanup()
+    assert conflicts == [True] and len(writes) == 2 and current["spec"]["replicas"] == 2
+    assert experiment.OWNER_ANNOTATION not in current["metadata"]["annotations"]
+
+
+def test_restart_requires_expected_template_in_api_response(monkeypatch):
+    current, _, _ = controlled_deployment(monkeypatch)
+    owner = experiment.OwnedDeployment("checkout", "demo", copy.deepcopy(current), "this-run")
+    reported = copy.deepcopy(current)
+    reported["metadata"]["annotations"][experiment.OWNER_ANNOTATION] = "this-run"
+    # API не подтвердил запрошенную отметку в шаблоне пода.
+    monkeypatch.setattr(experiment, "run_command", lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=json.dumps(reported), stderr=""))
+    with pytest.raises(RuntimeError, match="Ответ API"):
+        owner.mutate(2, restart=True)
+    assert owner.unknown
+    with pytest.raises(RuntimeError, match="неизвестен"):
+        owner.cleanup()
+
+
+def test_unknown_scale_cannot_be_repeated_by_cleanup(monkeypatch):
+    current, writes, _ = controlled_deployment(monkeypatch)
+    owner = experiment.OwnedDeployment("checkout", "demo", copy.deepcopy(current), "this-run")
+    calls = []
+    def unknown(*args, **kwargs):
+        calls.append(True)
+        raise RuntimeError("Ответ API не получен")
+    monkeypatch.setattr(experiment, "run_command", unknown)
+    with pytest.raises(RuntimeError, match="не получен"):
+        owner.mutate(5)
+    with pytest.raises(RuntimeError, match="неизвестен"):
+        owner.cleanup()
+    assert calls == [True] and not writes
+
+
+@pytest.mark.parametrize("change", ["uid", "generation", "marker"])
+def test_created_resource_cleanup_preserves_a_foreign_object(monkeypatch, change):
+    manifest = {"kind": "NetworkChaos", "metadata": {"name": "checkout-slow-pod", "namespace": "demo"}, "spec": {}}
+    owner = experiment.OwnedResource(manifest, "this-run")
+    owner.uid, owner.generation = "own-chaos", 1
+    current = {"metadata": {"uid": "own-chaos", "generation": 1, "resourceVersion": "12", "annotations": {
+        experiment.OWNER_ANNOTATION: "this-run"}}}
+    if change == "uid":
+        current["metadata"]["uid"] = "recreated-chaos"
+    elif change == "generation":
+        current["metadata"]["generation"] = 2
+    else:
+        current["metadata"]["annotations"][experiment.OWNER_ANNOTATION] = "other-run"
+    monkeypatch.setattr(experiment, "resource", lambda *args: current)
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: pytest.fail("Чужой объект нельзя удалять"))
+    with pytest.raises(RuntimeError, match="очистка запрещена"):
+        owner.cleanup()
+
+
+def test_unknown_create_is_reconciled_by_marker_without_a_second_post(monkeypatch):
+    owner = experiment.OwnedResource({"kind": "Job", "metadata": {"name": "k6-spike", "namespace": "demo"}, "spec": {}}, "this-run")
+    observed = {"metadata": {"uid": "own-job", "generation": 1, "resourceVersion": "17", "annotations": {
+        experiment.OWNER_ANNOTATION: "this-run"}}}
+    commands = []
+    def command(*args, **kwargs):
+        commands.append((args, kwargs))
+        if "create" in args:
+            raise RuntimeError("Ответ API не получен")
+    monkeypatch.setattr(experiment, "cmd", command)
+    def delete(*args, **kwargs):
+        commands.append((args, kwargs))
+        options = json.loads(kwargs["input_text"])
+        assert options["preconditions"] == {"uid": "own-job", "resourceVersion": "17"}
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+    monkeypatch.setattr(experiment, "run_command", delete)
+    reads = iter([observed, None])
+    monkeypatch.setattr(experiment, "resource", lambda *args: next(reads))
+    with pytest.raises(RuntimeError, match="не получен"):
+        owner.create(timeout=12)
+    owner.cleanup()
+    assert len(commands) == 2 and sum("create" in args for args, _ in commands) == 1
+    assert "--raw=/apis/batch/v1/namespaces/demo/jobs/k6-spike" in commands[1][0]
+
+
+def test_delete_conflict_rechecks_resource_ownership_before_retry(monkeypatch):
+    owner = experiment.OwnedResource({"kind": "Job", "metadata": {"name": "k6-spike", "namespace": "demo"}, "spec": {}}, "this-run")
+    owner.uid, owner.generation = "own-job", 1
+    original = {"metadata": {"uid": "own-job", "generation": 1, "resourceVersion": "10", "annotations": {
+        experiment.OWNER_ANNOTATION: "this-run"}}}
+    replacement = copy.deepcopy(original)
+    replacement["metadata"]["uid"] = "other-job"
+    reads = iter([original, replacement])
+    monkeypatch.setattr(experiment, "resource", lambda *args: next(reads))
+    writes = []
+    def rejected(*args, **kwargs):
+        writes.append(True)
+        return SimpleNamespace(returncode=1, stdout="", stderr="Error from server (Conflict)")
+    monkeypatch.setattr(experiment, "run_command", rejected)
+    with pytest.raises(RuntimeError, match="очистка запрещена"):
+        owner.cleanup()
+    assert writes == [True]
+
+
+def test_network_status_generation_does_not_block_owned_cleanup(monkeypatch):
+    owner = experiment.OwnedResource({"kind": "NetworkChaos", "metadata": {"name": "checkout-slow-pod", "namespace": "demo"},
+                                     "spec": {"selector": {"pods": {"demo": ["selected"]}}}}, "this-run")
+    created = {"metadata": {"uid": "own-chaos", "generation": 1, "resourceVersion": "10",
+                            "annotations": {experiment.OWNER_ANNOTATION: "this-run"}},
+               "spec": {"selector": {"pods": {"demo": ["selected"]}, "namespaces": ["demo"]}}}
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: json.dumps(created))
+    owner.create(timeout=30)
+    changed_status = copy.deepcopy(created)
+    changed_status["metadata"].update(generation=7, resourceVersion="20")
+    changed_status["status"] = {"experiment": {"desiredPhase": "Run"}}
+    reads = iter([changed_status, None])
+    monkeypatch.setattr(experiment, "resource", lambda *args: next(reads))
+    deleted = []
+    monkeypatch.setattr(experiment, "delete_identity", lambda *args: deleted.append(args))
+    owner.cleanup()
+    assert len(deleted) == 1 and deleted[0][3]["metadata"]["resourceVersion"] == "20"
+    assert owner.expected_spec == created["spec"]
+
+
+def test_network_spec_change_still_blocks_cleanup_after_status_updates(monkeypatch):
+    owner = experiment.OwnedResource({"kind": "NetworkChaos", "metadata": {"name": "checkout-slow-pod", "namespace": "demo"}, "spec": {}}, "this-run")
+    created = {"metadata": {"uid": "own-chaos", "generation": 1, "resourceVersion": "10",
+                            "annotations": {experiment.OWNER_ANNOTATION: "this-run"}}, "spec": {"action": "delay"}}
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: json.dumps(created))
+    owner.create(timeout=30)
+    changed = copy.deepcopy(created)
+    changed["metadata"]["generation"] = 7
+    changed["spec"]["action"] = "partition"
+    monkeypatch.setattr(experiment, "resource", lambda *args: changed)
+    monkeypatch.setattr(experiment, "delete_identity", lambda *args: pytest.fail("Чужая перенастройка не удаляется"))
+    with pytest.raises(RuntimeError, match="очистка запрещена"):
+        owner.cleanup()
