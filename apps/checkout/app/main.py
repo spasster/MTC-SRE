@@ -92,12 +92,15 @@ setup(SERVICE)
 
 @asynccontextmanager
 async def lifespan(app):
-    server, _ = start_http_server(int(os.getenv("METRICS_PORT", "8081")))
-    try:
-        yield
-    finally:
-        server.shutdown()
-        server.server_close()
+    # Клиент и его конфигурация создаются один раз, а traceparent передается на каждый вызов.
+    with httpx.Client(timeout=float(os.getenv("PAYMENT_TIMEOUT", "3"))) as payment_client:
+        app.state.payment_client = payment_client
+        server, _ = start_http_server(int(os.getenv("METRICS_PORT", "8081")))
+        try:
+            yield
+        finally:
+            server.shutdown()
+            server.server_close()
 
 
 app = FastAPI(title=SERVICE, lifespan=lifespan)
@@ -189,8 +192,7 @@ def call_payment(trace_id: str) -> str:
     with trace.get_tracer(SERVICE).start_as_current_span("POST /pay", kind=SpanKind.CLIENT) as span:
         headers = {}
         inject(headers)
-        with httpx.Client(timeout=timeout) as client:
-            response = client.post(url, headers=headers)
+        response = app.state.payment_client.post(url, headers=headers, timeout=timeout)
         span.set_attribute("http.status_code", response.status_code)
         if response.status_code >= 500:
             span.set_status(Status(StatusCode.ERROR, "http"))

@@ -1,8 +1,11 @@
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import Mock
 
 import httpx
+import pytest
 import redis
 from fastapi.testclient import TestClient
 from opentelemetry import trace
@@ -11,6 +14,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from opentelemetry.trace import StatusCode
 
 from app.main import JsonFormatter, app
+from app import main
 
 client = TestClient(app)
 TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
@@ -186,3 +190,75 @@ def test_openmetrics_exemplar(monkeypatch):
     response = client.get("/metrics", headers={"Accept": "application/openmetrics-text"})
     assert TRACE_ID in response.text
     assert response.text.rstrip().endswith("# EOF")
+
+
+def payment_runtime(monkeypatch, handler):
+    """Настоящий HTTP-клиент с управляемым транспортом, без внешнего платежа."""
+    _clear_flags(monkeypatch)
+    monkeypatch.setattr(main, "get_redis", lambda: FakeRedis())
+    monkeypatch.setenv("PAYMENT_URL", "http://payment/pay")
+    server = Mock()
+    monkeypatch.setattr(main, "start_http_server", lambda port: (server, None))
+    constructor, created = httpx.Client, []
+
+    def create(**kwargs):
+        payment = constructor(transport=httpx.MockTransport(handler), **kwargs)
+        created.append(payment)
+        return payment
+
+    monkeypatch.setattr(main.httpx, "Client", create)
+    return created, server
+
+
+def test_payment_client_is_reused_and_closed_with_distinct_request_traces(monkeypatch):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json={"status": "ok"})
+
+    created, server = payment_runtime(monkeypatch, handler)
+    ids = [TRACE_ID, "0123456789abcdef0123456789abcdef"]
+    with TestClient(app) as running:
+        for trace_id in ids:
+            response = running.get("/work", headers={"traceparent": f"00-{trace_id}-00f067aa0ba902b7-01"})
+            assert response.status_code == 200 and response.json()["payment"] == "ok"
+        assert len(created) == 1 and not created[0].is_closed
+    assert created[0].is_closed
+    server.shutdown.assert_called_once()
+    server.server_close.assert_called_once()
+    assert [request.headers["traceparent"].split("-")[1] for request in requests] == ids
+    assert all(request.url.path == "/pay" and request.method == "POST" for request in requests)
+
+
+@pytest.mark.parametrize("failure,reason", [("timeout", "payment_timeout"), ("http", "payment_http")])
+def test_shared_payment_client_does_not_repeat_an_unknown_or_failed_post(monkeypatch, failure, reason):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        if failure == "timeout":
+            raise httpx.ReadTimeout("Ответ не получен", request=request)
+        return httpx.Response(500)
+
+    created, server = payment_runtime(monkeypatch, handler)
+    with TestClient(app) as running:
+        response = running.get("/work")
+        assert response.status_code == 500 and response.json()["reason"] == reason
+    assert len(requests) == 1 and len(created) == 1 and created[0].is_closed
+
+
+def test_parallel_payments_keep_their_own_trace_headers(monkeypatch):
+    headers = []
+
+    def handler(request):
+        headers.append(request.headers["traceparent"].split("-")[1])
+        return httpx.Response(200)
+
+    created, server = payment_runtime(monkeypatch, handler)
+    ids = [f"{number:032x}" for number in range(1, 9)]
+    with TestClient(app) as running, ThreadPoolExecutor(max_workers=4) as pool:
+        replies = list(pool.map(lambda value: running.get("/work", headers={
+            "traceparent": f"00-{value}-00f067aa0ba902b7-01"}), ids))
+    assert all(reply.status_code == 200 for reply in replies)
+    assert sorted(headers) == ids and len(created) == 1 and created[0].is_closed
