@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-10-07T04:31:33.392342+00:00",
+  "prepared_verifier_commit": "649ade5f7278dcde27b0a938866aca067f064d18",
+  "application_base_commit": "3e1df769f0e8d9dcca7c91a41cc3717e271f7c97",
+  "passed": true,
+  "tests": 395,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "junit_sha256": "b5c5bd227e1d8e24fc5e5ce0213c4a8d3434426d8e92695226be03aadab7e72e",
+  "source_sha256": {
+    "scripts/experiment.py": "f8c5236a6c4e531e9b916502e8cbf35ce0b6a7d8a9643dddb5892aca96270dfb",
+    "scripts/verify-limited-chaos.py": "9e98564f5a23d0eb3a606e3135eb9bb5e294612f0895024f9025fb09c212a64b",
+    "scripts/verify-scenarios.py": "685233b41764b79445db874cf705d7dcb9cf448426d22c3dde1008993b560b03",
+    "scripts/local-images.py": "b678486c60802d6a2e414e489b597ba9b312f1c6863cbbf0ca6bf92a7842fd79"
+  },
+  "scope": "Подготовленные исправления трех подтвержденных дефектов проверочных утилит. Это Python-тесты и управляемые ответы. Перенос в основную ветку, реальные положительные опыты и полный CI еще не завершены."
+}

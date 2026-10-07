@@ -1,0 +1,49 @@
+{
+  "started_at": "2026-10-07T03:53:53.758992+00:00",
+  "passed": false,
+  "cases": [],
+  "source_commit": "e283970f846cc74bd6b5bb07a67d20c70be02982",
+  "initial_incident": {
+    "checked_at": 1791345233.5973082,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "source_worktree_dirty": false,
+  "profile": {
+    "client_rps": 2,
+    "duration_per_case_seconds": 180,
+    "warmup_seconds": 60,
+    "complete_response_ratio_minimum": 0.995,
+    "replicas": 3,
+    "original_checkout_replicas": 2,
+    "payment_replicas": 2,
+    "network_action": "partition",
+    "network_scope": "\u041e\u0434\u0438\u043d checkout -> \u043e\u0434\u0438\u043d payment; \u0432\u0442\u043e\u0440\u043e\u0439 payment \u043e\u0441\u0442\u0430\u0435\u0442\u0441\u044f \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d",
+    "cpu_workers": 1,
+    "cpu_load_percent_of_core": 5,
+    "faults": [
+      "pod",
+      "network",
+      "cpu"
+    ]
+  },
+  "resources_per_replica": {
+    "limits": {
+      "cpu": "200m",
+      "memory": "256Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "64Mi"
+    }
+  },
+  "limitation": "\u0414\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u043e \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0441\u044f \u043a \u0443\u043a\u0430\u0437\u0430\u043d\u043d\u043e\u0439 \u043e\u0431\u043b\u0430\u0441\u0442\u0438 \u043e\u0442\u043a\u0430\u0437\u0430 \u0438 \u043a\u043e\u0440\u043e\u0442\u043a\u043e\u043c\u0443 \u043e\u043a\u043d\u0443, \u043d\u0435 \u043a\u043e \u0432\u0441\u0435\u043c \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432\u043d\u043e\u0441\u0442\u044f\u043c \u0445\u0430\u043e\u0441\u0430 \u0438\u043b\u0438 \u043c\u0435\u0441\u044f\u0447\u043d\u043e\u043c\u0443 SLO. \u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u0442\u0435\u0432\u043e\u0439 \u0440\u0430\u0437\u0440\u044b\u0432 \u0438 \u043f\u0435\u0440\u0435\u0433\u0440\u0443\u0437\u043a\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u044e\u0442 \u043e\u0442\u0440\u0438\u0446\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u044b.",
+  "error": "\u041f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0438\u0439 \u0438\u043d\u0446\u0438\u0434\u0435\u043d\u0442 healer \u043d\u0435 \u0437\u0430\u043a\u0440\u044b\u0442; \u043d\u043e\u0432\u044b\u0439 \u044d\u043a\u0441\u043f\u0435\u0440\u0438\u043c\u0435\u043d\u0442 \u043d\u0435 \u043d\u0430\u0447\u0430\u0442",
+  "original_checkout_replicas_restored": true,
+  "cleanup_errors": [],
+  "finished_at": "2026-10-07T03:59:07.032581+00:00"
+}

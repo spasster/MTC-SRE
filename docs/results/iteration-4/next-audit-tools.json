@@ -1,0 +1,30 @@
+{
+  "checked_at": "2026-10-07T03:37:46.885257+00:00",
+  "source_commit": "74c9361d55de63ad7ca567c01c6798a56e8ec7e1",
+  "scope": "Подменены команды, ответы Kubernetes и процессы; настоящий кластер не изменяется.",
+  "cases": {
+    "limited_background_cleanup_overwrites_operator": {
+      "reproduced": true,
+      "operator_replicas_after_unknown_response": 7,
+      "replicas_after_cleanup": 1,
+      "json_preserved": true
+    },
+    "scenarios_cleanup_failure_loses_json_and_process_cleanup": {
+      "reproduced": true,
+      "json_preserved": false,
+      "forward_terminated": false
+    },
+    "runtime_verification_misses_deployment_replacement_during_exec": {
+      "reproduced": true,
+      "runtime_verifier_passed": true,
+      "deployment_read_count": 1,
+      "final_uid_differs_from_report": true
+    }
+  },
+  "source_sha256": {
+    "scripts/verify-limited-chaos.py": "f65088d831bc720c72caeacb2c16116bda727aab74df0c9adc534f2310293492",
+    "scripts/verify-scenarios.py": "d88a9afa582b22701a5153504841b6253686bd69bdd0a9a21f3eef7a4cf74fdf",
+    "scripts/local-images.py": "be9966cbee55653340cc624b79ec8c0361548b16f4ab6fdf4bd93baa83eacccf"
+  },
+  "all_reproduced": true
+}

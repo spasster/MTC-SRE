@@ -1,0 +1,96 @@
+{
+  "checked_at": "2026-10-07T03:52:49.835067+00:00",
+  "passed": true,
+  "components": {
+    "checkout": {
+      "deployment_uid": "3175fb94-2361-494b-b735-2371cb82637a",
+      "generation": 1,
+      "image_id": "sha256:5bef94a8898abc6be08f98843ae7f0de68056d02d974d4db202d10ca346e1e38",
+      "image_tag": "checkout:local-5bef94a8898abc6be08f98843ae7f0de68056d02d974d4db202d10ca346e1e38",
+      "pods": [
+        {
+          "pod": "checkout-77fdf6f4d-d9hzc",
+          "uid": "f34710e3-9c06-438f-95dd-d03c92cb10c9",
+          "image_id": "sha256:5bef94a8898abc6be08f98843ae7f0de68056d02d974d4db202d10ca346e1e38",
+          "source_sha256": {
+            "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "app/main.py": "2809a4b9ab4bc5ad57c8b3fbcf5c8042b09b8eb24eb5e1f7cee42d1a78df3bc4",
+            "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267",
+            "requirements.txt": "45560be84a048a7ae5a5f1888834807f03e7e906e6401f681e5e509a5fc6b19e"
+          }
+        },
+        {
+          "pod": "checkout-77fdf6f4d-zxbpx",
+          "uid": "3ef5a967-fbb1-4dd5-b10b-95d2a5acf437",
+          "image_id": "sha256:5bef94a8898abc6be08f98843ae7f0de68056d02d974d4db202d10ca346e1e38",
+          "source_sha256": {
+            "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "app/main.py": "2809a4b9ab4bc5ad57c8b3fbcf5c8042b09b8eb24eb5e1f7cee42d1a78df3bc4",
+            "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267",
+            "requirements.txt": "45560be84a048a7ae5a5f1888834807f03e7e906e6401f681e5e509a5fc6b19e"
+          }
+        }
+      ],
+      "passed": true
+    },
+    "payment": {
+      "deployment_uid": "971ddc3f-06bf-40f4-98fb-775cb308df29",
+      "generation": 1,
+      "image_id": "sha256:6daabf57442cb68f5f0c42f845c799bdac89afe399afa7b284b633dc0c93b25d",
+      "image_tag": "payment:local-6daabf57442cb68f5f0c42f845c799bdac89afe399afa7b284b633dc0c93b25d",
+      "pods": [
+        {
+          "pod": "payment-667dc9b99f-kvhr9",
+          "uid": "c62ef00c-0081-497e-a209-173dde9834f8",
+          "image_id": "sha256:6daabf57442cb68f5f0c42f845c799bdac89afe399afa7b284b633dc0c93b25d",
+          "source_sha256": {
+            "app/main.py": "bc4d07aa91ef2f4a6a6f0da392372490984cf894db4a71d0d8f7952b55d9efe7",
+            "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267",
+            "requirements.txt": "130d0a0641fb952b717cb38eba1de050bdc363ce8ce2454be9fea0694f19f5ab"
+          }
+        },
+        {
+          "pod": "payment-667dc9b99f-wzxwb",
+          "uid": "a5066fbb-9821-4f12-82a4-90e444e1803c",
+          "image_id": "sha256:6daabf57442cb68f5f0c42f845c799bdac89afe399afa7b284b633dc0c93b25d",
+          "source_sha256": {
+            "app/main.py": "bc4d07aa91ef2f4a6a6f0da392372490984cf894db4a71d0d8f7952b55d9efe7",
+            "app/otel.py": "64586beb7eef41c2d85be5731262eac7db92ce3e72eb2ca04f327ddac8809267",
+            "requirements.txt": "130d0a0641fb952b717cb38eba1de050bdc363ce8ce2454be9fea0694f19f5ab"
+          }
+        }
+      ],
+      "passed": true
+    },
+    "healer": {
+      "deployment_uid": "664ec815-8a6e-4480-b9fc-bd101eea0bef",
+      "generation": 1,
+      "image_id": "sha256:7030fd01999c82c6cd6b426cf08ffb1ae7b6dee313075e397a605466d1c1721d",
+      "image_tag": "healer:local-7030fd01999c82c6cd6b426cf08ffb1ae7b6dee313075e397a605466d1c1721d",
+      "pods": [
+        {
+          "pod": "healer-5dd7d5dd5-78r5b",
+          "uid": "b870895a-a697-4eb2-b3a1-df1e8ffa0200",
+          "image_id": "sha256:7030fd01999c82c6cd6b426cf08ffb1ae7b6dee313075e397a605466d1c1721d",
+          "source_sha256": {
+            "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "app/assistant.py": "a74e91ac96da0b1de6baddbf9c58eb0a2998ea095e1cede87919372cb69214f2",
+            "app/diagnose.py": "2c40e5f66dee1a6700885b4c3625888fa5dd23d9ba76084142cfc5188e00261b",
+            "app/evidence.py": "1e933b2aa9ab8ea9006ba2097e9f3ad67408015848be988b5b8e4205d0e53cb8",
+            "app/k8s.py": "aa1d8302f5a0aabf0d22a224f9138af127921539f5b41f612549a6ce4c1cf67e",
+            "app/main.py": "6243dc0a6b4e52df72be9e5438ba39e24c075ed348bf214bca3b356b96055f8f",
+            "app/observability.py": "b154a678f4c9dc886ce702eb862d8bb84f8fa503a8552efa6a28b38345eb6dc6",
+            "app/state.py": "557b8d7e737b17767c092dfcf5a12373025cb6619bfbebb7b42927bcb9dbc6fb",
+            "app/telegram.py": "917d59b9d1b2ca8c109ab5d76283904e088d47e44c1923840f1f25768f427826",
+            "prompts/incident.md": "8895533b6aa1a79ffdc4e224feb4e52619a7b831273257d8f9e8622e750afcb9",
+            "prompts/postmortem.md": "606d0f14f3557f7b1fedd5c292ecaeb92854a7cc48c80c525a83f136fb862e50",
+            "requirements.txt": "294006876090d31a5fdfb5651a0e140686740f1d22233d39e96f9a72ef3258cc",
+            "rules.yaml": "ac0ffda2e11eacbaad0570d3a607cc417e455497ebcb8b6f8615f6a9d4f1a90e"
+          }
+        }
+      ],
+      "passed": true
+    }
+  },
+  "verifier_sha256": "be9966cbee55653340cc624b79ec8c0361548b16f4ab6fdf4bd93baa83eacccf"
+}

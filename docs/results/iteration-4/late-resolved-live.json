@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-10-07T04:15:40.108395+00:00",
+  "source_commit": "3e1df769f0e8d9dcca7c91a41cc3717e271f7c97",
+  "main_sha256": "1ab3d5a8850cd71fe2cc9219756ae3743262c5074af4d69ed815f0a183176d8d",
+  "cluster": "mtc-review",
+  "passed": true,
+  "http_status": 200,
+  "result": "ignored: no active incident",
+  "history_preserved": true,
+  "state_preserved": true,
+  "resolved_pending": false,
+  "events_before": 78,
+  "events_after": 78,
+  "operations_before": 22,
+  "operations_after": 22,
+  "limitation": "Проверен собственный тестовый кластер и закрытый инцидент. Отказ метрик и сохраненный лишний флаг воспроизведены отдельными тестами."
+}

@@ -1,0 +1,144 @@
+{
+  "checked_at": "2026-10-07T04:55:09.702948+00:00",
+  "passed": true,
+  "duration_seconds": 83.0874617099762,
+  "rbac": {
+    "get deployments": "yes",
+    "patch deployments": "no",
+    "delete pods": "no",
+    "get secrets": "no",
+    "get heal/configmap/healer-state": "yes",
+    "patch heal/configmap/healer-state": "no",
+    "get heal/secrets": "no",
+    "patch heal/lease/healer-leader": "no"
+  },
+  "authentication": {
+    "report:absent": 401,
+    "report:invalid": 401,
+    "postmortem:absent": 401,
+    "postmortem:invalid": 401
+  },
+  "response": {
+    "source": "local_llm",
+    "model": "qwen2.5:1.5b",
+    "snapshot": {
+      "collection_failed": false,
+      "replicas": 2,
+      "request_rate": 2.933333333333333,
+      "p95": 0.16857142857142848,
+      "revision_age_seconds": 3976.875363,
+      "error_ratio": 0.0,
+      "application_error_ratio": 0.0,
+      "redis_error_ratio": 0.0,
+      "payment_error_ratio": 0.0,
+      "payment_timeout_ratio": 0.0,
+      "synthetic_success": 1.0,
+      "synthetic_age_seconds": 10.91880745569506,
+      "redis_ready": true,
+      "payment_ready": true,
+      "pods": [
+        {
+          "pod": "checkout-7585bd76f7-p7587",
+          "p95": 0.09833333333333333,
+          "p95_recent": 0.1449999999999999,
+          "throttle": 0.1476510067114094
+        },
+        {
+          "pod": "checkout-7585bd76f7-c5bgq",
+          "p95": 0.18157894736842103,
+          "p95_recent": 0.17700000000000002,
+          "throttle": 0.20728291316526612
+        }
+      ]
+    },
+    "slo_assessment": {
+      "state": "healthy",
+      "p95_limit_seconds": 0.3,
+      "error_ratio_limit": 0.005,
+      "source": "measured_metrics"
+    },
+    "incident_facts": {
+      "scope": "latest_completed",
+      "status": "completed",
+      "started_at": 1791348449.680016,
+      "slo_restored_at": null,
+      "api_accepted_at": null,
+      "resolved_received_at": null,
+      "closed_at": 1791348676.9367573,
+      "mttr_seconds": null,
+      "api_delay_seconds": null,
+      "operations": [],
+      "timeline": [
+        {
+          "time": 1791348450.6492884,
+          "event": "decision",
+          "action": "none",
+          "diagnosis": "unknown",
+          "mode": "escalate"
+        }
+      ],
+      "current_unknown_operation": false,
+      "timeline_truncated": false,
+      "unknown_operation_in_selected_incident": false,
+      "operations_truncated": false
+    },
+    "report_sections": {
+      "symptoms": "Сейчас SLO в норме; этот снимок описывает момент запроса, а не начало выбранного инцидента.",
+      "actions": "Операции Kubernetes в выбранном инциденте не зафиксированы.",
+      "recovery": "Время восстановления SLO не подтверждено; MTTR не определен.",
+      "next_checks": "Сверить отказ от вмешательства с полнотой и свежестью метрик checkout в Prometheus в момент инцидента."
+    },
+    "selected_recommendation": {
+      "id": "data1",
+      "group": "data",
+      "text": "Сверить отказ от вмешательства с полнотой и свежестью метрик checkout в Prometheus в момент инцидента.",
+      "basis": {
+        "source": "selected_incident",
+        "diagnoses": [
+          "unknown"
+        ],
+        "operations": [],
+        "mttr_seconds": null
+      }
+    },
+    "recommendation_candidates": [
+      {
+        "id": "data1",
+        "group": "data",
+        "text": "Сверить отказ от вмешательства с полнотой и свежестью метрик checkout в Prometheus в момент инцидента.",
+        "basis": {
+          "source": "selected_incident",
+          "diagnoses": [
+            "unknown"
+          ],
+          "operations": [],
+          "mttr_seconds": null
+        }
+      },
+      {
+        "id": "data2",
+        "group": "data",
+        "text": "Проверить up и метрики запросов checkout; отсутствие подтверждения восстановления сохранить как неизвестное время.",
+        "basis": {
+          "source": "selected_incident",
+          "diagnoses": [
+            "unknown"
+          ],
+          "operations": [],
+          "mttr_seconds": null
+        }
+      }
+    ],
+    "human_review_required": true,
+    "rule_decision": {
+      "diagnosis": "settling",
+      "mode": "ignore",
+      "action": "none",
+      "target": null,
+      "detail": "за последние 30 секунд поды уже быстрые"
+    },
+    "report": "Симптомы: Сейчас SLO в норме; этот снимок описывает момент запроса, а не начало выбранного инцидента.\n\nДействия и подтверждения: Операции Kubernetes в выбранном инциденте не зафиксированы.\n\nВосстановление и время: Время восстановления SLO не подтверждено; MTTR не определен.\n\nЧто еще проверить: Сверить отказ от вмешательства с полнотой и свежестью метрик checkout в Prometheus в момент инцидента.",
+    "actions_applied": [],
+    "notice": "Факты вычислены кодом; модель выбирает одну обоснованную проверку из явных кандидатов. Это черновик для человека, без изменения кластера."
+  }
+}

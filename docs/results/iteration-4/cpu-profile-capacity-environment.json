@@ -1,0 +1,17 @@
+{
+  "started_at": "2026-10-07T04:15:51.736952+00:00",
+  "source_commit": "3e1df769f0e8d9dcca7c91a41cc3717e271f7c97",
+  "capacity_verifier_sha256": "ae7d260b68fca3d58ee3d8d94e6860902091f06b7ccf9fbb0330b506ff2e980f",
+  "host_available_cpus": 22,
+  "cluster_allowed_cpus": [
+    0,
+    1
+  ],
+  "restriction_method": "Docker CpusetCpus только для k3d-mtc-review-server-0",
+  "original_cpuset": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21",
+  "cleanup_confirmed": true,
+  "passed": true,
+  "limitation": "Это локальная проверка при двух CPU, а не тождество процессора, сети и диска GitHub runner.",
+  "capacity_exit_code": 0,
+  "finished_at": "2026-10-07T04:24:46.628773+00:00"
+}

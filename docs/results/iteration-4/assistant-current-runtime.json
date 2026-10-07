@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-10-07T04:52:31.140599+00:00",
+  "passed": true,
+  "components": {
+    "assistant": {
+      "deployment_uid": "b2e0cca7-5655-4d8e-8fad-c6127f9058ec",
+      "generation": 9,
+      "image_id": "sha256:6155cf1b11e17622d0067a248aa22a45cdccf964be605d836f366da9e9c9c513",
+      "image_tag": "healer:local-6155cf1b11e17622d0067a248aa22a45cdccf964be605d836f366da9e9c9c513",
+      "pods": [
+        {
+          "pod": "sre-assistant-76cd9577f6-9tml6",
+          "uid": "5c2c0704-1580-41a6-83c8-aa1aea65e626",
+          "image_id": "sha256:6155cf1b11e17622d0067a248aa22a45cdccf964be605d836f366da9e9c9c513",
+          "source_sha256": {
+            "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "app/assistant.py": "a74e91ac96da0b1de6baddbf9c58eb0a2998ea095e1cede87919372cb69214f2",
+            "app/diagnose.py": "2c40e5f66dee1a6700885b4c3625888fa5dd23d9ba76084142cfc5188e00261b",
+            "app/evidence.py": "1e933b2aa9ab8ea9006ba2097e9f3ad67408015848be988b5b8e4205d0e53cb8",
+            "app/k8s.py": "aa1d8302f5a0aabf0d22a224f9138af127921539f5b41f612549a6ce4c1cf67e",
+            "app/main.py": "1ab3d5a8850cd71fe2cc9219756ae3743262c5074af4d69ed815f0a183176d8d",
+            "app/observability.py": "b154a678f4c9dc886ce702eb862d8bb84f8fa503a8552efa6a28b38345eb6dc6",
+            "app/state.py": "557b8d7e737b17767c092dfcf5a12373025cb6619bfbebb7b42927bcb9dbc6fb",
+            "app/telegram.py": "917d59b9d1b2ca8c109ab5d76283904e088d47e44c1923840f1f25768f427826",
+            "prompts/incident.md": "8895533b6aa1a79ffdc4e224feb4e52619a7b831273257d8f9e8622e750afcb9",
+            "prompts/postmortem.md": "606d0f14f3557f7b1fedd5c292ecaeb92854a7cc48c80c525a83f136fb862e50",
+            "requirements.txt": "294006876090d31a5fdfb5651a0e140686740f1d22233d39e96f9a72ef3258cc",
+            "rules.yaml": "ac0ffda2e11eacbaad0570d3a607cc417e455497ebcb8b6f8615f6a9d4f1a90e"
+          }
+        }
+      ],
+      "passed": true
+    }
+  },
+  "verifier_sha256": "be9966cbee55653340cc624b79ec8c0361548b16f4ab6fdf4bd93baa83eacccf"
+}

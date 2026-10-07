@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "cases": {
+    "checkout": {
+      "no_generation_change": true,
+      "same_pod_uids": true,
+      "passed": true
+    },
+    "payment": {
+      "no_generation_change": true,
+      "same_pod_uids": true,
+      "passed": true
+    },
+    "healer": {
+      "no_generation_change": true,
+      "same_pod_uids": true,
+      "passed": true
+    }
+  },
+  "limitation": "Повтор установки текущих локальных образов; не заменяет полный CI и отдельную проверку конкурирующей замены."
+}
