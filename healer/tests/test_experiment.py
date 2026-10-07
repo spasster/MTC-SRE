@@ -157,9 +157,11 @@ def controlled_deployment(monkeypatch):
         body = json.loads(args[args.index("-p") + 1])
         assert body["metadata"]["uid"] == current["metadata"]["uid"]
         assert body["metadata"]["resourceVersion"] == current["metadata"]["resourceVersion"]
-        if body["spec"]["replicas"] != current["spec"]["replicas"]:
+        requested = copy.deepcopy(current["spec"])
+        requested.update(body["spec"])
+        if requested != current["spec"]:
             current["metadata"]["generation"] += 1
-        current["spec"]["replicas"] = body["spec"]["replicas"]
+        current["spec"] = requested
         marker = body["metadata"]["annotations"][experiment.OWNER_ANNOTATION]
         if marker is None:
             current["metadata"]["annotations"].pop(experiment.OWNER_ANNOTATION, None)
@@ -236,6 +238,39 @@ def test_unknown_scale_cannot_be_repeated_by_cleanup(monkeypatch):
     with pytest.raises(RuntimeError, match="неизвестен"):
         owner.cleanup()
     assert calls == [True] and not writes
+
+
+def test_owned_test_release_restores_the_exact_template_and_other_environment(monkeypatch):
+    current, writes, _ = controlled_deployment(monkeypatch)
+    current["spec"]["template"]["spec"]["containers"] = [
+        {"name": "checkout", "image": "checkout:local-controlled", "env": [
+            {"name": "KEEP", "value": "unchanged"}, {"name": "FAIL_RATE", "value": "0"}]},
+        {"name": "other", "image": "other:controlled"}]
+    original = copy.deepcopy(current)
+    owner = experiment.OwnedDeployment("checkout", "demo", original, "this-run")
+    owner.mutate(2, environment={"FAIL_RATE": "1"})
+    assert current["spec"]["template"]["spec"]["containers"][0]["env"] == [
+        {"name": "KEEP", "value": "unchanged"}, {"name": "FAIL_RATE", "value": "1"}]
+    owner.cleanup(restore_template=True)
+    assert current["spec"] == original["spec"] and len(writes) == 2
+    assert experiment.OWNER_ANNOTATION not in current["metadata"]["annotations"]
+
+
+def test_unknown_test_release_response_cannot_trigger_an_undo(monkeypatch):
+    current, writes, _ = controlled_deployment(monkeypatch)
+    current["spec"]["template"]["spec"]["containers"] = [{"name": "checkout", "env": []}]
+    owner = experiment.OwnedDeployment("checkout", "demo", copy.deepcopy(current), "this-run")
+    calls = []
+    def unknown(*args, **kwargs):
+        calls.append(True)
+        current["metadata"]["uid"] = "operator-replacement"
+        raise RuntimeError("Ответ тестового релиза потерян")
+    monkeypatch.setattr(experiment, "run_command", unknown)
+    with pytest.raises(RuntimeError, match="потерян"):
+        owner.mutate(2, environment={"FAIL_RATE": "1"})
+    with pytest.raises(RuntimeError, match="неизвестен"):
+        owner.cleanup(restore_template=True)
+    assert calls == [True] and not writes and current["metadata"]["uid"] == "operator-replacement"
 
 
 @pytest.mark.parametrize("change", ["uid", "generation", "marker"])

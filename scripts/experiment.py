@@ -153,7 +153,7 @@ class OwnedDeployment:
         self.original, self.expected = original, original
         self.changed, self.unknown = False, False
 
-    def mutate(self, replicas, restart=False, restore=False):
+    def mutate(self, replicas, restart=False, restore=False, environment=None, restore_template=False):
         for _ in range(3):
             current = deployment(self.name, self.namespace)
             expected = self.expected
@@ -170,6 +170,17 @@ class OwnedDeployment:
             if restart:
                 body["spec"]["template"] = {"metadata": {"annotations": {"mtc-sre/experiment-restart": self.marker}}}
                 requested_spec["template"].setdefault("metadata", {}).setdefault("annotations", {})["mtc-sre/experiment-restart"] = self.marker
+            if environment is not None:
+                containers = [row for row in requested_spec["template"]["spec"]["containers"] if row["name"] == self.name]
+                if len(containers) != 1 or not all(isinstance(key, str) and isinstance(value, str) for key, value in environment.items()):
+                    raise RuntimeError("Единственный контейнер и переменные тестового релиза не подтверждены")
+                selected = containers[0]
+                selected["env"] = [row for row in selected.get("env", []) if row["name"] not in environment]
+                selected["env"] += [{"name": key, "value": value} for key, value in environment.items()]
+                body["spec"]["template"] = copy.deepcopy(requested_spec["template"])
+            if restore_template:
+                requested_spec["template"] = copy.deepcopy(self.original["spec"]["template"])
+                body["spec"]["template"] = copy.deepcopy(requested_spec["template"])
             self.unknown = True
             response = run_command("kubectl", "patch", "deployment", self.name, "-n", self.namespace,
                                    "--type=merge", "-p", json.dumps(body), "-o", "json", timeout=30)
@@ -189,11 +200,11 @@ class OwnedDeployment:
             return
         raise RuntimeError("Три конфликта CAS; Deployment сохранен без дополнительной записи")
 
-    def cleanup(self):
+    def cleanup(self, restore_template=False):
         if self.unknown:
             raise RuntimeError("Результат изменения Deployment неизвестен; автоматический возврат запрещен")
         if self.changed:
-            self.mutate(self.original["spec"]["replicas"], restore=True)
+            self.mutate(self.original["spec"]["replicas"], restore=True, restore_template=restore_template)
 
 
 def scalar(base, query):
