@@ -1,0 +1,34 @@
+{
+  "checked_at": "2026-10-07T05:15:13.625603+00:00",
+  "links": {
+    "prometheus": {
+      "exemplarTraceIdDestinations": [
+        {
+          "datasourceUid": "tempo",
+          "name": "trace_id",
+          "urlDisplayLabel": "Трейс"
+        }
+      ]
+    },
+    "loki": {
+      "derivedFields": [
+        {
+          "datasourceUid": "tempo",
+          "matcherRegex": "\"trace_id\": \"([0-9a-f]{32})\"",
+          "name": "TraceID",
+          "url": "${__value.raw}",
+          "urlDisplayLabel": "Трейс"
+        }
+      ]
+    },
+    "tempo": {
+      "tracesToLogsV2": {
+        "customQuery": true,
+        "datasourceUid": "loki",
+        "filterByTraceID": false,
+        "query": "{namespace=\"demo\"} | json | trace_id=\"${__trace.traceId}\""
+      }
+    }
+  },
+  "note": "Настройки реально сохраненных источников Grafana; подтверждение работоспособности UI выполняется отдельно."
+}

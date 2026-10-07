@@ -1,0 +1,61 @@
+{
+  "checked_at": "2026-10-07T05:20:51.434625+00:00",
+  "trace_id": "166dcbd876005501ab900de21fa91559",
+  "prometheus_actual_version": "3.15.0",
+  "grafana_configured_version": null,
+  "direct_exemplar_count": 26,
+  "direct_contains_selected_trace": true,
+  "frames": [
+    {
+      "name": null,
+      "meta": {
+        "type": "timeseries-multi",
+        "typeVersion": [
+          0,
+          1
+        ],
+        "custom": {
+          "calculatedMinStep": 1000,
+          "resultType": "matrix"
+        },
+        "executedQueryString": "Expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[1m])))\nStep: 1s"
+      },
+      "fields": [
+        "Time",
+        "Value"
+      ]
+    },
+    {
+      "name": "exemplar",
+      "meta": {
+        "typeVersion": [
+          0,
+          0
+        ],
+        "custom": {
+          "calculatedMinStep": 1000,
+          "resultType": "exemplar"
+        },
+        "executedQueryString": "Expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace=\"demo\",job=\"checkout\",path=\"/work\"}[1m])))\nStep: 1s"
+      },
+      "fields": [
+        "Time",
+        "Value",
+        "__name__",
+        "container",
+        "endpoint",
+        "instance",
+        "job",
+        "le",
+        "method",
+        "namespace",
+        "path",
+        "pod",
+        "service",
+        "trace_id"
+      ]
+    }
+  ],
+  "status": 200,
+  "grafana_exemplar_frame": true
+}

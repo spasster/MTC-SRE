@@ -1,0 +1,79 @@
+{
+  "checked_at": "2026-10-07T05:29:57.091718+00:00",
+  "source_commit": "201cfd1cac9acb630db15805c3f65fcf665f029e",
+  "method": "Настоящий интерфейс Grafana в отдельной вкладке собственного локального mtc-review; браузерные действия через cua_repl.",
+  "dashboards": {
+    "SLO": "Реальные значения доступности, p95, синтетики; различие окон явно указано",
+    "RED": "Реальные запросы, ошибки и длительность"
+  },
+  "trace_id": "166dcbd876005501ab900de21fa91559",
+  "metric_to_trace_passed": true,
+  "trace_services": [
+    "checkout",
+    "payment"
+  ],
+  "original_trace_to_logs_services": [
+    "payment"
+  ],
+  "after_manual_time_range_zoom_services": [
+    "checkout",
+    "payment"
+  ],
+  "trace_to_logs_complete_without_workaround": false,
+  "issue": "Лог checkout записан через 15.944 мс после правой границы span. Исправление временного запаса источника Tempo включено в следующую цель.",
+  "range_start_ms": 1791347968153,
+  "range_end_ms": 1791347968455,
+  "manual_range_start_ms": 1791347968002,
+  "manual_range_end_ms": 1791347968606,
+  "screenshots": [
+    {
+      "file": "grafana-slo-browser.jpg",
+      "size": [
+        1580,
+        889
+      ],
+      "sha256": "b8711e8f96e01b1f9c8e4c9a6fe9ada6312b79ac00d6e25e2dce86d3150a445d"
+    },
+    {
+      "file": "grafana-red-browser.jpg",
+      "size": [
+        1580,
+        889
+      ],
+      "sha256": "f594eb20fe6138a9097fc1494288033d53a9a1b2c9d3e90afa42208e4f363ef1"
+    },
+    {
+      "file": "grafana-exemplar-browser.jpg",
+      "size": [
+        1580,
+        889
+      ],
+      "sha256": "8e80af87d03f9ad84d81d3cb6180ab9737d41c6e254196e2fbab517fc33f33b1"
+    },
+    {
+      "file": "grafana-trace-browser.jpg",
+      "size": [
+        1580,
+        889
+      ],
+      "sha256": "91d4a4b08017174ba89bc5ed0e0e542434a5239fa7b7528c566d642823d0929e"
+    },
+    {
+      "file": "grafana-logs-narrow-browser.jpg",
+      "size": [
+        1580,
+        889
+      ],
+      "sha256": "686f5adf6f17e45cf579c94315eb53b6a77bfbb32f394931d5ee2f133a3a9b7a"
+    },
+    {
+      "file": "grafana-logs-expanded-browser.jpg",
+      "size": [
+        1580,
+        889
+      ],
+      "sha256": "b05ad263e834944d7bdf9baf371d475fb21abe92dfe927842561048aa7ae3d60"
+    }
+  ],
+  "note": "Это проверка конкретного запроса сохраненного CPU-инцидента, а не полный CI. Пароль, Telegram и личные данные в кадры не включались."
+}
