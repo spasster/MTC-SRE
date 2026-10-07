@@ -141,13 +141,15 @@ sh chaos/inject.sh clear
 ```sh
 python scripts/experiment.py --mode baseline --output docs/results/slow-pod-baseline.json
 python scripts/experiment.py --mode auto --output docs/results/slow-pod-auto.json
-python scripts/experiment.py --scenario spike --mode auto --output docs/results/spike-auto.json
-python scripts/experiment.py --scenario spike --mode auto --natural-end --timeout 660 --output docs/results/spike-lifecycle.json
+python scripts/experiment.py --scenario spike --mode auto --spike-rate 18 --output docs/results/spike-auto.json
+python scripts/experiment.py --scenario spike --mode auto --natural-end --spike-rate 18 --timeout 660 --output docs/results/spike-lifecycle.json
 python scripts/benchmark.py --pairs 5 --output-dir docs/results/repeated-mttr
 python scripts/capacity.py --duration 120 --output docs/results/capacity-stages.json
 ```
 
 Baseline отключает healer и задаёт задержку оператора 30 секунд после firing. Это контролируемая модель, не замер скорости человека. Скрипт сохраняет метрики, момент внесения сбоя, детект, принятие команды API и три последовательных здоровых измерения. MTTR отсчитывается от внесения сбоя до этих измерений. Встроенный таймер healer начинается с startsAt алерта, поэтому его значение отличается от внешнего таймера эксперимента.
+
+После переиспользования HTTP-клиента checkout профиль полного CPU-демо задается явно до запуска: 18 дополнительных запросов/с поверх трех фоновых, всего 21 RPS. Итог требует нарушения SLO, принятого scale, восстановления во время продолжающейся нагрузки и самостоятельного возврата к двум репликам. Старые ступени мощности и видео сохраняют прежний образ приложения и профиль; это отдельная история измерений.
 
 Результаты и ограничения сравнения находятся в [docs/experiments.md](docs/experiments.md). Старые цифры 4-5 октября измеряли в основном принятие команды и не используются как доказательство MTTR. Во время сравнения LLM выключен.
 

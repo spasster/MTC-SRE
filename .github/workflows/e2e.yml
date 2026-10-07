@@ -98,7 +98,7 @@ jobs:
           python scripts/experiment.py --cluster "$CLUSTER" --scenario slow-pod --mode baseline --incident-chain-output .runtime/proof/incident-chain.json --output .runtime/proof/mttr-baseline.json
           python scripts/experiment.py --cluster "$CLUSTER" --scenario slow-pod --mode auto --output .runtime/proof/mttr-auto.json
       - name: Проверить CPU spike и самостоятельный возврат масштаба
-        run: python scripts/experiment.py --cluster "$CLUSTER" --scenario spike --mode auto --natural-end --timeout 660 --output .runtime/proof/spike-lifecycle.json
+        run: python scripts/experiment.py --cluster "$CLUSTER" --scenario spike --mode auto --natural-end --spike-rate 18 --timeout 660 --output .runtime/proof/spike-lifecycle.json
       - name: Сохранить состояние подов и причины событий
         if: always()
         run: python scripts/collect-ci-diagnostics.py --output .runtime/proof/diagnostics.json
