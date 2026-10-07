@@ -33,10 +33,13 @@ const history=[];const start=Date.now();const text=(id,value)=>document.getEleme
 const number=(value,scale=1,digits=1)=>Number.isFinite(value)?(value*scale).toFixed(digits):'нет данных';
 function plot(){const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,1160,250);
 const max=Math.max(1,...history.map(x=>x[1]||0));const y=v=>218-v/max*185;
+const maxTime=Math.max(240,Math.ceil((history.at(-1)?.[0]||0)/60)*60);
 ctx.strokeStyle='#ff927b';ctx.beginPath();ctx.moveTo(55,y(.3));ctx.lineTo(1140,y(.3));ctx.stroke();
 ctx.fillStyle='#aac1dd';ctx.font='16px system-ui';ctx.fillText('p95, секунды',16,24);ctx.fillText(max.toFixed(1),16,50);ctx.fillText('0',25,222);
-ctx.strokeStyle='#ffd27c';ctx.lineWidth=3;ctx.beginPath();history.forEach(([t,v],i)=>{if(v===null)return;const x=55+Math.min(t/240,1)*1085;i?ctx.lineTo(x,y(v)):ctx.moveTo(x,y(v));});ctx.stroke();
-for(let t=0;t<=240;t+=60)ctx.fillText(t+' с',55+t/240*1085,242);}
+ctx.strokeStyle='#ffd27c';ctx.lineWidth=3;ctx.beginPath();let connected=false;
+history.forEach(([t,v])=>{if(!Number.isFinite(v)){connected=false;return;}const x=55+t/maxTime*1085;
+connected?ctx.lineTo(x,y(v)):ctx.moveTo(x,y(v));connected=true;});ctx.stroke();
+for(let t=0;t<=maxTime;t+=60){ctx.textAlign=t===maxTime?'right':'left';ctx.fillText(t+' с',55+t/maxTime*1085,242);}ctx.textAlign='left';}
 async function refresh(){try{const response=await fetch('/data');if(!response.ok)throw Error();const d=await response.json();
 text('latency',number(d.p95,1000)+' мс');text('errors',number(d.error_ratio,100,2)+'%');text('probe',d.synthetic_success===1?'Успешна':'Сбой / нет данных');
 text('replicas',(d.rollout_ready?'Готово: ':'Ожидание: ')+d.replicas);history.push([(Date.now()-start)/1000,d.p95]);plot();
