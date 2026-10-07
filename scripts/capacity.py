@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from experiment import cmd, deployment, metrics, scalar, healthy, wait_incident_closed, OwnedDeployment, OwnedResource
+from cpu_profile import stage_diagnostics
 
 
 def job_summary(owned):
@@ -122,6 +123,7 @@ def main():
                 for field in ("checkout_cpu_cores", "checkout_ram_bytes"):
                     values = [sample[field] for sample in stage["samples"] if sample[field] is not None]
                     stage[field + "_max"] = max(values) if values else None
+                print("Измерена ступень: " + json.dumps(stage_diagnostics(stage, args.duration), ensure_ascii=False), flush=True)
                 owned.cleanup()
                 Path(args.output).parent.mkdir(parents=True, exist_ok=True)
                 Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

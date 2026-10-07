@@ -35,6 +35,46 @@ def complete_client(stage, rate, duration):
             and finite(errors) and 0 <= errors <= .005)
 
 
+def stage_diagnostics(stage, duration):
+    """Только числа и признаки критериев; посторонние строки и вложенные поля исключены."""
+    stage = stage if isinstance(stage, dict) else {}
+    rate = stage.get("planned_rps")
+    rate = rate if type(rate) is int and rate > 0 else None
+    samples = stage.get("samples")
+    samples = [row for row in samples if isinstance(row, dict)] if isinstance(samples, list) else []
+    active = [row for row in samples if row.get("load_active") is True]
+    tail = active_tail({"samples": samples}, rate) if rate is not None else []
+    try:
+        complete = rate is not None and type(duration) is int and duration > 0 and complete_client(stage, rate, duration)
+    except (AttributeError, TypeError):
+        complete = False
+    client = stage.get("client")
+    errors = client.get("http_req_failed") if isinstance(client, dict) else None
+    errors = errors.get("rate") if isinstance(errors, dict) else None
+    last = active[-3:]
+    observed = [row["request_rate"] for row in last if finite(row.get("request_rate"))]
+    times = [row["time"] for row in last if finite(row.get("time"))]
+    return {"replicas": stage.get("replicas") if type(stage.get("replicas")) is int else None,
+            "planned_rps": rate, "client_p95_ms": stage.get("client_p95_ms") if finite(stage.get("client_p95_ms")) else None,
+            "sent": stage.get("sent") if type(stage.get("sent")) is int else None,
+            "dropped": stage.get("dropped") if type(stage.get("dropped")) is int else None,
+            "http_error_ratio": errors if finite(errors) else None,
+            "stage_passed": stage.get("passed") if type(stage.get("passed")) is bool else None,
+            "complete_client": bool(complete), "active_samples": len(active), "valid_active_tail": bool(tail),
+            "tail_min_observed_rps": min(observed) if len(observed) == 3 else None,
+            "tail_seconds": times[-1] - times[0] if len(times) == 3 else None,
+            "cpu_degraded_in_tail": bool(tail) and all(finite(row.get("p95")) and row["p95"] >= .3
+                and finite(row.get("cpu_throttle")) and row["cpu_throttle"] >= .4
+                and finite(row.get("error_ratio")) and 0 <= row["error_ratio"] <= .005 for row in tail),
+            "healthy_in_tail": bool(tail) and all(healthy_sample(row) for row in tail)}
+
+
+def selection_diagnostics(report):
+    if not isinstance(report, dict) or not isinstance(report.get("stages"), list):
+        return []
+    return [stage_diagnostics(stage, report.get("duration_seconds")) for stage in report["stages"]]
+
+
 def selected_profile(report, cluster, commit, now=None):
     if (not isinstance(report, dict) or report.get("passed") is not True or report.get("cleanup_errors") != []
             or report.get("cluster") != cluster or report.get("source_commit") != commit):

@@ -1,12 +1,13 @@
 """Выбор CPU-нагрузки не подменяет отрицательные или несовместимые замеры."""
 import copy
+import json
 import sys
 from pathlib import Path
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-from cpu_profile import selected_profile
+from cpu_profile import selected_profile, selection_diagnostics
 
 
 def measured():
@@ -89,5 +90,35 @@ def test_unproven_active_load_cannot_define_a_cpu_profile(side, field, value):
 def test_incomplete_or_healthy_two_replica_client_is_not_cpu_degradation(field, value):
     report = measured()
     report["stages"][0][field] = value
+    with pytest.raises(ValueError):
+        selected_profile(report, "mtc-ci", "current", now=NOW)
+
+
+def test_diagnostics_distinguishes_cpu_degradation_from_a_healthy_same_rate():
+    diagnostics = selection_diagnostics(measured())
+    assert all(row["complete_client"] and row["valid_active_tail"] for row in diagnostics)
+    assert diagnostics[0]["cpu_degraded_in_tail"] is True
+    assert diagnostics[0]["healthy_in_tail"] is False
+    assert diagnostics[1]["healthy_in_tail"] is True
+    assert diagnostics[1]["cpu_degraded_in_tail"] is False
+
+
+def test_incomplete_flow_is_visible_without_disclosing_unrelated_input():
+    report = measured()
+    report["stages"][0].update(dropped=8, private_detail="закрытое-тестовое-значение")
+    diagnostics = selection_diagnostics(report)
+    assert diagnostics[0]["complete_client"] is False
+    assert diagnostics[0]["dropped"] == 8
+    assert "закрытое-тестовое-значение" not in json.dumps(diagnostics, ensure_ascii=False)
+    with pytest.raises(ValueError):
+        selected_profile(report, "mtc-ci", "current", now=NOW)
+
+
+def test_partial_warmup_window_is_visible_and_cannot_define_a_profile():
+    report = measured()
+    report["stages"][0]["samples"][0]["request_rate"] = 4
+    diagnostics = selection_diagnostics(report)
+    assert diagnostics[0]["valid_active_tail"] is False
+    assert diagnostics[0]["tail_min_observed_rps"] == 4
     with pytest.raises(ValueError):
         selected_profile(report, "mtc-ci", "current", now=NOW)

@@ -335,12 +335,14 @@ def main():
         wait_healthy(args.prometheus)
         report["healer_precondition_before_preparation"] = wait_incident_closed()
         if args.spike_capacity:
-            from cpu_profile import selected_profile
-            measured = json.loads(Path(args.spike_capacity).read_text(encoding="utf-8"))
+            from cpu_profile import selected_profile, selection_diagnostics
+            measured_bytes = Path(args.spike_capacity).read_bytes()
+            measured = json.loads(measured_bytes)
+            report["capacity_sha256"] = hashlib.sha256(measured_bytes).hexdigest()
+            report["cpu_profile_candidates"] = selection_diagnostics(measured)
             profile = selected_profile(measured, args.cluster, report["source_commit"])
             args.spike_rate = profile["total_rps"]
             report["cpu_profile"] = profile
-            report["capacity_sha256"] = hashlib.sha256(Path(args.spike_capacity).read_bytes()).hexdigest()
             background_owner = OwnedDeployment("k6-background", "demo", deployment("k6-background", "demo"), marker)
         image_check = str(Path(".runtime") / ("experiment-images-" + marker + ".json"))
         cmd(sys.executable, "scripts/local-images.py", "--cluster", args.cluster, "--component", "checkout", "payment",
