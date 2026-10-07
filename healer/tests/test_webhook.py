@@ -114,6 +114,20 @@ def test_old_resolved_does_not_start_a_new_incident():
     assert main._broke_at is None
 
 
+def test_self_recovered_settling_incident_closes_without_an_api_action(monkeypatch):
+    recent = [{"pod": "a", "p95": .5, "p95_recent": .05, "throttle": .1},
+              {"pod": "b", "p95": .5, "p95_recent": .05, "throttle": .1}]
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: evidence(p95=.5, pods=recent))
+    result = main.handle_alert(alert())
+    assert result["diagnosis"] == "settling" and main._broke_at is not None
+    assert not main._escalated and main._applied_at is None and main.actuator.calls == []
+    main.handle_resolved(evidence=evidence(p95=.05, pods=recent))
+    assert main._broke_at is None and main._fixed_at is None and not main._resolved_pending
+    assert main._last_recovery["started_at"] is not None
+    assert main._last_recovery["api_accepted_at"] is None and main._last_recovery["slo_restored_at"] is None
+    assert main.actuator.calls == []
+
+
 def test_delayed_firing_does_not_start_an_incident_when_slo_is_healthy(monkeypatch):
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(pods=list(HEALTHY)))
     payload = alert()

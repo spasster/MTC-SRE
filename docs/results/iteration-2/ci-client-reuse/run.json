@@ -1,0 +1,170 @@
+{
+  "checked_at": "2026-10-07T00:58:11.747686+00:00",
+  "passed": false,
+  "run": {
+    "id": 37553481669,
+    "name": "Проверка полного контура Ubuntu",
+    "head_sha": "24c22ec8f240e2cd78c614604b8635537edcdd5a",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/spasster/MTC-SRE/actions/runs/37553481669",
+    "created_at": "2026-10-07T00:43:45Z"
+  },
+  "jobs": [
+    {
+      "id": 112574312353,
+      "name": "Чистая установка, mTLS и доставка журналов",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-07T00:44:15Z",
+          "completed_at": "2026-10-07T00:44:17Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-07T00:44:17Z",
+          "completed_at": "2026-10-07T00:44:19Z"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-07T00:44:19Z",
+          "completed_at": "2026-10-07T00:44:19Z"
+        },
+        {
+          "name": "Установить инструменты",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-07T00:44:19Z",
+          "completed_at": "2026-10-07T00:44:26Z"
+        },
+        {
+          "name": "Установить полный стек на чистом Ubuntu",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-07T00:44:26Z",
+          "completed_at": "2026-10-07T00:50:37Z"
+        },
+        {
+          "name": "Проверить mTLS и подготовить доступ к наблюдаемости",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-07T00:50:37Z",
+          "completed_at": "2026-10-07T00:51:11Z"
+        },
+        {
+          "name": "Проверить удержание SLO при ограниченных отказах",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 7,
+          "started_at": "2026-10-07T00:51:11Z",
+          "completed_at": "2026-10-07T00:56:43Z"
+        },
+        {
+          "name": "Проверить наблюдаемость и отказ вмешательства при потере данных",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-07T00:56:43Z",
+          "completed_at": "2026-10-07T00:56:43Z"
+        },
+        {
+          "name": "Проверить реальные отказы и сохранение состояния healer",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-10-07T00:56:43Z",
+          "completed_at": "2026-10-07T00:56:43Z"
+        },
+        {
+          "name": "Сравнить восстановление одного инцидента",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2026-10-07T00:56:43Z",
+          "completed_at": "2026-10-07T00:56:43Z"
+        },
+        {
+          "name": "Проверить CPU spike и самостоятельный возврат масштаба",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2026-10-07T00:56:43Z",
+          "completed_at": "2026-10-07T00:56:43Z"
+        },
+        {
+          "name": "Сохранить состояние подов и причины событий",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-07T00:56:43Z",
+          "completed_at": "2026-10-07T00:56:43Z"
+        },
+        {
+          "name": "Сохранить обезличенные результаты",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-07T00:56:43Z",
+          "completed_at": "2026-10-07T00:56:45Z"
+        },
+        {
+          "name": "Удалить тестовый контур",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-07T00:56:45Z",
+          "completed_at": "2026-10-07T00:57:02Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-07T00:57:02Z",
+          "completed_at": "2026-10-07T00:57:02Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2026-10-07T00:57:02Z",
+          "completed_at": "2026-10-07T00:57:02Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2026-10-07T00:57:02Z",
+          "completed_at": "2026-10-07T00:57:02Z"
+        }
+      ],
+      "started_at": "2026-10-07T00:44:14Z",
+      "completed_at": "2026-10-07T00:57:04Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11453238838,
+      "name": "sre-proof",
+      "size_in_bytes": 8014,
+      "digest": "sha256:1a8769c466b59febb6700fb6bd638af9293a47d0511c2f6dd53a56a40bd4e1d7"
+    }
+  ],
+  "note": "Полный CI остановился на этапе ограниченного хаоса, JSON этого опыта отсутствует в артефакте. Установка, mTLS, scale-guard, правила, журналы и RBAC прошли. Причина уточняется по журналу; последующие этапы пропущены."
+}

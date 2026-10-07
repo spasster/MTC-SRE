@@ -464,9 +464,10 @@ def recovery_text(now=None) -> str:
 
 def notify_recovered() -> None:
     global _broke_at, _fixed_at, _incident_name, _mttr_sent, _last_recovery
-    text = recovery_text()
-    if not text:
+    if _broke_at is None:
         return
+    # Самостоятельное восстановление тоже закрывает состояние, независимо от уведомления.
+    text = recovery_text() or "Инцидент закрыт после проверки SLO. Автоматическое действие не выполнялось."
     _last_recovery = {
         "incident": _incident_name,
         "started_at": _broke_at,
