@@ -1,0 +1,149 @@
+{
+  "checked_at": "2026-10-07T05:39:25.950408+00:00",
+  "pods": [
+    {
+      "namespace": "demo",
+      "name": "redis-5cd6b68655-nncj9",
+      "phase": "Pending",
+      "conditions": [],
+      "resources": [
+        {
+          "name": "redis",
+          "resources": {}
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": []
+    }
+  ],
+  "events": [
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-07T05:39:18Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "redis-5cd6b68655"
+    },
+    {
+      "namespace": "demo",
+      "reason": "WaitForFirstConsumer",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-07T05:39:18Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ExternalProvisioning",
+      "type": "Normal",
+      "count": 2,
+      "lastTimestamp": "2026-10-07T05:39:18Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Provisioning",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-07T05:39:18Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-07T05:39:18Z",
+      "object_kind": "Deployment",
+      "object_name": "redis"
+    }
+  ],
+  "nodes": [
+    {
+      "capacity": {
+        "cpu": "2",
+        "ephemeral-storage": "75085112Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "8128876Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "2",
+        "ephemeral-storage": "73042796897",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "8128876Ki",
+        "pods": "110"
+      },
+      "conditions": [
+        {
+          "lastHeartbeatTime": "2026-10-07T05:39:24Z",
+          "lastTransitionTime": "2026-10-07T05:37:52Z",
+          "message": "kubelet has sufficient memory available",
+          "reason": "KubeletHasSufficientMemory",
+          "status": "False",
+          "type": "MemoryPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-07T05:39:24Z",
+          "lastTransitionTime": "2026-10-07T05:37:52Z",
+          "message": "kubelet has no disk pressure",
+          "reason": "KubeletHasNoDiskPressure",
+          "status": "False",
+          "type": "DiskPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-07T05:39:24Z",
+          "lastTransitionTime": "2026-10-07T05:37:52Z",
+          "message": "kubelet has sufficient PID available",
+          "reason": "KubeletHasSufficientPID",
+          "status": "False",
+          "type": "PIDPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-07T05:39:24Z",
+          "lastTransitionTime": "2026-10-07T05:37:52Z",
+          "message": "kubelet is posting ready status",
+          "reason": "KubeletReady",
+          "status": "True",
+          "type": "Ready"
+        }
+      ]
+    }
+  ],
+  "healer_state": {
+    "available": false,
+    "error_type": "KubernetesReadError"
+  }
+}
