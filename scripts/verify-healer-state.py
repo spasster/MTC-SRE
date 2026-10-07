@@ -68,7 +68,7 @@ def main():
         forward.terminate()
         forward = None
         cmd("kubectl", "rollout", "restart", "deployment/healer", "-n", "heal")
-        cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s")
+        cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
         restored = document()
         if restored["state"]["_actions"] != state["_actions"] or restored["state"]["_cooldown_until"] != state["_cooldown_until"]:
             raise RuntimeError("Замена пода сбросила лимит или cooldown")
@@ -76,7 +76,7 @@ def main():
             raise RuntimeError("Замена пода потеряла журнал операции")
         report.update(action="delete_pod", action_budget_preserved=True, cooldown_preserved=True, journal_preserved=True)
         cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=2")
-        cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s")
+        cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
         time.sleep(35)
         statuses = []
         pods = json.loads(cmd("kubectl", "get", "pods", "-n", "heal", "-l", "app=healer", "-o", "json"))["items"]

@@ -161,7 +161,7 @@ def main():
     try:
         cmd("kubectl", "scale", "deployment/k6-background", "-n", "demo", "--replicas=0")
         scale_owner = resize_checkout(original_checkout, 3, scale_marker)
-        cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s")
+        cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
         report["incident_before_client"] = wait_incident_closed()
         for fault in args.faults:
             name = "k6-slo-" + fault
@@ -244,7 +244,7 @@ def main():
                               and (fault != "network" or network_mesh_proven(case))
                               and case["samples"][-1]["rollout_ready"] and all(sample["replicas"] == 3 for sample in case["samples"]))
             for kind, object_name in list(owned):
-                cmd("kubectl", "delete", kind, object_name, "-n", "demo", "--ignore-not-found", "--timeout=60s")
+                cmd("kubectl", "delete", kind, object_name, "-n", "demo", "--ignore-not-found", "--timeout=60s", timeout=75)
                 owned.remove((kind, object_name))
             print(f"Ограниченный отказ {fault}: SLO={case['slo_held_in_all_samples']}, алерт={case['alert_observed']}, результат={case['passed']}", flush=True)
             if not case["passed"]:
@@ -256,13 +256,13 @@ def main():
         cleanup_errors = []
         for kind, object_name in owned:
             try:
-                cmd("kubectl", "delete", kind, object_name, "-n", "demo", "--ignore-not-found", "--timeout=60s")
+                cmd("kubectl", "delete", kind, object_name, "-n", "demo", "--ignore-not-found", "--timeout=60s", timeout=75)
             except Exception as error:
                 cleanup_errors.append({"resource": kind + "/" + object_name, "error_type": type(error).__name__})
         if scale_owner is not None:
             try:
                 resize_checkout(scale_owner, original_checkout["replicas"], scale_marker, remove_marker=True)
-                cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s")
+                cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
                 report["original_checkout_replicas_restored"] = scale_identity(deployment("checkout", "demo"))["replicas"] == original_checkout["replicas"]
             except Exception as error:
                 cleanup_errors.append({"resource": "deployment/checkout", "error_type": type(error).__name__})

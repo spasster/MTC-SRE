@@ -42,7 +42,7 @@ def main():
             cmd("kubectl", "scale", "deployment/" + name, "-n", namespace, "--replicas=0")
         for replicas in replica_counts:
             cmd("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(replicas))
-            cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s")
+            cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
             bound = {"highest_tested_passing_rps": None, "first_tested_failing_rps": None}
             report["bounds"][str(replicas)] = bound
             for rate in rates:

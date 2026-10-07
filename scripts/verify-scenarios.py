@@ -46,7 +46,7 @@ def main():
             running = scenario
             started = time.time()
             if scenario == "bad-release":
-                cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s")
+                cmd("kubectl", "rollout", "status", "deployment/checkout", "-n", "demo", "--timeout=180s", timeout=210)
                 before = pods(app)
             if scenario == "kill":
                 wait_healthy("http://127.0.0.1:19090", timeout=180)

@@ -25,8 +25,15 @@ PROMQL = {
 }
 
 
-def cmd(*args):
-    result = subprocess.run(args, capture_output=True, text=True, check=False)
+def cmd(*args, timeout=60):
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("Команде нужен конечный положительный таймаут")
+    if args and args[0] == "kubectl" and not any(str(arg).startswith("--request-timeout") for arg in args):
+        args = (args[0], "--request-timeout=" + format(min(timeout, 10), ".6f") + "s", *args[1:])
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, check=False, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Команда " + str(args[0]) + " не завершилась за отведенное время") from None
     if result.returncode:
         raise RuntimeError("Команда не выполнена: " + " ".join(args) + "\n" + result.stderr[-1500:])
     return result.stdout
@@ -103,13 +110,18 @@ def closed_incident(state):
 def wait_incident_closed(timeout=300):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        obj = json.loads(cmd("kubectl", "get", "configmap", "healer-state", "-n", "heal", "-o", "json"))
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        obj = json.loads(cmd("kubectl", "get", "configmap", "healer-state", "-n", "heal", "-o", "json", timeout=min(10, remaining)))
+        if time.monotonic() >= deadline:
+            break
         document = json.loads(obj.get("data", {}).get("state.json", "null"))
         state = document.get("state") if isinstance(document, dict) else None
         if closed_incident(state):
             return {"checked_at": time.time(), "started_at": None, "actions": 0, "operation_unknown": False,
                     "recovery_pending": False, "approval_pending": False, "incident_closed": True}
-        time.sleep(5)
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
     raise RuntimeError("Предыдущий инцидент healer не закрыт; новый эксперимент не начат")
 
 
@@ -161,7 +173,7 @@ def main():
         cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + ("0" if args.mode == "baseline" else "1"))
         if args.mode == "auto":
             cmd("kubectl", "rollout", "restart", "deployment/healer", "-n", "heal")
-            cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s")
+            cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
             secret = json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))
             token = base64.b64decode(secret["data"]["token"]).decode()
             forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18081:8080"],
@@ -255,11 +267,26 @@ def main():
     except KeyboardInterrupt:
         report["error"] = "Эксперимент остановлен оператором; восстановление не подтверждено"
     finally:
+        cleanup_errors = []
+        def cleanup(*args):
+            try:
+                cmd(*args)
+            except Exception as error:
+                cleanup_errors.append({"operation": " ".join(args[:3]), "error_type": type(error).__name__})
         if forward is not None:
-            forward.terminate()
-            forward.wait(timeout=10)
+            try:
+                forward.terminate()
+                forward.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                try:
+                    forward.kill()
+                    forward.wait(timeout=10)
+                except Exception as error:
+                    cleanup_errors.append({"operation": "port-forward", "error_type": type(error).__name__})
+            except Exception as error:
+                cleanup_errors.append({"operation": "port-forward", "error_type": type(error).__name__})
         if args.scenario == "slow-pod":
-            cmd("kubectl", "delete", "networkchaos", "checkout-slow-pod", "-n", "demo", "--ignore-not-found")
+            cleanup("kubectl", "delete", "networkchaos", "checkout-slow-pod", "-n", "demo", "--ignore-not-found")
         else:
             try:
                 pods = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "job-name=k6-spike", "-o", "json"))["items"]
@@ -277,9 +304,13 @@ def main():
                         time.sleep(2)
             except Exception:
                 report["k6_summary_error"] = "Итог клиента k6 не получен"
-            cmd("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
-        cmd("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(original_checkout))
-        cmd("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original_healer))
+            cleanup("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
+        cleanup("kubectl", "scale", "deployment/checkout", "-n", "demo", "--replicas=" + str(original_checkout))
+        cleanup("kubectl", "scale", "deployment/healer", "-n", "heal", "--replicas=" + str(original_healer))
+        report["cleanup_errors"] = cleanup_errors
+        if cleanup_errors:
+            report["passed"] = False
+            report.setdefault("error", "Очистка опыта не подтверждена")
         output = Path(args.output)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
