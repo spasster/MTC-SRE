@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-10-07T09:50:29.680383+00:00",
+  "source_commit": "3f49a38a140db757534e4720cb8ea83d37df1127",
+  "passed": false,
+  "capacity_passed": true,
+  "injection_started": false,
+  "spike_sample_count": 0,
+  "failure_phase": "before_preparation",
+  "error": "Начальный SLO не восстановлен; эксперимент не начат",
+  "precondition_samples_recorded": false,
+  "replayed_profile": {
+    "total_rps": 9,
+    "background_rps_during_spike": 0,
+    "capacity_source_commit": "3f49a38a140db757534e4720cb8ea83d37df1127",
+    "cluster": "mtc-ci",
+    "capacity_finished_at": "2026-10-07T08:29:09.809519+00:00",
+    "two_replicas_client_p95_ms": 464.074209,
+    "five_replicas_client_p95_ms": 188.846996,
+    "method": "Один и тот же поток проверен при двух и пяти репликах. В CPU-опыте фон временно выключен, весь поток создает собственный Job; эффект scale подтверждается отдельно до окончания нагрузки."
+  },
+  "profile_reference_time": "2026-10-07T08:29:09.809519+00:00",
+  "input_sha256": {
+    "cpu-capacity.json": "b911b8c1978689c7fccf1179e4b6919986895cb173c642c3afa8c944f7582299",
+    "spike-lifecycle.json": "c93e70b462c8a58fa51ea909cd6c17e9cd80df76847385a9e13cd7274115bdda",
+    "diagnostics.json": "a1646d8e4c10943a9e468bacaf68ebe89a6eab963a23da872673ba2947ac98a3",
+    "run.json": "fff563ccade350e5e5375b656dfbefa5f0d88293f6d38b1799539b47a7df62f5",
+    "delivery.json": "e3d17d2a6401e5cf0c66584c4d1e3b9486be815c625a481d5d85240639dc05b4"
+  },
+  "selector_sha256": "1bcd4f7aefdcdbb105dff5058a03525c1606b7263815f7da776053c9cff3e7e4",
+  "scope": "Исходный CI 3f49a38 не начал CPU-инъекцию из-за недопуска начального SLO. Повтор выбора по сохраненным JSON с часами на момент завершения серии дает 9 RPS; это вычисление, не новый CPU-опыт. Снимки начального допуска в старом отчете отсутствуют, точное непройденное условие и причина отказа неизвестны."
+}

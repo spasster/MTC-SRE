@@ -1,0 +1,88 @@
+{
+  "checked_at": "2026-10-07T07:31:12.906215+00:00",
+  "passed": true,
+  "verifier_sha256": "ac7744d85d4c0676c255ba6dc68f686a7bdb1d48bcdfad677930fda5a8779be2",
+  "initial_incident": {
+    "checked_at": 1791358283.404085,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "monitor_uid": "fed2da7f-3ce9-4d6e-9c8b-6e586b930f1c",
+  "healthy": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 1.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791358280.467521,
+    "evidence_checked_timestamp_seconds": 1791358270.3827393,
+    "evidence_age_seconds": 12.64140651877642,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 0.0
+  },
+  "missing": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 0.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791358322.8913748,
+    "evidence_checked_timestamp_seconds": 1791358317.8462727,
+    "evidence_age_seconds": null,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 0.0
+  },
+  "webhook_result": [
+    {
+      "result": "escalated",
+      "action": "none",
+      "mode": "escalate"
+    }
+  ],
+  "alert": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 0.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791358445.1151702,
+    "evidence_checked_timestamp_seconds": 1791358445.0927422,
+    "evidence_age_seconds": null,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 1.0
+  },
+  "new_operations": 0,
+  "restored": {
+    "leader": 1.0,
+    "state_available": 1.0,
+    "evidence_complete": 1.0,
+    "operation_unknown": 0.0,
+    "incident_actions": 0.0,
+    "state_checked_timestamp_seconds": 1791358552.4406536,
+    "evidence_checked_timestamp_seconds": 1791358547.3592093,
+    "evidence_age_seconds": 4.624263975475969,
+    "scrape_up": 1.0,
+    "evidence_alert_firing": 0.0
+  },
+  "test_incident_closed": true,
+  "resolved_webhook_result": [
+    {
+      "result": "ignored: no active incident",
+      "action": null,
+      "mode": null
+    }
+  ],
+  "closed_state": {
+    "checked_at": 1791358569.391067,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  }
+}

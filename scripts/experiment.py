@@ -240,18 +240,37 @@ def healthy(sample):
     )
 
 
+class InitialHealthError(RuntimeError):
+    """Недопуск сохраняет только числовые условия здоровья и признаки проверки."""
+
+    def __init__(self, samples):
+        super().__init__("Начальный SLO не восстановлен; эксперимент не начат")
+        self.samples = samples
+
+
 def wait_healthy(base, timeout=180):
-    deadline, streak = time.time() + timeout, 0
-    while time.time() < deadline:
+    if type(timeout) not in (int, float) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("Допуску нужен конечный положительный таймаут")
+    deadline, streak, samples = time.monotonic() + timeout, 0, []
+    while time.monotonic() < deadline:
         sample = metrics(base)
-        if healthy(sample) and sample["alerts_active"] == 0:
+        fields = ("time", "p95", "error_ratio", "request_rate", "synthetic_success", "synthetic_time",
+                  "replicas", "alerts_active", "cpu_throttle")
+        snapshot = {key: value if type(value := sample.get(key)) in (int, float) and math.isfinite(value) else None
+                    for key in fields}
+        snapshot["rollout_ready"] = sample.get("rollout_ready") is True
+        snapshot["slo_healthy"] = snapshot["time"] is not None and healthy(snapshot)
+        snapshot["alerts_clear"] = snapshot["alerts_active"] == 0
+        snapshot["collection_within_deadline"] = time.monotonic() < deadline
+        samples.append(snapshot)
+        if snapshot["slo_healthy"] and snapshot["alerts_clear"] and snapshot["collection_within_deadline"]:
             streak += 1
             if streak >= 3:
-                return
+                return samples
         else:
             streak = 0
-        time.sleep(5)
-    raise RuntimeError("Начальный SLO не восстановлен; эксперимент не начат")
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise InitialHealthError(samples)
 
 
 def closed_incident(state):
@@ -332,7 +351,8 @@ def main():
               "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               "baseline_note": "Задержка оператора задаётся явно; это контролируемый baseline, не измерение работы человека."}
     try:
-        wait_healthy(args.prometheus)
+        report["health_phase"] = "before_preparation"
+        report["health_before_preparation"] = wait_healthy(args.prometheus)
         report["healer_precondition_before_preparation"] = wait_incident_closed()
         if args.spike_capacity:
             from cpu_profile import selected_profile, selection_diagnostics
@@ -363,7 +383,8 @@ def main():
             token = base64.b64decode(secret["data"]["token"]).decode()
             forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18081:8080"],
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        wait_healthy(args.prometheus)
+        report["health_phase"] = "before_injection"
+        report["health_before_injection"] = wait_healthy(args.prometheus)
         report["healer_precondition_before_injection"] = wait_incident_closed()
         selected_pod = json.loads(cmd("kubectl", "get", "pods", "-n", "demo", "-l", "app=checkout", "-o", "json"))["items"][0]
         selected = selected_pod["metadata"]["name"]
@@ -476,6 +497,9 @@ def main():
             report.setdefault("error", "Восстановление и требуемый возврат масштаба не подтверждены до таймаута")
         if args.incident_chain_output and not report.get("incident_chain_verified"):
             report.update(passed=False, error="Связка метрика -> трейс -> лог на инциденте не подтверждена")
+    except InitialHealthError as exc:
+        report["error"] = str(exc)
+        report["health_precondition_samples"] = exc.samples
     except Exception as exc:
         report["error"] = str(exc)
     except KeyboardInterrupt:

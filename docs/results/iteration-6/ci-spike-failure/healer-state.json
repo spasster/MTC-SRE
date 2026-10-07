@@ -1,0 +1,78 @@
+{
+  "checked_at": "2026-10-07T07:43:09.213138+00:00",
+  "passed": true,
+  "verifier_sha256": "fb1df70219307c1908c9e8bfa7d596598e92bbcc32cbd07a2045b630be2f5fbb",
+  "initial_incident": {
+    "checked_at": 1791358999.993838,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "target_pod_uid": "f9e188b6-0ad1-4c02-8c7a-bdd0bcce884e",
+  "webhook_attempts": [
+    {
+      "elapsed_seconds": 2.1457672119140625e-06,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 6.32103705406189,
+      "outcomes": [
+        {
+          "action": "none",
+          "mode": "ignore",
+          "diagnosis": null,
+          "result_class": "ignored",
+          "ignored_reason": "ignored: healthy"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 13.253517866134644,
+      "outcomes": [
+        {
+          "action": "delete_pod",
+          "mode": "auto",
+          "diagnosis": "slow_pod",
+          "result_class": "other"
+        }
+      ]
+    }
+  ],
+  "action": "delete_pod",
+  "action_budget_preserved": true,
+  "cooldown_preserved": true,
+  "journal_preserved": true,
+  "two_instances": true,
+  "single_holder": true,
+  "extra_processes_refused": true,
+  "closed_state": {
+    "checked_at": 1791359080.1422923,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "cleanup_errors": [],
+  "resource_intents": [
+    {
+      "kind": "networkchaos",
+      "namespace": "demo",
+      "name": "checkout-slow-pod",
+      "uid_confirmed": "5da48f73-6da7-420f-a358-154278c5a559",
+      "generation_confirmed": 1
+    }
+  ]
+}

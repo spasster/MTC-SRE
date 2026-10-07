@@ -14,6 +14,70 @@ import experiment
 from app import main
 
 
+def health_sample(**changes):
+    return {"time": 100, "p95": .1, "error_ratio": 0, "request_rate": 3, "synthetic_success": 1,
+            "synthetic_time": 95, "rollout_ready": True, "replicas": 2, "alerts_active": 0,
+            "cpu_throttle": .1, **changes}
+
+
+def test_initial_health_failure_keeps_metrics_without_closed_fields(monkeypatch):
+    clock = [0]
+    monkeypatch.setattr(experiment.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(experiment.time, "sleep", lambda duration: clock.__setitem__(0, clock[0] + duration))
+    monkeypatch.setattr(experiment, "metrics", lambda *args: health_sample(p95=2, alerts_active=1,
+        raw_response="controlled-private-value", unrelated={"closed": "controlled-private-value"}))
+    with pytest.raises(experiment.InitialHealthError) as failure:
+        experiment.wait_healthy("controlled", timeout=5)
+    samples = failure.value.samples
+    assert len(samples) == 1 and samples[0]["p95"] == 2 and samples[0]["alerts_active"] == 1
+    assert samples[0]["slo_healthy"] is False and samples[0]["alerts_clear"] is False
+    assert "controlled-private-value" not in json.dumps(samples) + str(failure.value)
+    assert "raw_response" not in samples[0] and "unrelated" not in samples[0]
+
+
+def test_third_healthy_read_after_deadline_cannot_admit_an_injection(monkeypatch):
+    clock = [0]
+    times = iter([1, 2, 6])
+    def delayed(*args):
+        clock[0] = next(times)
+        return health_sample()
+    monkeypatch.setattr(experiment.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(experiment.time, "sleep", lambda *args: None)
+    monkeypatch.setattr(experiment, "metrics", delayed)
+    with pytest.raises(experiment.InitialHealthError) as failure:
+        experiment.wait_healthy("controlled", timeout=5)
+    assert len(failure.value.samples) == 3
+    assert failure.value.samples[-1]["slo_healthy"] is True
+    assert failure.value.samples[-1]["collection_within_deadline"] is False
+
+
+def test_initial_health_requires_three_timely_reads_and_keeps_them(monkeypatch):
+    clock = [0]
+    monkeypatch.setattr(experiment.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(experiment.time, "sleep", lambda duration: clock.__setitem__(0, clock[0] + duration))
+    monkeypatch.setattr(experiment, "metrics", lambda *args: health_sample())
+    samples = experiment.wait_healthy("controlled", timeout=20)
+    assert len(samples) == 3 and clock[0] == 10
+    assert all(row["slo_healthy"] and row["alerts_clear"] and row["collection_within_deadline"] for row in samples)
+
+
+def test_initial_health_failure_is_saved_before_any_mutation(monkeypatch, tmp_path):
+    output = tmp_path / "result.json"
+    commands, clock = [], [0]
+    monkeypatch.setattr(sys, "argv", ["experiment", "--mode", "baseline", "--output", str(output)])
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: commands.append(args) or json.dumps({"items": []}))
+    monkeypatch.setattr(experiment, "deployment", lambda name, namespace: {"spec": {"replicas": 2 if name == "checkout" else 1}})
+    monkeypatch.setattr(experiment.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(experiment.time, "sleep", lambda duration: clock.__setitem__(0, clock[0] + 60))
+    monkeypatch.setattr(experiment, "metrics", lambda *args: health_sample(request_rate=0, p95=None))
+    with pytest.raises(SystemExit, match="эксперимент не начат"):
+        experiment.main()
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["passed"] is False and report["health_phase"] == "before_preparation"
+    assert report["health_precondition_samples"][-1]["request_rate"] == 0
+    assert not any(args[0] == "kubectl" and any(verb in args for verb in ("delete", "patch", "scale", "apply", "create")) for args in commands)
+
+
 @pytest.mark.parametrize("key,value", [
     ("_actions", 1), ("_actions", False), ("_broke_at", 100), ("_fixed_at", 120),
     ("_pending", {"action": "rollback"}), ("_action_intent", {"status": "unknown"}),

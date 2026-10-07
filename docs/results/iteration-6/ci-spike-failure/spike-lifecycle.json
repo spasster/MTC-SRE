@@ -1,0 +1,14 @@
+{
+  "scenario": "spike",
+  "mode": "auto",
+  "manual_delay_seconds": 30,
+  "created_at": "2026-10-07T08:29:13.799446+00:00",
+  "samples": [],
+  "passed": false,
+  "source_commit": "3f49a38a140db757534e4720cb8ea83d37df1127",
+  "verifier_sha256": "05823ff136df33b30f8e494632dde84ad1d6ff1bbbbaac560305023a21ef1009",
+  "baseline_note": "Задержка оператора задаётся явно; это контролируемый baseline, не измерение работы человека.",
+  "error": "Начальный SLO не восстановлен; эксперимент не начат",
+  "cleanup_errors": [],
+  "resource_intents": []
+}

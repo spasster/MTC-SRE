@@ -1,0 +1,1426 @@
+{
+  "started_at": "2026-10-07T07:20:32.630100+00:00",
+  "passed": true,
+  "cases": [
+    {
+      "fault": "pod",
+      "samples": [
+        {
+          "p95": 0.09875,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357750.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1692307692307692,
+          "time": 1791357755.9657772,
+          "replicas": 3,
+          "rollout_ready": false,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.06261758046087859
+        },
+        {
+          "p95": 0.09875,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357750.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16923076923076924,
+          "time": 1791357761.5267408,
+          "replicas": 3,
+          "rollout_ready": false,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.04784043780433762
+        },
+        {
+          "p95": 0.162,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357765.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.196969696969697,
+          "time": 1791357766.9235902,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.05648276722817246
+        },
+        {
+          "p95": 0.1387664999999999,
+          "request_rate": 1.9774222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357765.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.19457013574660634,
+          "time": 1791357772.2107215,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.061726790499415
+        },
+        {
+          "p95": 0.14141899999999982,
+          "request_rate": 1.9302755555555555,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357765.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.19457013574660634,
+          "time": 1791357777.5088603,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.057358922537707316
+        },
+        {
+          "p95": 0.15547166666666662,
+          "request_rate": 2.0762111111111112,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357780.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5625,
+          "time": 1791357782.8189912,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.09395269391552936
+        },
+        {
+          "p95": 0.17384449980515498,
+          "request_rate": 2.141738888888889,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357780.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5625,
+          "time": 1791357788.0936487,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0988074743300026
+        },
+        {
+          "p95": 0.18042747633558964,
+          "request_rate": 2.1791111111111108,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357780.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5625,
+          "time": 1791357793.3743944,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.07877199133104479
+        },
+        {
+          "p95": 0.18544950149802364,
+          "request_rate": 1.916361111111111,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357795.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.5625,
+          "time": 1791357798.7107465,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0773403879250143
+        },
+        {
+          "p95": 0.18841538962796062,
+          "request_rate": 2.0543733333333334,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357795.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.37735849056603776,
+          "time": 1791357804.0797708,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.08603008352160518
+        },
+        {
+          "p95": 0.18252203694127062,
+          "request_rate": 1.9903644444444444,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357795.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.3773584905660377,
+          "time": 1791357809.3841596,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.08701537795360892
+        },
+        {
+          "p95": 0.18339506452343218,
+          "request_rate": 2.0374222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357810.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.3076923076923077,
+          "time": 1791357814.7089186,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.07705762088444293
+        },
+        {
+          "p95": 0.18407930049247595,
+          "request_rate": 2.0671192592592593,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357810.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1923076923076923,
+          "time": 1791357820.0252707,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.059508862787256686
+        },
+        {
+          "p95": 0.18696570471789428,
+          "request_rate": 1.9790874074074072,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357810.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.18468468468468466,
+          "time": 1791357825.3601673,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06330236570914485
+        },
+        {
+          "p95": 0.18714931919948827,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357825.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.18468468468468469,
+          "time": 1791357830.7044528,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06330236570914485
+        },
+        {
+          "p95": 0.1905128205128205,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357825.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1878172588832487,
+          "time": 1791357836.0700738,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.053701385187828264
+        },
+        {
+          "p95": 0.19027027027027027,
+          "request_rate": 2.0444444444444443,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357840.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.21290322580645157,
+          "time": 1791357841.392471,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06339832326415683
+        },
+        {
+          "p95": 0.19027027027027027,
+          "request_rate": 2.0444444444444443,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357840.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.20853080568720378,
+          "time": 1791357846.691344,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06444312184672996
+        },
+        {
+          "p95": 0.19013157894736846,
+          "request_rate": 2.1111111111111107,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357840.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.20853080568720378,
+          "time": 1791357852.0006523,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06802002423147557
+        },
+        {
+          "p95": 0.19028571428571428,
+          "request_rate": 1.9555555555555555,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357855.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.20833333333333334,
+          "time": 1791357857.3311725,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0570877728094646
+        },
+        {
+          "p95": 0.19104651162790698,
+          "request_rate": 2.1555555555555554,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357855.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.18085106382978725,
+          "time": 1791357862.6180787,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06477835769158558
+        },
+        {
+          "p95": 0.19158536585365854,
+          "request_rate": 1.9777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357855.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1925925925925926,
+          "time": 1791357867.994094,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06138853920915215
+        },
+        {
+          "p95": 0.19125000000000003,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357870.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.20361990950226244,
+          "time": 1791357873.271134,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06492619345993793
+        },
+        {
+          "p95": 0.19125000000000003,
+          "request_rate": 2.0,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357870.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.20361990950226244,
+          "time": 1791357878.5970974,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06492619345993793
+        }
+      ],
+      "passed": true,
+      "client_job_uid": "92afd3bc-7596-4fb4-8a36-861d30403aad",
+      "client_started_at": 1791357695.0955179,
+      "target_pod": "checkout-5cd6f95456-4l8dj",
+      "target_uid": "fe3d8da9-300c-48a1-baef-7a4af61a9d90",
+      "injected_at": 1791357755.1774087,
+      "fault_spec": {
+        "mode": "one",
+        "selector": {
+          "namespaces": [
+            "demo"
+          ],
+          "pods": {
+            "demo": [
+              "checkout-5cd6f95456-4l8dj"
+            ]
+          }
+        },
+        "action": "pod-kill"
+      },
+      "chaos_uid": "e768f418-efe3-4bab-b64c-32ba36acb289",
+      "injection_confirmed": true,
+      "chaos_conditions": [
+        {
+          "status": "True",
+          "type": "Selected"
+        },
+        {
+          "status": "True",
+          "type": "AllInjected"
+        },
+        {
+          "status": "False",
+          "type": "AllRecovered"
+        },
+        {
+          "status": "False",
+          "type": "Paused"
+        }
+      ],
+      "client": {
+        "http_reqs": {
+          "count": 361,
+          "rate": 2.0043347513699272
+        },
+        "http_req_duration": {
+          "med": 91.584378,
+          "max": 237.624667,
+          "p(90)": 115.237321,
+          "p(95)": 182.273354,
+          "avg": 91.40793380609429,
+          "min": 30.502676
+        },
+        "http_req_failed": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 361
+        },
+        "dropped_iterations": {},
+        "checks": {
+          "rate": 1,
+          "passes": 361,
+          "fails": 0
+        }
+      },
+      "alert_observed": true,
+      "slo_held_in_all_samples": true,
+      "pod_replaced": true
+    },
+    {
+      "fault": "network",
+      "samples": [
+        {
+          "p95": 0.12416666666666676,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357945.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1728395061728395,
+          "time": 1791357952.7981677,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.071539302893702
+        },
+        {
+          "p95": 0.1357142857142857,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357945.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17283950617283952,
+          "time": 1791357958.1703384,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.05705021243902492
+        },
+        {
+          "p95": 0.1335714285714285,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357960.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.21074380165289255,
+          "time": 1791357965.9680612,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.07187947926549892
+        },
+        {
+          "p95": 0.14312500000000006,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357960.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.23636363636363636,
+          "time": 1791357971.25424,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.07295090019416074
+        },
+        {
+          "p95": 0.1833333333333334,
+          "request_rate": 2.0,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357975.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.28085106382978725,
+          "time": 1791357976.7132215,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.07987749990827642
+        },
+        {
+          "p95": 0.18499999999999986,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357975.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.28085106382978725,
+          "time": 1791357982.0328653,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.08077210426803061
+        },
+        {
+          "p95": 0.18499999999999986,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357975.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.3333333333333333,
+          "time": 1791357987.382131,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0709280571703254
+        },
+        {
+          "p95": 0.18576923076923085,
+          "request_rate": 2.1555555555555554,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357990.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.26180257510729615,
+          "time": 1791357992.7369423,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06965545106145643
+        },
+        {
+          "p95": 0.187142857142857,
+          "request_rate": 2.133333333333333,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357990.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.26180257510729615,
+          "time": 1791357998.0461175,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06768832768807218
+        },
+        {
+          "p95": 0.18807692307692314,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791357990.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.23786407766990286,
+          "time": 1791358003.3606272,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0768719686859006
+        },
+        {
+          "p95": 0.18807692307692314,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358005.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.23786407766990292,
+          "time": 1791358008.7383451,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0768719686859006
+        },
+        {
+          "p95": 0.18999999999999997,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358005.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.22264150943396224,
+          "time": 1791358014.0648983,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0734550960760933
+        },
+        {
+          "p95": 0.16799999999999993,
+          "request_rate": 2.133333333333333,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358005.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17326732673267325,
+          "time": 1791358019.4436574,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06055840535485269
+        },
+        {
+          "p95": 0.1679999999999999,
+          "request_rate": 2.1333333333333333,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358020.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17435897435897438,
+          "time": 1791358024.8530838,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06498246620786709
+        },
+        {
+          "p95": 0.16866666666666663,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358020.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17435897435897438,
+          "time": 1791358030.1521688,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06380194999242958
+        },
+        {
+          "p95": 0.1696666666666667,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358020.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16577540106951869,
+          "time": 1791358035.4822547,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.05227615852595897
+        },
+        {
+          "p95": 0.1696666666666667,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358035.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16577540106951874,
+          "time": 1791358040.814701,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.04959476127214103
+        },
+        {
+          "p95": 0.16499999999999998,
+          "request_rate": 2.022222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358035.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16176470588235292,
+          "time": 1791358046.1246269,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06817932657819059
+        },
+        {
+          "p95": 0.16166666666666668,
+          "request_rate": 2.0444444444444443,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358050.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16176470588235295,
+          "time": 1791358051.4315767,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.05879185360001165
+        },
+        {
+          "p95": 0.16166666666666668,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358050.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17351598173515984,
+          "time": 1791358056.726425,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06954502487460683
+        },
+        {
+          "p95": 0.1554545454545454,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358050.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1798561151079137,
+          "time": 1791358062.0347447,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.07044379733153404
+        },
+        {
+          "p95": 0.16423076923076918,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358065.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17985611510791366,
+          "time": 1791358067.3656638,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.0631926129561819
+        },
+        {
+          "p95": 0.1616666666666667,
+          "request_rate": 2.0444444444444443,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358065.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17727272727272728,
+          "time": 1791358072.6713269,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.06653048884282385
+        }
+      ],
+      "passed": true,
+      "client_job_uid": "2080882d-3f0c-403c-9c67-8541c236671c",
+      "client_started_at": 1791357889.9955459,
+      "target_pod": "checkout-5cd6f95456-5ld7w",
+      "target_uid": "d046c630-bcce-43cd-9aa3-51fbb92c12bc",
+      "payment_pods": {
+        "blocked": "payment-7c6f464b98-kznwn",
+        "alternate": "payment-7c6f464b98-r4b2d"
+      },
+      "payment_targets": {
+        "blocked": "10.42.0.14",
+        "alternate": "10.42.0.15"
+      },
+      "paths_before": {
+        "blocked": {
+          "reachable": true,
+          "status": 200
+        },
+        "alternate": {
+          "reachable": true,
+          "status": 200
+        }
+      },
+      "mesh_before": {
+        "time": 1791357952.2546694,
+        "hosts": {
+          "10.42.0.14": {
+            "failed_outlier_check": false,
+            "connect_failures": 0,
+            "requests_succeeded": 87
+          },
+          "10.42.0.15": {
+            "failed_outlier_check": false,
+            "connect_failures": 0,
+            "requests_succeeded": 84
+          }
+        }
+      },
+      "injected_at": 1791357952.351837,
+      "fault_spec": {
+        "mode": "one",
+        "selector": {
+          "namespaces": [
+            "demo"
+          ],
+          "pods": {
+            "demo": [
+              "checkout-5cd6f95456-5ld7w"
+            ]
+          }
+        },
+        "action": "partition",
+        "direction": "to",
+        "duration": "120s",
+        "target": {
+          "mode": "one",
+          "selector": {
+            "namespaces": [
+              "demo"
+            ],
+            "pods": {
+              "demo": [
+                "payment-7c6f464b98-kznwn"
+              ]
+            }
+          }
+        }
+      },
+      "chaos_uid": "4fa4f056-a1de-40dc-bcfd-88aa88b834f4",
+      "injection_confirmed": true,
+      "chaos_conditions": [
+        {
+          "status": "True",
+          "type": "AllInjected"
+        },
+        {
+          "status": "False",
+          "type": "AllRecovered"
+        },
+        {
+          "status": "False",
+          "type": "Paused"
+        },
+        {
+          "status": "True",
+          "type": "Selected"
+        }
+      ],
+      "paths_during": {
+        "blocked": {
+          "reachable": false,
+          "error_type": "TimeoutError"
+        },
+        "alternate": {
+          "reachable": true,
+          "status": 200
+        }
+      },
+      "mesh_during": {
+        "time": 1791357960.5484552,
+        "hosts": {
+          "10.42.0.14": {
+            "failed_outlier_check": true,
+            "connect_failures": 1,
+            "requests_succeeded": 87
+          },
+          "10.42.0.15": {
+            "failed_outlier_check": false,
+            "connect_failures": 0,
+            "requests_succeeded": 92
+          }
+        }
+      },
+      "client": {
+        "http_reqs": {
+          "count": 360,
+          "rate": 1.9999865448905205
+        },
+        "http_req_duration": {
+          "min": 43.343376,
+          "med": 72.011793,
+          "max": 535.896545,
+          "p(90)": 139.1821463000001,
+          "p(95)": 172.17741045000002,
+          "avg": 81.73387589999999
+        },
+        "http_req_failed": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 360
+        },
+        "dropped_iterations": {},
+        "checks": {
+          "rate": 1,
+          "passes": 360,
+          "fails": 0
+        }
+      },
+      "alert_observed": true,
+      "slo_held_in_all_samples": true,
+      "pod_replaced": false
+    },
+    {
+      "fault": "cpu",
+      "samples": [
+        {
+          "p95": 0.19055555555555548,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358140.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.18235294117647058,
+          "time": 1791358141.54654,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.05577524766665848
+        },
+        {
+          "p95": 0.1852777777777777,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358140.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.19444444444444442,
+          "time": 1791358146.8707507,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.062348518858315986
+        },
+        {
+          "p95": 0.1852777777777777,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358140.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17874396135265702,
+          "time": 1791358152.1644373,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.06958286532616023
+        },
+        {
+          "p95": 0.18238095238095237,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358155.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17874396135265702,
+          "time": 1791358157.5150251,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.06549526568652535
+        },
+        {
+          "p95": 0.182,
+          "request_rate": 2.0444444444444443,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358155.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16145833333333334,
+          "time": 1791358162.8705003,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.08445308065784596
+        },
+        {
+          "p95": 0.18304347826086953,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358155.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16145833333333331,
+          "time": 1791358168.1606896,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.0936615857976201
+        },
+        {
+          "p95": 0.18847826086956518,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358170.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16666666666666669,
+          "time": 1791358173.5514202,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 0.0,
+          "checkout_cpu_cores": 0.09277566609639906
+        },
+        {
+          "p95": 0.19351851851851848,
+          "request_rate": 2.1111111111111107,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358170.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16666666666666666,
+          "time": 1791358178.877994,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.09277566609639906
+        },
+        {
+          "p95": 0.19166666666666668,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358170.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.15942028985507245,
+          "time": 1791358184.1677856,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.09212831324312755
+        },
+        {
+          "p95": 0.19166666666666668,
+          "request_rate": 1.9999999999999998,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358185.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.15942028985507248,
+          "time": 1791358189.5117853,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.10540966797306695
+        },
+        {
+          "p95": 0.19205882352941173,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358185.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1313131313131313,
+          "time": 1791358194.8341758,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.1135477512141327
+        },
+        {
+          "p95": 0.19196969696969693,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358185.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.1313131313131313,
+          "time": 1791358200.1220753,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.09560140292210455
+        },
+        {
+          "p95": 0.19196969696969693,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358200.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11940298507462686,
+          "time": 1791358205.4590905,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.1089300155964724
+        },
+        {
+          "p95": 0.1923076923076923,
+          "request_rate": 2.222222222222222,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358200.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.11940298507462686,
+          "time": 1791358210.920579,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.10742257850416324
+        },
+        {
+          "p95": 0.1913095238095238,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358215.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.12875536480686695,
+          "time": 1791358216.2496185,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.11694298908212361
+        },
+        {
+          "p95": 0.1913095238095238,
+          "request_rate": 2.0666666666666664,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358215.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.12875536480686695,
+          "time": 1791358221.714981,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.09742428700540275
+        },
+        {
+          "p95": 0.19585365853658535,
+          "request_rate": 2.0888888888888886,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358215.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.13705583756345177,
+          "time": 1791358227.0919282,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.10619943772059674
+        },
+        {
+          "p95": 0.1980263207138931,
+          "request_rate": 2.1110874084608584,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358230.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.13793103448275862,
+          "time": 1791358232.4143126,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.11682960225275854
+        },
+        {
+          "p95": 0.207000239991467,
+          "request_rate": 2.066642964016414,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358230.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.13793103448275862,
+          "time": 1791358237.7437868,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.11260889671037395
+        },
+        {
+          "p95": 0.2183333333333332,
+          "request_rate": 2.1777777777777776,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358230.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.14999999999999997,
+          "time": 1791358243.0636096,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.11765340279526698
+        },
+        {
+          "p95": 0.22333333333333333,
+          "request_rate": 2.0444444444444443,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358245.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.16176470588235292,
+          "time": 1791358248.3413527,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.10379619057832296
+        },
+        {
+          "p95": 0.22749999999999998,
+          "request_rate": 1.9333333333333331,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358245.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.175,
+          "time": 1791358253.727673,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.11796801909347784
+        },
+        {
+          "p95": 0.22166651853168617,
+          "request_rate": 2.088800011850272,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358245.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.175,
+          "time": 1791358259.1312318,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.11761339169822042
+        },
+        {
+          "p95": 0.22166651853168617,
+          "request_rate": 2.088800011850272,
+          "error_ratio": 0.0,
+          "synthetic_success": 1.0,
+          "synthetic_time": 1791358260.988,
+          "alerts_firing": 0.0,
+          "alerts_active": 0.0,
+          "cpu_throttle": 0.17948717948717946,
+          "time": 1791358264.427837,
+          "replicas": 3,
+          "rollout_ready": true,
+          "chaos_alert_firing": 1.0,
+          "checkout_cpu_cores": 0.09585903763845423
+        }
+      ],
+      "passed": true,
+      "client_job_uid": "e373f84e-0061-489c-9f29-676784ac4765",
+      "client_started_at": 1791358080.630382,
+      "target_pod": "checkout-5cd6f95456-5ld7w",
+      "target_uid": "d046c630-bcce-43cd-9aa3-51fbb92c12bc",
+      "injected_at": 1791358141.056436,
+      "fault_spec": {
+        "mode": "one",
+        "selector": {
+          "namespaces": [
+            "demo"
+          ],
+          "pods": {
+            "demo": [
+              "checkout-5cd6f95456-5ld7w"
+            ]
+          }
+        },
+        "duration": "120s",
+        "containerNames": [
+          "checkout"
+        ],
+        "stressors": {
+          "cpu": {
+            "workers": 1,
+            "load": 5
+          }
+        }
+      },
+      "chaos_uid": "2d385c13-a612-40be-a5c4-e472df2e724d",
+      "injection_confirmed": true,
+      "chaos_conditions": [
+        {
+          "status": "False",
+          "type": "AllRecovered"
+        },
+        {
+          "status": "False",
+          "type": "Paused"
+        },
+        {
+          "status": "True",
+          "type": "Selected"
+        },
+        {
+          "status": "True",
+          "type": "AllInjected"
+        }
+      ],
+      "client": {
+        "http_reqs": {
+          "count": 361,
+          "rate": 2.004712722004223
+        },
+        "http_req_duration": {
+          "max": 274.004298,
+          "p(90)": 165.659554,
+          "p(95)": 192.014027,
+          "avg": 102.1117336011081,
+          "min": 30.787319,
+          "med": 101.091767
+        },
+        "http_req_failed": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 361
+        },
+        "dropped_iterations": {},
+        "checks": {
+          "rate": 1,
+          "passes": 361,
+          "fails": 0
+        }
+      },
+      "alert_observed": true,
+      "slo_held_in_all_samples": true,
+      "pod_replaced": false
+    }
+  ],
+  "source_commit": "3f49a38a140db757534e4720cb8ea83d37df1127",
+  "source_worktree_dirty": false,
+  "profile": {
+    "client_rps": 2,
+    "duration_per_case_seconds": 180,
+    "warmup_seconds": 60,
+    "complete_response_ratio_minimum": 0.995,
+    "replicas": 3,
+    "original_checkout_replicas": 2,
+    "payment_replicas": 2,
+    "network_action": "partition",
+    "network_scope": "Один checkout -> один payment; второй payment остается доступен",
+    "cpu_workers": 1,
+    "cpu_load_percent_of_core": 5,
+    "faults": [
+      "pod",
+      "network",
+      "cpu"
+    ]
+  },
+  "resources_per_replica": {
+    "limits": {
+      "cpu": "200m",
+      "memory": "256Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "64Mi"
+    }
+  },
+  "limitation": "Доказательство относится к указанной области отказа и короткому окну, не ко всем интенсивностям хаоса или месячному SLO. Полный сетевой разрыв и перегрузка сохраняют отрицательные результаты.",
+  "initial_incident": {
+    "checked_at": 1791357674.4143336,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "incident_before_client": {
+    "checked_at": 1791357687.609159,
+    "started_at": null,
+    "actions": 0,
+    "operation_unknown": false,
+    "recovery_pending": false,
+    "approval_pending": false,
+    "incident_closed": true
+  },
+  "original_checkout_replicas_restored": true,
+  "original_background_replicas_restored": true,
+  "cleanup_errors": [],
+  "resource_intents": [],
+  "finished_at": "2026-10-07T07:31:12.708480+00:00"
+}
