@@ -38,7 +38,7 @@ def main():
             if not row["metadata"].get("deletionTimestamp"))
 
     try:
-        for scenario, expected, app in [("kill", None, "checkout"), ("partition", "partition", "checkout"),
+        for scenario, expected, app in [("kill", None, "checkout"), ("partition", ("partition", "payment"), "checkout"),
                                          ("bad-release", "bad_release", "checkout"), ("redis", "redis", "redis")]:
             wait_healthy("http://127.0.0.1:19090", timeout=300)
             before = pods(app)
@@ -68,12 +68,12 @@ def main():
                                           headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
                         with urlopen(request, timeout=20) as response:
                             result = json.load(response)["results"][0]
-                        if result.get("diagnosis") == expected:
+                        if result.get("diagnosis") in (expected if isinstance(expected, tuple) else (expected,)):
                             break
                     time.sleep(5)
-                if not result or result.get("diagnosis") != expected:
+                if not result or result.get("diagnosis") not in (expected if isinstance(expected, tuple) else (expected,)):
                     raise RuntimeError("Ожидаемый диагноз не подтверждён: " + scenario)
-                if scenario == "partition" and result.get("action") != "none":
+                if scenario == "partition" and (result.get("action") != "none" or result.get("mode") != "escalate"):
                     raise RuntimeError("Сетевой разрыв вызвал изменение кластера")
                 if (scenario in ("bad-release", "redis")
                     and not (result.get("result", "").startswith("needs approval:")

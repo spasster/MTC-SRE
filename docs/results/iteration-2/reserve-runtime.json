@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-10-07T00:16:11.896628+00:00",
+  "source_commit": "36a284ae1c323bb1a9d3be715fd16d41c6b258e5",
+  "source_worktree_dirty": true,
+  "images": {
+    "healer": [
+      "sha256:8d7a8dad0c5bd179a2eb19f895c1f6e5392cab2c1ebe5b54c202005aac6b904a"
+    ],
+    "checkout": [
+      "sha256:4062e814030afebcd8fc1d72f36456914c63510a9163b19c68886e13472192c6"
+    ],
+    "payment": [
+      "sha256:dd9bb5e34c67c01562f390959fa30c876418fbae3dbfde4cac1aec94d9db8472",
+      "sha256:e4b80c531ba5b4e2ecf3cd119628418d37390cb6c5b8fafc4645c9e84456a09e"
+    ]
+  },
+  "control_code_sha256": {
+    "app/k8s.py": "f936992ddeaac7ce010bedb8d20adfefe77813ddb84b81b11ae07900b1a0374f",
+    "app/main.py": "1c47f631a9f467e10e6d289db9147794bf459c3fe9eb8a2ae5de442a0ab48741",
+    "app/observability.py": "b154a678f4c9dc886ce702eb862d8bb84f8fa503a8552efa6a28b38345eb6dc6",
+    "app/evidence.py": "97591e2117a335a9cfc591c56bed2a82f5df8dab1c29349bae5edc03b95ccdfc",
+    "app/state.py": "e6d4ed16eb706a17359a6a447f2fd550e168ecc53756e2e430d55fb28a8c368d"
+  },
+  "local_control_code_matches": true,
+  "resilience_configuration_sha256": "32d78ed71b558a6288bf42f405a63c5f42eacc41f7865f92d75f21a24cacb06b",
+  "verifier_sha256": "54b9359ae63468a1458db5af5a5ecc7b3384f14cfc33ab15d644b564ea6574e8",
+  "client_sha256": "c4751461940dc3045acd906c06720e94f99d071e674f0a56afc833e822c8735f",
+  "note": "Серия с резервом 3 checkout и 2 payment выполнена до коммита. Образ healer сохранен; менялись политики сети и число реплик профиля. Ранние опыты с двумя checkout и другой проверкой сохранены как отдельная история."
+}

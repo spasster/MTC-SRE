@@ -29,3 +29,50 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: payment
+  namespace: demo
+spec:
+  hosts: ["payment", "payment.demo.svc.cluster.local"]
+  http:
+    - match:
+        - method:
+            exact: POST
+          uri:
+            exact: /pay
+      route:
+        - destination:
+            host: payment.demo.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 1
+        # Соединение еще не установлено, поэтому payment не принял операцию.
+        retryOn: connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: payment
+  namespace: demo
+spec:
+  host: payment.demo.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      tcp:
+        connectTimeout: 100ms
+      http:
+        # Новое соединение позволяет обнаружить разрыв до передачи POST /pay.
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 1
+      consecutive5xxErrors: 0
+      interval: 1s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50

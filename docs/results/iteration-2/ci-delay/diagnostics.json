@@ -1,0 +1,4327 @@
+{
+  "checked_at": "2026-10-06T23:54:45.703470+00:00",
+  "pods": [
+    {
+      "namespace": "heal",
+      "name": "healer-99459c8b8-f94hr",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:51Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:53Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:01Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:01Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:50Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "healer",
+          "resources": {
+            "limits": {
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "50m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "healer",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:c3931d54e5f5716535131afbdacc286e766e42f4e25bbae88949f26d5a60f7e5",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:53Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://04cfa209da84519732334b8636b3099634d0390b1b17af611953d3a8d2574ff3",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:47:50Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:47:50Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:51Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "demo",
+      "name": "checkout-fbb749496-cdvrm",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:33Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:38Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:47Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:47Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:28Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "checkout",
+          "resources": {
+            "limits": {
+              "cpu": "200m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "50m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "checkout",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:982fe208a65af02a10e909bc077a51ca79a36473b6add23948b3014441ccd8e8",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:46:38Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://99ecfa51ea80e67969ef3db29c7327184f6c0f299d9ecb16ac5b5da14b073311",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:46:34Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:46:33Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:46:35Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "demo",
+      "name": "checkout-fbb749496-kjp2q",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:52:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:52:45Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:52:53Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:52:53Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:52:42Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "checkout",
+          "resources": {
+            "limits": {
+              "cpu": "200m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "50m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "checkout",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:982fe208a65af02a10e909bc077a51ca79a36473b6add23948b3014441ccd8e8",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:52:45Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://19cca856226d659faace03a370ba138dd570b00e037e6456a2f28d8e4468a5f8",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:52:43Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:52:42Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:52:43Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "demo",
+      "name": "k6-background-66c65b8c84-hkc5d",
+      "phase": "Pending",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:54:45Z",
+          "observedGeneration": 1,
+          "status": "False",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:54:45Z",
+          "message": "containers with incomplete status: [istio-init istio-proxy]",
+          "observedGeneration": 1,
+          "reason": "ContainersNotInitialized",
+          "status": "False",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:54:45Z",
+          "message": "containers with unready status: [istio-proxy k6]",
+          "observedGeneration": 1,
+          "reason": "ContainersNotReady",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:54:45Z",
+          "message": "containers with unready status: [istio-proxy k6]",
+          "observedGeneration": 1,
+          "reason": "ContainersNotReady",
+          "status": "False",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:54:45Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "k6",
+          "resources": {
+            "limits": {
+              "cpu": "200m",
+              "memory": "128Mi"
+            },
+            "requests": {
+              "cpu": "20m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "k6",
+          "ready": false,
+          "restartCount": 0,
+          "imageID": "",
+          "state": {
+            "waiting": {
+              "reason": "PodInitializing"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": false,
+          "restartCount": 0,
+          "imageID": "",
+          "state": {
+            "waiting": {
+              "reason": "PodInitializing"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": false,
+          "restartCount": 0,
+          "imageID": "",
+          "state": {
+            "waiting": {
+              "reason": "PodInitializing"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "demo",
+      "name": "payment-6b58658f8d-ntfz2",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:33Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:38Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:47Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:47Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:28Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "payment",
+          "resources": {
+            "limits": {
+              "cpu": "200m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "20m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "payment",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:dc7f7ea79f151a5660ee61c7a5398e79640c8eef7909a538ca34b4dd931612c9",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:46:38Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://3b0da537d5faf889464cbc371b1e6b5e4628174caa853570da837f45f49bec9d",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:46:34Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:46:33Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:46:35Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "demo",
+      "name": "redis-5cd6b68655-mtlmc",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:38Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:42Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:46Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:46Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:36Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "redis",
+          "resources": {}
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "redis",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/library/redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:46:44Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://37a51eea3116ae3c26b56d3e8a7b0a9ef83996b03d065bdc4252b3eee1aaf647",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:46:37Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:46:37Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:46:38Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:13Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:14Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:26Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:26Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:07Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "alertmanager",
+          "resources": {
+            "requests": {
+              "memory": "200Mi"
+            }
+          }
+        },
+        {
+          "name": "config-reloader",
+          "resources": {}
+        },
+        {
+          "name": "init-config-reloader",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "alertmanager",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus/alertmanager@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:19Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "config-reloader",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus-operator/prometheus-config-reloader@sha256:06b52bd4dbe3ed6dd5905aadaf8b9987d9da4c31d37bb86deaadae68cee2d26b",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:19Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "init-config-reloader",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus-operator/prometheus-config-reloader@sha256:06b52bd4dbe3ed6dd5905aadaf8b9987d9da4c31d37bb86deaadae68cee2d26b",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://aff6f1033c720e0c88c67c013bbc0d62ee690b8c58dfea6ad723feee743fa5d1",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:47:13Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:47:13Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "alloy-67d8d77999-bvmqw",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:49:13Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:49:00Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:49:24Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:49:24Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:49:00Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "alloy",
+          "resources": {
+            "limits": {
+              "cpu": "300m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "50m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "config-reloader",
+          "resources": {
+            "requests": {
+              "cpu": "10m",
+              "memory": "50Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "alloy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/grafana/alloy@sha256:f111cce835516c5f99166342be7038496b52ced16667be5a11e19258a3e4cd30",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:49:09Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "config-reloader",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus-operator/prometheus-config-reloader@sha256:142a1f11df8dd165f00375b0b1826aecb9c9adeb05c39855893138d7c7575ff7",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:49:12Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "blackbox-549976d488-j7x6f",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:56Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:02Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:02Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:55Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "blackbox-exporter",
+          "resources": {
+            "limits": {
+              "cpu": "200m",
+              "memory": "128Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "32Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-init",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        },
+        {
+          "name": "istio-proxy",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "10m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "blackbox-exporter",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/prom/blackbox-exporter@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:48:02Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-init",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://7cade39c5d3707ceb97415154ffbab681d81e71ccf70d0254e50023e7cd1ac84",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:47:56Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:47:56Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "istio-proxy",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.istio.io/release/proxyv2@sha256:a30fb25b1e4cfc0fbc50a8a6795f5984a49022dd0ec09bcd8683b3db35af5ed3",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:57Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "kube-prom-grafana-58d9b748c6-p6wt5",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:31Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "grafana-sc-dashboard",
+          "resources": {}
+        },
+        {
+          "name": "grafana-sc-datasources",
+          "resources": {}
+        },
+        {
+          "name": "grafana",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "grafana",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/grafana/grafana@sha256:202e5d5b3f8499e70ccac7991eea6d7da72d2790eb2e0597e7987acf724e7180",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:30Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "grafana-sc-dashboard",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/kiwigrid/k8s-sidecar@sha256:2912be006f62f9ea080194cf6d3afcd90daead8d101d0ba686a137a849f6a4f6",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:06Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "grafana-sc-datasources",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/kiwigrid/k8s-sidecar@sha256:2912be006f62f9ea080194cf6d3afcd90daead8d101d0ba686a137a849f6a4f6",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:06Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:04Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:05Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:05Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "kube-prometheus-stack",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "kube-prometheus-stack",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus-operator/prometheus-operator@sha256:7c88d4e7bae63bd8d0f8da986054337c23b4472fa8d3c6817f5bc4b8407a2d6a",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:03Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "kube-prom-kube-state-metrics-68bd8664b9-kngwx",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:06Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:18Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:18Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "kube-state-metrics",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "kube-state-metrics",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "registry.k8s.io/kube-state-metrics/kube-state-metrics@sha256:42cfe3723a5f058171c627537fb57a3ea0f26e4380fa18555a95cb1a1b4cfc5b",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:06Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "kube-prom-prometheus-node-exporter-z477k",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:02Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:02Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:02Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:46:59Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "node-exporter",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "node-exporter",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus/node-exporter@sha256:8c9bac11973b94b59be88d6e11fee4429aa743c8846cdc75d65b18db33f6a106",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:01Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "loki-0",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:16Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:55Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:55Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:16Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "loki",
+          "resources": {
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        },
+        {
+          "name": "loki-sc-rules",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "loki",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/grafana/loki@sha256:44148ad243c07957113baea950ee5ba9b0c8eff8d7e38ff3cc1c0af705790945",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:48:20Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "loki-sc-rules",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/kiwigrid/k8s-sidecar@sha256:a6b3f707f883108376514489a94d6629109a327b2978e1d826cd104c4ca436df",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:48:23Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "prometheus-kube-prom-kube-prometheus-prometheus-0",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:21Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:24Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:35Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:35Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:19Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "prometheus",
+          "resources": {}
+        },
+        {
+          "name": "config-reloader",
+          "resources": {}
+        },
+        {
+          "name": "init-config-reloader",
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "config-reloader",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus-operator/prometheus-config-reloader@sha256:06b52bd4dbe3ed6dd5905aadaf8b9987d9da4c31d37bb86deaadae68cee2d26b",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:30Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "prometheus",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus/prometheus@sha256:b2a413d5a03ea6a76782a508d1c7947440bba3b973931a25676e278431891b01",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:30Z"
+            }
+          },
+          "lastState": {}
+        },
+        {
+          "name": "init-config-reloader",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "quay.io/prometheus-operator/prometheus-config-reloader@sha256:06b52bd4dbe3ed6dd5905aadaf8b9987d9da4c31d37bb86deaadae68cee2d26b",
+          "state": {
+            "terminated": {
+              "containerID": "containerd://5e40deca421e78621950d00e4997c6abe789ffc03696cc104b84216883688b7e",
+              "exitCode": 0,
+              "finishedAt": "2026-10-06T23:47:21Z",
+              "reason": "Completed",
+              "startedAt": "2026-10-06T23:47:21Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    },
+    {
+      "namespace": "obs",
+      "name": "tempo-5d87c67f8f-rxmrt",
+      "phase": "Running",
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:55Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:51Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:27Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:48:27Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-06T23:47:51Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "resources": [
+        {
+          "name": "tempo",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "50m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "tempo",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "docker.io/grafana/tempo@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4",
+          "state": {
+            "running": {
+              "startedAt": "2026-10-06T23:47:55Z"
+            }
+          },
+          "lastState": {}
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "namespace": "heal",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:50Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:50Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:50Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:51Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:51Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:51Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:53Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:53Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:53Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:47:56Z",
+      "object_kind": "Pod",
+      "object_name": "healer-99459c8b8-f94hr"
+    },
+    {
+      "namespace": "heal",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:50Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "healer-99459c8b8"
+    },
+    {
+      "namespace": "heal",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:49Z",
+      "object_kind": "Deployment",
+      "object_name": "healer"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:29Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:34Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:34Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:35Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:46:40Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-8j9dj"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:29Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:34Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:35Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:35Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:36Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:46:42Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cdvrm"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-cvpq5"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-jzbvh"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:43Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:43Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:43Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:45Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:45Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:45Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:52:48Z",
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-kjp2q"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "checkout-fbb749496-l4wcg"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "checkout-fbb749496"
+    },
+    {
+      "namespace": "demo",
+      "reason": "FinalizerInited",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Updated",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Updated",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Applied",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Updated",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:42Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Deleted",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Updated",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Recovered",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Updated",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "FinalizerInited",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Updated",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Failed",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "PodChaos",
+      "object_name": "checkout-limited-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "Deployment",
+      "object_name": "checkout"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:43Z",
+      "object_kind": "Deployment",
+      "object_name": "checkout"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:44Z",
+      "object_kind": "Deployment",
+      "object_name": "checkout"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-hkc5d"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:46Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-hkc5d"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:46Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-hkc5d"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:46Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-hkc5d"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:46Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-hkc5d"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:30Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:34Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:34Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:35Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:40Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:40Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:40Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:03Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:03Z",
+      "object_kind": "Pod",
+      "object_name": "k6-background-66c65b8c84-trns7"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:29Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "k6-background-66c65b8c84"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:03Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "k6-background-66c65b8c84"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "k6-background-66c65b8c84"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:54:45Z",
+      "object_kind": "Deployment",
+      "object_name": "k6-background"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:03Z",
+      "object_kind": "Deployment",
+      "object_name": "k6-background"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:04Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:04Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:04Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:05Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:05Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:05Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:07Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:07Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:07Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:37Z",
+      "object_kind": "Pod",
+      "object_name": "k6-slo-pod-kx624"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:52:04Z",
+      "object_kind": "Job",
+      "object_name": "k6-slo-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Completed",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:54:41Z",
+      "object_kind": "Job",
+      "object_name": "k6-slo-pod"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:36Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:36Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:37Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:38Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:38Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:38Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:40Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:40Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:40Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:43Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:43Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-mesh-15150"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:33Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:34Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:35Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:35Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:36Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:46:42Z",
+      "object_kind": "Pod",
+      "object_name": "payment-6b58658f8d-ntfz2"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "payment-6b58658f8d"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "Deployment",
+      "object_name": "payment"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:37Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:38Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:46:40Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:42Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:44Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:44Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:44Z",
+      "object_kind": "Pod",
+      "object_name": "redis-5cd6b68655-mtlmc"
+    },
+    {
+      "namespace": "demo",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "redis-5cd6b68655"
+    },
+    {
+      "namespace": "demo",
+      "reason": "WaitForFirstConsumer",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ExternalProvisioning",
+      "type": "Normal",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:46:36Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "Provisioning",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ProvisioningSucceeded",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:36Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "redis-data"
+    },
+    {
+      "namespace": "demo",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:28Z",
+      "object_kind": "Deployment",
+      "object_name": "redis"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:07Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:12Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:12Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:13Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:14Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:18Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:18Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:19Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:19Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:19Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:19Z",
+      "object_kind": "Pod",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:07Z",
+      "object_kind": "StatefulSet",
+      "object_name": "alertmanager-kube-prom-kube-prometheus-alertmanager"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:01Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:09Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:09Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:09Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:09Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:12Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:12Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:12Z",
+      "object_kind": "Pod",
+      "object_name": "alloy-67d8d77999-bvmqw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:49:00Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "alloy-67d8d77999"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:59Z",
+      "object_kind": "Deployment",
+      "object_name": "alloy"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:56Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:56Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:56Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:57Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:57Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:57Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:59Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:01Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:01Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:02Z",
+      "object_kind": "Pod",
+      "object_name": "blackbox-549976d488-j7x6f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:55Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "blackbox-549976d488"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:55Z",
+      "object_kind": "Deployment",
+      "object_name": "blackbox"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:00Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:29Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 3,
+      "lastTimestamp": "2026-10-06T23:47:33Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-grafana-58d9b748c6-p6wt5"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "kube-prom-grafana-58d9b748c6"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "Deployment",
+      "object_name": "kube-prom-grafana"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-create-hv9rf"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:54Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-create-hv9rf"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:55Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-create-hv9rf"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:55Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-create-hv9rf"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:55Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-create-hv9rf"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:53Z",
+      "object_kind": "Job",
+      "object_name": "kube-prom-kube-prometheus-admission-create"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Completed",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:58Z",
+      "object_kind": "Job",
+      "object_name": "kube-prom-kube-prometheus-admission-create"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-patch-sctmw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:45Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-patch-sctmw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:45Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-patch-sctmw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:45Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-admission-patch-sctmw"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:45Z",
+      "object_kind": "Job",
+      "object_name": "kube-prom-kube-prometheus-admission-patch"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Completed",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:48Z",
+      "object_kind": "Job",
+      "object_name": "kube-prom-kube-prometheus-admission-patch"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:00Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:03Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:03Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:03Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:04Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:01Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7-6mx2b"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "kube-prom-kube-prometheus-operator-5cc59967f7"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "Deployment",
+      "object_name": "kube-prom-kube-prometheus-operator"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-state-metrics-68bd8664b9-kngwx"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:00Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-state-metrics-68bd8664b9-kngwx"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:05Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-state-metrics-68bd8664b9-kngwx"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:05Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-state-metrics-68bd8664b9-kngwx"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:06Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-kube-state-metrics-68bd8664b9-kngwx"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "kube-prom-kube-state-metrics-68bd8664b9"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "Deployment",
+      "object_name": "kube-prom-kube-state-metrics"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "kube-prom-prometheus-node-exporter-z477k"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:00Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-prometheus-node-exporter-z477k"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:01Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-prometheus-node-exporter-z477k"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:01Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-prometheus-node-exporter-z477k"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:01Z",
+      "object_kind": "Pod",
+      "object_name": "kube-prom-prometheus-node-exporter-z477k"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:46:59Z",
+      "object_kind": "DaemonSet",
+      "object_name": "kube-prom-prometheus-node-exporter"
+    },
+    {
+      "namespace": "obs",
+      "reason": "FailedScheduling",
+      "type": "Warning",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:17Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:19Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:19Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:20Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:20Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:23Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:23Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:23Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:48:45Z",
+      "object_kind": "Pod",
+      "object_name": "loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:10Z",
+      "object_kind": "StatefulSet",
+      "object_name": "loki"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:10Z",
+      "object_kind": "StatefulSet",
+      "object_name": "loki"
+    },
+    {
+      "namespace": "obs",
+      "reason": "FailedUpdate",
+      "type": "Warning",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:10Z",
+      "object_kind": "StatefulSet",
+      "object_name": "loki"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "mtls-plain-15150"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:37Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-plain-15150"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:39Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-plain-15150"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:39Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-plain-15150"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:39Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-plain-15150"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Killing",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:50:42Z",
+      "object_kind": "Pod",
+      "object_name": "mtls-plain-15150"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:20Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:20Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:21Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:24Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:30Z",
+      "object_kind": "Pod",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "WaitForFirstConsumer",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:08Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-db-prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ExternalProvisioning",
+      "type": "Normal",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:47:08Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-db-prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Provisioning",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:08Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-db-prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ProvisioningSucceeded",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:18Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus-db-prometheus-kube-prom-kube-prometheus-prometheus-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:08Z",
+      "object_kind": "StatefulSet",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:08Z",
+      "object_kind": "StatefulSet",
+      "object_name": "prometheus-kube-prom-kube-prometheus-prometheus"
+    },
+    {
+      "namespace": "obs",
+      "reason": "WaitForFirstConsumer",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:10Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "storage-loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "WaitForPodScheduled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:10Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "storage-loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ExternalProvisioning",
+      "type": "Normal",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:48:12Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "storage-loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Provisioning",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:12Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "storage-loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ProvisioningSucceeded",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:48:15Z",
+      "object_kind": "PersistentVolumeClaim",
+      "object_name": "storage-loki-0"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "count": null,
+      "lastTimestamp": null,
+      "object_kind": "Pod",
+      "object_name": "tempo-5d87c67f8f-rxmrt"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulling",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:51Z",
+      "object_kind": "Pod",
+      "object_name": "tempo-5d87c67f8f-rxmrt"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Pulled",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:55Z",
+      "object_kind": "Pod",
+      "object_name": "tempo-5d87c67f8f-rxmrt"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Created",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:55Z",
+      "object_kind": "Pod",
+      "object_name": "tempo-5d87c67f8f-rxmrt"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Started",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:55Z",
+      "object_kind": "Pod",
+      "object_name": "tempo-5d87c67f8f-rxmrt"
+    },
+    {
+      "namespace": "obs",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "count": 2,
+      "lastTimestamp": "2026-10-06T23:48:17Z",
+      "object_kind": "Pod",
+      "object_name": "tempo-5d87c67f8f-rxmrt"
+    },
+    {
+      "namespace": "obs",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:51Z",
+      "object_kind": "ReplicaSet",
+      "object_name": "tempo-5d87c67f8f"
+    },
+    {
+      "namespace": "obs",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "count": 1,
+      "lastTimestamp": "2026-10-06T23:47:51Z",
+      "object_kind": "Deployment",
+      "object_name": "tempo"
+    }
+  ],
+  "nodes": [
+    {
+      "capacity": {
+        "cpu": "2",
+        "ephemeral-storage": "75085112Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "8128876Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "2",
+        "ephemeral-storage": "73042796897",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "8128876Ki",
+        "pods": "110"
+      },
+      "conditions": [
+        {
+          "lastHeartbeatTime": "2026-10-06T23:51:09Z",
+          "lastTransitionTime": "2026-10-06T23:45:01Z",
+          "message": "kubelet has sufficient memory available",
+          "reason": "KubeletHasSufficientMemory",
+          "status": "False",
+          "type": "MemoryPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-06T23:51:09Z",
+          "lastTransitionTime": "2026-10-06T23:45:01Z",
+          "message": "kubelet has no disk pressure",
+          "reason": "KubeletHasNoDiskPressure",
+          "status": "False",
+          "type": "DiskPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-06T23:51:09Z",
+          "lastTransitionTime": "2026-10-06T23:45:01Z",
+          "message": "kubelet has sufficient PID available",
+          "reason": "KubeletHasSufficientPID",
+          "status": "False",
+          "type": "PIDPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-06T23:51:09Z",
+          "lastTransitionTime": "2026-10-06T23:45:01Z",
+          "message": "kubelet is posting ready status",
+          "reason": "KubeletReady",
+          "status": "True",
+          "type": "Ready"
+        }
+      ]
+    }
+  ]
+}
