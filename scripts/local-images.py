@@ -150,6 +150,13 @@ def verify_runtime(component, accepted, identity, tag, expected):
         if after["metadata"]["uid"] != uid or after["metadata"].get("deletionTimestamp") or observed != expected:
             raise RuntimeError("Код рабочего пода не совпал или под заменен во время проверки")
         verified.append({"pod": pod_name, "uid": uid, "image_id": statuses[0]["imageID"], "source_sha256": observed})
+    final = deployment(name, namespace)
+    final_status = final.get("status", {})
+    if (not unchanged(final, current)
+            or final["metadata"].get("annotations", {}).get("deployment.kubernetes.io/revision") != revision
+            or final_status.get("observedGeneration", 0) < final["metadata"]["generation"]
+            or any(final_status.get(key, 0) != replicas for key in ("replicas", "updatedReplicas", "readyReplicas", "availableReplicas"))):
+        raise RuntimeError("Рабочий Deployment заменен, изменен или потерял готовность во время проверки реплик")
     return {"deployment_uid": current["metadata"]["uid"], "generation": current["metadata"]["generation"],
             "image_id": identity, "image_tag": tag, "pods": verified, "passed": True}
 

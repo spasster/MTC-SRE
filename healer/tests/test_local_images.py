@@ -118,6 +118,25 @@ def test_all_replicas_require_image_and_source_identity(monkeypatch):
     assert {row["uid"] for row in result["pods"]} == {"pod-uid", "pod-uid-2"}
 
 
+@pytest.mark.parametrize("field,value", [("uid", "replacement"), ("generation", 3),
+                                      ("spec", {"replicas": 0}), ("readyReplicas", 1), ("revision", "3")])
+def test_deployment_change_during_replica_checks_is_rejected(monkeypatch, field, value):
+    accepted = runtime(monkeypatch)
+    changed = copy.deepcopy(accepted)
+    if field in ("uid", "generation"):
+        changed["metadata"][field] = value
+    elif field == "spec":
+        changed["spec"] = value
+    elif field == "revision":
+        changed["metadata"]["annotations"]["deployment.kubernetes.io/revision"] = value
+    else:
+        changed["status"][field] = value
+    reads = iter([accepted, changed])
+    monkeypatch.setattr(images, "deployment", lambda *args: next(reads))
+    with pytest.raises(RuntimeError, match="во время проверки"):
+        images.verify_runtime("payment", accepted, IDENTITY, TAG, {"app/main.py": "expected-sha"})
+
+
 def test_reapply_same_immutable_image_has_same_template(monkeypatch):
     original = object_for(TAG)
     applied = []
