@@ -65,7 +65,8 @@ images:
 	k3d image import checkout:dev payment:dev healer:dev -c $(CLUSTER) --mode direct
 
 apps:
-	kubectl apply -f k8s/namespace.yaml -f k8s/redis.yaml -f k8s/payment.yaml -f k8s/checkout.yaml
+	kubectl apply -f k8s/namespace.yaml -f k8s/redis.yaml
+	python3 scripts/local-images.py --cluster $(CLUSTER) --component checkout payment --output .runtime/image-apps.json
 	kubectl apply -f k8s/resilience.yaml
 	kubectl create configmap k6-scripts -n demo \
 		--from-file=k6/ \
@@ -97,7 +98,8 @@ observability: repos
 		$(if $(TELEGRAM_VALUES),-f $(TELEGRAM_VALUES),)
 	kubectl wait --for=condition=Established --timeout=120s \
 		crd/servicemonitors.monitoring.coreos.com crd/prometheusrules.monitoring.coreos.com
-	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f observability/healer-rules.yaml -f k8s/healer.yaml
+	kubectl apply -f k8s/checkout-servicemonitor.yaml -f k8s/payment-servicemonitor.yaml -f observability/rules.yaml -f observability/healer-rules.yaml
+	python3 scripts/local-images.py --cluster $(CLUSTER) --component healer --output .runtime/image-healer.json
 	kubectl apply -f observability/slo-budget.yaml
 	kubectl apply -f observability/chaos-rules.yaml
 	kubectl apply -f k8s/tempo.yaml -f observability/tempo-datasource.yaml -f observability/loki-datasource.yaml
@@ -153,7 +155,8 @@ chaos: repos
 		--set dashboard.securityMode=false
 
 llm:
-	kubectl apply -f k8s/ollama.yaml -f k8s/assistant.yaml
+	kubectl apply -f k8s/ollama.yaml
+	python3 scripts/local-images.py --cluster $(CLUSTER) --component assistant --output .runtime/image-assistant.json
 	kubectl rollout status deployment/ollama -n assist --timeout=600s
 	kubectl exec -n assist deployment/ollama -- ollama pull qwen2.5:1.5b
 	kubectl rollout status deployment/sre-assistant -n heal --timeout=180s

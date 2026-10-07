@@ -317,14 +317,21 @@ def main():
     try:
         wait_healthy(args.prometheus)
         report["healer_precondition_before_preparation"] = wait_incident_closed()
+        image_check = str(Path(".runtime") / ("experiment-images-" + marker + ".json"))
+        cmd(sys.executable, "scripts/local-images.py", "--cluster", args.cluster, "--component", "checkout", "payment",
+            "--verify-only", "--output", image_check, timeout=300)
+        report["runtime_image_check"] = image_check
         if args.mode == "auto":
-            # Временный импорт может исчезнуть после удаления всех подов baseline.
-            # Исходный образ остается в Docker; подготовка заканчивается до внесения сбоя.
-            report["healer_image_id"] = cmd("docker", "image", "inspect", "healer:dev", "--format", "{{.Id}}").strip()
-            cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct")
+            # После baseline может потребоваться повторный импорт именно закрепленного тега.
+            containers = original_healer["spec"]["template"]["spec"]["containers"]
+            healer_image = next(row["image"] for row in containers if row["name"] == "healer")
+            report["healer_image_id"] = cmd("docker", "image", "inspect", healer_image, "--format", "{{.Id}}").strip()
+            cmd("k3d", "image", "import", healer_image, "-c", args.cluster, "--mode", "direct", timeout=180)
         healer_owner.mutate(0 if args.mode == "baseline" else 1, restart=args.mode == "auto")
         if args.mode == "auto":
             cmd("kubectl", "rollout", "status", "deployment/healer", "-n", "heal", "--timeout=180s", timeout=210)
+            cmd(sys.executable, "scripts/local-images.py", "--cluster", args.cluster, "--component", "checkout", "payment", "healer",
+                "--verify-only", "--output", image_check, timeout=300)
             secret = json.loads(cmd("kubectl", "get", "secret", "healer-webhook", "-n", "heal", "-o", "json"))
             token = base64.b64decode(secret["data"]["token"]).decode()
             forward = subprocess.Popen(["kubectl", "port-forward", "-n", "heal", "svc/healer", "18081:8080"],
@@ -475,7 +482,10 @@ def main():
             # Масштаб checkout принадлежит healer; опыт не присваивает эту запись себе.
             cleanup("закрытие инцидента healer", lambda: (wait_healthy(args.prometheus), wait_incident_closed()))
         if healer_owner.changed and not healer_owner.unknown and original_healer["spec"]["replicas"] > 0:
-            cleanup("импорт исходного healer", lambda: cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct"))
+            def import_original_healer():
+                image = next(row["image"] for row in original_healer["spec"]["template"]["spec"]["containers"] if row["name"] == "healer")
+                cmd("k3d", "image", "import", image, "-c", args.cluster, "--mode", "direct", timeout=180)
+            cleanup("импорт исходного healer", import_original_healer)
         if args.mode == "auto" and original_healer["spec"]["replicas"] == 0 and cleanup_errors:
             cleanup_errors.append({"operation": "deployment/healer", "error_type": "Инцидент не закрыт; healer оставлен работающим"})
         else:

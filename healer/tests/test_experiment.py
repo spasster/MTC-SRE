@@ -97,6 +97,30 @@ def test_cleanup_failure_keeps_a_failed_result(monkeypatch, tmp_path):
     assert "не закрыт" in result["error"]
 
 
+def test_baseline_cleanup_imports_the_original_pinned_healer_image(monkeypatch, tmp_path):
+    commands = []
+    pinned = "healer:local-" + "a" * 64
+    monkeypatch.setattr(sys, "argv", ["experiment", "--mode", "baseline", "--output", str(tmp_path / "result.json")])
+    monkeypatch.setattr(experiment, "cmd", lambda *args, **kwargs: commands.append(args) or json.dumps({"items": []}))
+    monkeypatch.setattr(experiment, "deployment", lambda name, namespace: {
+        "spec": {"replicas": 2 if name == "checkout" else 1,
+                 "template": {"spec": {"containers": [{"name": name, "image": pinned}]}}}})
+    checks = [0]
+    def healthy_once(*args, **kwargs):
+        checks[0] += 1
+        if checks[0] > 1:
+            raise RuntimeError("Повторный допуск запрещен")
+    monkeypatch.setattr(experiment, "wait_healthy", healthy_once)
+    monkeypatch.setattr(experiment, "wait_incident_closed", lambda: {"incident_closed": True})
+    monkeypatch.setattr(experiment.OwnedDeployment, "mutate", lambda self, *args, **kwargs: setattr(self, "changed", True))
+    monkeypatch.setattr(experiment.OwnedDeployment, "cleanup", lambda self: None)
+    with pytest.raises(SystemExit, match="Повторный допуск"):
+        experiment.main()
+    imports = [args for args in commands if args[:3] == ("k3d", "image", "import")]
+    assert len(imports) == 1 and imports[0][3] == pinned
+    assert not json.loads((tmp_path / "result.json").read_text(encoding="utf-8"))["passed"]
+
+
 def test_no_direct_child_process_can_bypass_the_deadline():
     tree = ast.parse(Path(experiment.__file__).read_text(encoding="utf-8"))
     calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)

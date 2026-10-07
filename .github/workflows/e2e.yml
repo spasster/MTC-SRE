@@ -69,6 +69,7 @@ jobs:
           set -euo pipefail
           sh scripts/verify-mtls.sh
           mkdir -p .runtime/proof
+          python scripts/local-images.py --cluster "$CLUSTER" --component checkout payment healer --verify-only --output .runtime/proof/runtime-images.json
           kubectl exec -i -n heal deployment/healer -c healer -- python < scripts/verify-scale.py > .runtime/proof/scale-guard.json
           kubectl rollout status deployment/checkout -n demo --timeout=180s
           kubectl port-forward -n obs svc/kube-prom-kube-prometheus-prometheus 19090:9090 >.runtime/prometheus-forward.log 2>&1 &

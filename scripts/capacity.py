@@ -30,7 +30,9 @@ def main():
         raise SystemExit("Сначала завершить инъекцию Chaos Mesh")
     if any(row["metadata"]["name"] == "k6-spike" for row in json.loads(cmd("kubectl", "get", "jobs", "-n", "demo", "-o", "json"))["items"]):
         raise SystemExit("В demo уже есть Job k6-spike")
-    original = {("heal", "healer"): deployment("healer", "heal")["spec"]["replicas"],
+    original_healer = deployment("healer", "heal")
+    original_healer_image = next(row["image"] for row in original_healer["spec"]["template"]["spec"]["containers"] if row["name"] == "healer")
+    original = {("heal", "healer"): original_healer["spec"]["replicas"],
                 ("demo", "checkout"): deployment("checkout", "demo")["spec"]["replicas"],
                 ("demo", "k6-background"): deployment("k6-background", "demo")["spec"]["replicas"]}
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "source_commit": cmd("git", "rev-parse", "HEAD").strip(),
@@ -102,7 +104,7 @@ def main():
     finally:
         cmd("kubectl", "delete", "job", "k6-spike", "-n", "demo", "--ignore-not-found")
         if original[("heal", "healer")] > 0:
-            cmd("k3d", "image", "import", "healer:dev", "-c", args.cluster, "--mode", "direct")
+            cmd("k3d", "image", "import", original_healer_image, "-c", args.cluster, "--mode", "direct", timeout=180)
         for (namespace, name), replicas in original.items():
             cmd("kubectl", "scale", "deployment/" + name, "-n", namespace, "--replicas=" + str(replicas))
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
