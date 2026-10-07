@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-10-07T05:36:16.231Z",
+  "configuration_commit": "20aa4f1",
+  "prepared_configuration_commit": "26c4b9f",
+  "passed": true,
+  "trace_id": "166dcbd876005501ab900de21fa91559",
+  "range": {
+    "from": "1791347966153",
+    "to": "1791347970455"
+  },
+  "query": "{namespace=\"demo\"} | json | trace_id=\"166dcbd876005501ab900de21fa91559\"",
+  "log_services": [
+    "checkout",
+    "payment"
+  ],
+  "manual_range_adjustment": false,
+  "note": "Настоящая ссылка Related logs открыта в собственном Grafana после обновления provisioning. Оба лога показаны сразу, ручного изменения времени не было. Это браузерная приемка конфигурации, а не полный CI."
+}

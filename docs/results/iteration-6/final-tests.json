@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-10-07T05:37:43.304208+00:00",
+  "source_commit": "20aa4f11defc729c454437d5d6ef735958fdccd9",
+  "passed": true,
+  "tests": 401,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "junit_sha256": "d3c224c2dde36f3c37fdff0aabae57bdb830c1b99ca140fe2cf974b2f7874768",
+  "source_sha256": {
+    "scripts/experiment.py": "f8c5236a6c4e531e9b916502e8cbf35ce0b6a7d8a9643dddb5892aca96270dfb",
+    "scripts/verify-limited-chaos.py": "9e98564f5a23d0eb3a606e3135eb9bb5e294612f0895024f9025fb09c212a64b",
+    "scripts/verify-scenarios.py": "685233b41764b79445db874cf705d7dcb9cf448426d22c3dde1008993b560b03",
+    "scripts/local-images.py": "b678486c60802d6a2e414e489b597ba9b312f1c6863cbbf0ca6bf92a7842fd79",
+    "scripts/verify-healer-observability.py": "ac7744d85d4c0676c255ba6dc68f686a7bdb1d48bcdfad677930fda5a8779be2",
+    "observability/tempo-datasource.yaml": "bc5859f6ad679e863b5497139ca04671b45d108a988997e70d72a7c5a7a00f8e"
+  },
+  "prepared_live_verifiers_match_main": true,
+  "live_evidence": [
+    "limited-prepared.json",
+    "scenarios-prepared.json",
+    "runtime-prepared.json",
+    "grafana-fixed-browser.json"
+  ],
+  "scope": "Объединенный Main: 395 ранее подготовленных тестов и 6 регрессий приемки NoData. Четыре проверочные утилиты побайтно совпадают с уже выполненными положительными опытами подготовленной копии. Полный CI заключительной ветки остается отдельным условием приемки."
+}
