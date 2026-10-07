@@ -215,7 +215,7 @@ def test_payment_client_is_reused_and_closed_with_distinct_request_traces(monkey
 
     def handler(request):
         requests.append(request)
-        return httpx.Response(200, json={"status": "ok"})
+        return httpx.Response(200, json={"status": "ok", "trace_id": request.headers["traceparent"].split("-")[1]})
 
     created, server = payment_runtime(monkeypatch, handler)
     ids = [TRACE_ID, "0123456789abcdef0123456789abcdef"]
@@ -253,7 +253,7 @@ def test_parallel_payments_keep_their_own_trace_headers(monkeypatch):
 
     def handler(request):
         headers.append(request.headers["traceparent"].split("-")[1])
-        return httpx.Response(200)
+        return httpx.Response(200, json={"status": "ok", "trace_id": request.headers["traceparent"].split("-")[1]})
 
     created, server = payment_runtime(monkeypatch, handler)
     ids = [f"{number:032x}" for number in range(1, 9)]
@@ -262,3 +262,41 @@ def test_parallel_payments_keep_their_own_trace_headers(monkeypatch):
             "traceparent": f"00-{value}-00f067aa0ba902b7-01"}), ids))
     assert all(reply.status_code == 200 for reply in replies)
     assert sorted(headers) == ids and len(created) == 1 and created[0].is_closed
+
+
+@pytest.mark.parametrize("payload", [
+    {"status": "error", "trace_id": TRACE_ID, "private": "закрытые данные"},
+    {}, [], None, {"status": "ok"},
+    {"status": "ok", "trace_id": "0123456789abcdef0123456789abcdef"},
+    {"status": "ok", "trace_id": True}, "не JSON: закрытые данные",
+])
+def test_payment_payload_must_confirm_success_and_the_request_trace(monkeypatch, payload):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        if isinstance(payload, str):
+            return httpx.Response(200, text=payload)
+        return httpx.Response(200, json=payload)
+
+    payment_runtime(monkeypatch, handler)
+    before = main.DEPENDENCY_ERRORS.labels("payment", "payload")._value.get()
+    exporter = InMemorySpanExporter()
+    trace.get_tracer_provider().add_span_processor(SimpleSpanProcessor(exporter))
+    with TestClient(app) as running:
+        response = running.get("/work", headers={"traceparent": TRACEPARENT})
+    assert response.status_code == 500
+    assert response.json() == {"status": "error", "reason": "payment_payload", "trace_id": TRACE_ID}
+    assert "закрытые данные" not in response.text
+    assert len(requests) == 1
+    assert main.DEPENDENCY_ERRORS.labels("payment", "payload")._value.get() == before + 1
+    payment_span = next(span for span in exporter.get_finished_spans() if span.name == "POST /pay")
+    assert payment_span.status.status_code == StatusCode.ERROR
+    assert payment_span.status.description == "payload"
+
+
+def test_payment_success_requires_the_contract_http_status(monkeypatch):
+    payment_runtime(monkeypatch, lambda request: httpx.Response(201, json={"status": "ok", "trace_id": TRACE_ID}))
+    with TestClient(app) as running:
+        response = running.get("/work", headers={"traceparent": TRACEPARENT})
+    assert response.status_code == 500 and response.json()["reason"] == "payment_http"

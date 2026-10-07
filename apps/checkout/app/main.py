@@ -54,7 +54,7 @@ DEPENDENCY_LATENCY = Histogram(
 for status in ("200", "500"):
     REQUESTS.labels("GET", "/work", status)
 LATENCY.labels("GET", "/work")
-for dependency, reasons in (("redis", ("timeout", "error")), ("payment", ("timeout", "error", "http"))):
+for dependency, reasons in (("redis", ("timeout", "error")), ("payment", ("timeout", "error", "http", "payload"))):
     for reason in reasons:
         DEPENDENCY_ERRORS.labels(dependency, reason)
 APPLICATION_ERRORS.labels("fail_rate")
@@ -194,10 +194,18 @@ def call_payment(trace_id: str) -> str:
         inject(headers)
         response = app.state.payment_client.post(url, headers=headers, timeout=timeout)
         span.set_attribute("http.status_code", response.status_code)
-        if response.status_code >= 500:
+        if response.status_code != 200:
             span.set_status(Status(StatusCode.ERROR, "http"))
             return "http"
-        response.raise_for_status()
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        if (not isinstance(payload, dict) or payload.get("status") != "ok"
+                or not trace_id or type(payload.get("trace_id")) is not str
+                or payload["trace_id"] != trace_id):
+            span.set_status(Status(StatusCode.ERROR, "payload"))
+            return "payload"
         return "ok"
 
 
