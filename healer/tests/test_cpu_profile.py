@@ -11,12 +11,13 @@ from cpu_profile import selected_profile
 
 def measured():
     sample = {"p95": .15, "error_ratio": 0, "request_rate": 9, "cpu_throttle": .2,
-              "synthetic_success": 1, "synthetic_time": 100, "time": 110, "rollout_ready": True}
+              "synthetic_success": 1, "synthetic_time": 100, "time": 110, "rollout_ready": True, "load_active": True}
     failed = {"replicas": 2, "planned_rps": 9, "passed": False, "client_p95_ms": 550,
-              "samples": [{**sample, "p95": .55, "cpu_throttle": .7} for _ in range(3)]}
+              "sent": 810, "dropped": 0, "client": {"http_req_failed": {"rate": 0}},
+              "samples": [{**sample, "p95": .55, "cpu_throttle": .7, "time": 110 + i * 10} for i in range(3)]}
     healthy = {"replicas": 5, "planned_rps": 9, "passed": True, "client_p95_ms": 150,
                "sent": 810, "dropped": 0, "client": {"http_req_failed": {"rate": 0}},
-               "samples": [copy.deepcopy(sample) for _ in range(3)]}
+               "samples": [{**sample, "time": 110 + i * 10} for i in range(3)]}
     return {"passed": True, "cleanup_errors": [], "cluster": "mtc-ci", "source_commit": "current",
             "duration_seconds": 90, "finished_at": "2026-10-07T03:00:00+00:00", "stages": [failed, healthy]}
 
@@ -64,3 +65,29 @@ def test_client_flags_do_not_replace_cpu_and_service_evidence(side, field, value
 def test_future_and_stale_measurements_are_rejected(now):
     with pytest.raises(ValueError):
         selected_profile(measured(), "mtc-ci", "current", now=now)
+
+
+def test_completed_job_samples_do_not_replace_active_cpu_measurements():
+    report = measured()
+    for stage in report["stages"]:
+        stage["samples"].append({"load_active": False, "p95": .05, "cpu_throttle": 0, "time": 140})
+    assert selected_profile(report, "mtc-ci", "current", now=NOW)["total_rps"] == 9
+
+
+@pytest.mark.parametrize("side,field,value", [(0, "load_active", False), (1, "load_active", False),
+                                             (0, "request_rate", 4), (1, "request_rate", 4),
+                                             (0, "time", 110), (1, "time", float("nan"))])
+def test_unproven_active_load_cannot_define_a_cpu_profile(side, field, value):
+    report = measured()
+    for sample in report["stages"][side]["samples"]:
+        sample[field] = value
+    with pytest.raises(ValueError):
+        selected_profile(report, "mtc-ci", "current", now=NOW)
+
+
+@pytest.mark.parametrize("field,value", [("sent", 100), ("dropped", 1), ("client_p95_ms", 150)])
+def test_incomplete_or_healthy_two_replica_client_is_not_cpu_degradation(field, value):
+    report = measured()
+    report["stages"][0][field] = value
+    with pytest.raises(ValueError):
+        selected_profile(report, "mtc-ci", "current", now=NOW)

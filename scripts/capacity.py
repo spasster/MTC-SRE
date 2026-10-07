@@ -35,6 +35,7 @@ def main():
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
     parser.add_argument("--rates", default="1,3,4,6,8,12")
     parser.add_argument("--replicas", default="2,5", help="Проверяемые варианты: 2, 5 или 2,5")
+    parser.add_argument("--continue-after-failure", action="store_true", help="Проверить все ступени для калибровки CPU-демо")
     parser.add_argument("--duration", type=int, default=120)
     parser.add_argument("--output", default="docs/results/capacity.json")
     args = parser.parse_args()
@@ -62,6 +63,7 @@ def main():
               "cluster": args.cluster,
               "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               "duration_seconds": args.duration, "stages": [], "bounds": {}, "passed": False,
+              "continue_after_failure": args.continue_after_failure,
               "method": "Фоновая нагрузка и healer выключены на время серии; 2 и 5 реплик проверяются при одинаковом профиле. Каждый RPS держится не менее 90 с. Результаты относятся только к этому контуру.",
               "checkout_resources_per_replica": deployment("checkout", "demo")["spec"]["template"]["spec"]["containers"][0]["resources"]}
     try:
@@ -87,13 +89,20 @@ def main():
                 print(f"Измеряется {rate} RPS при {replicas} репликах", flush=True)
                 deadline = time.monotonic() + args.duration + 90
                 while time.monotonic() < deadline:
+                    before = owned.current()
+                    if before is None:
+                        raise RuntimeError("Собственный Job исчез до измерения")
                     sample = metrics("http://127.0.0.1:19090")
                     sample["checkout_cpu_cores"] = scalar("http://127.0.0.1:19090", 'sum(rate(container_cpu_usage_seconds_total{namespace="demo",container="checkout",pod=~"checkout-.*"}[1m]))')
                     sample["checkout_ram_bytes"] = scalar("http://127.0.0.1:19090", 'sum(container_memory_working_set_bytes{namespace="demo",container="checkout",pod=~"checkout-.*"})')
-                    stage["samples"].append(sample)
                     job = owned.current()
                     if job is None or time.monotonic() >= deadline:
                         raise RuntimeError("Собственный Job или своевременное завершение не подтверждены")
+                    # Окно относится к нагрузке, только если свой Job активен до и после чтения.
+                    sample["load_active"] = all(obj.get("status", {}).get("active", 0) > 0
+                                                and not obj.get("status", {}).get("succeeded")
+                                                and not obj.get("status", {}).get("failed") for obj in (before, job))
+                    stage["samples"].append(sample)
                     if job.get("status", {}).get("succeeded") or job.get("status", {}).get("failed"):
                         break
                     time.sleep(10)
@@ -119,8 +128,10 @@ def main():
                 if stage["passed"]:
                     bound["highest_tested_passing_rps"] = rate
                 else:
-                    bound["first_tested_failing_rps"] = rate
-                    break
+                    if bound["first_tested_failing_rps"] is None:
+                        bound["first_tested_failing_rps"] = rate
+                    if not args.continue_after_failure:
+                        break
         report["passed"] = all(bound["highest_tested_passing_rps"] is not None for bound in report["bounds"].values())
     except Exception as exc:
         report["error"] = str(exc)
@@ -146,7 +157,7 @@ def main():
             report["passed"] = False
             report.setdefault("error", "Очистка серии мощности не подтверждена")
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
-        report["limitation"] = "Указаны проверенные прошедшие ступени и первые отказы. Если одной границы нет, интервал максимума не установлен. Точный максимум и минимальные CPU/RAM этим опытом не доказаны."
+        report["limitation"] = "Указаны проверенные прошедшие ступени и первые отказы. Если одной границы нет или результаты немонотонны, интервал максимума не установлен. Точный максимум и минимальные CPU/RAM этим опытом не доказаны."
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     if not report["passed"]:

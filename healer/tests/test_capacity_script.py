@@ -99,3 +99,52 @@ def test_capacity_rejects_job_replacement_after_log_read(monkeypatch):
             {"kind": "Job", "uid": "created-job", "controller": True}]}}]}))
     with pytest.raises(RuntimeError, match="не подтвержден"):
         capacity.job_summary(owner)
+
+
+@pytest.mark.parametrize("continue_series,expected_stages", [(False, 2), (True, 3)])
+def test_cpu_calibration_can_continue_after_failure_and_keeps_first_boundary(monkeypatch, tmp_path, continue_series, expected_stages):
+    objects, target, commands = controlled_capacity(monkeypatch, tmp_path)
+    monkeypatch.setattr(sys, "argv", ["capacity", "--rates", "1,2,3", "--replicas", "2", "--duration", "90",
+                                     "--output", str(target)] + (["--continue-after-failure"] if continue_series else []))
+    counter = {"jobs": 0}
+
+    class Deployment:
+        changed = unknown = False
+        def __init__(self, name, namespace, original, marker):
+            self.name = name
+        def mutate(self, replicas):
+            objects[self.name]["spec"]["replicas"] = replicas
+        def cleanup(self):
+            pass
+
+    class Job:
+        kind, name, namespace, generation = "Job", "k6-spike", "demo", 1
+        def __init__(self, manifest, marker):
+            counter["jobs"] += 1
+            self.uid, self.reads = "job-" + str(counter["jobs"]), 0
+        def create(self, **kwargs):
+            pass
+        def current(self):
+            self.reads += 1
+            return {"metadata": {"uid": self.uid}, "status": {"active": 1} if self.reads <= 6 else {"succeeded": 1}}
+        def cleanup(self):
+            pass
+
+    monkeypatch.setattr(capacity, "OwnedDeployment", Deployment)
+    monkeypatch.setattr(capacity, "OwnedResource", Job)
+    monkeypatch.setattr(capacity.time, "sleep", lambda *args: None)
+    monkeypatch.setattr(capacity, "metrics", lambda *args: {"p95": .05, "error_ratio": 0, "request_rate": 1,
+        "synthetic_success": 1, "synthetic_time": 100, "time": 110, "rollout_ready": True})
+    monkeypatch.setattr(capacity, "scalar", lambda *args: 1)
+    monkeypatch.setattr(capacity, "cmd", lambda *args, **kwargs: "current" if args[0] == "git" else
+        json.dumps({"spec": {"template": {"spec": {"containers": [{"env": []}]}}}}) if "create" in args else json.dumps({"items": []}))
+    monkeypatch.setattr(capacity, "job_summary", lambda *args: {"http_reqs": {"count": counter["jobs"] * 90},
+        "dropped_iterations": {"count": 0}, "http_req_failed": {"rate": 0},
+        "http_req_duration": {"p(95)": 50 if counter["jobs"] == 1 else 500}})
+
+    capacity.main()
+    report = json.loads(target.read_text(encoding="utf-8"))
+    assert report["passed"] is True and len(report["stages"]) == expected_stages
+    assert report["bounds"]["2"] == {"highest_tested_passing_rps": 1, "first_tested_failing_rps": 2}
+    assert all(row["load_active"] is True for row in report["stages"][0]["samples"][:3])
+    assert report["stages"][0]["samples"][-1]["load_active"] is False
