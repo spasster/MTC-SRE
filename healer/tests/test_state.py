@@ -212,6 +212,28 @@ def controlled(monkeypatch):
     main.reset_state()
 
 
+def test_worker_removes_restored_orphan_resolved_without_new_history(controlled, monkeypatch):
+    snapshot = main.state_snapshot()
+    snapshot["_resolved_pending"] = True
+    snapshot["_mttr_sent"] = True
+    controlled.document["state"] = snapshot
+    unavailable = Mock(side_effect=RuntimeError("Метрики недоступны"))
+    monkeypatch.setattr(main, "gather", unavailable)
+    actor = main.actuator
+
+    assert main.check_recovery() is None
+    assert controlled.document["state"]["_resolved_pending"] is False
+    assert controlled.document["state"]["_last_recovery"] is None
+    assert controlled.document["events"] == [] and controlled.document["operations"] == []
+    assert actor.calls == []
+    unavailable.assert_not_called()
+    main.reset_state()
+    main._state_store, main.actuator = controlled, actor
+    assert main.check_recovery() is None
+    assert main._resolved_pending is False and main._broke_at is None
+    unavailable.assert_not_called()
+
+
 def test_restart_preserves_action_budget_and_cooldown(controlled):
     main.handle_alert(alert())
     assert main._actions == 1

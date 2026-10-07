@@ -378,7 +378,7 @@ def test_scale_down_follows_the_aggregate(monkeypatch):
 def test_resolved_preserves_replicas_changed_by_the_operator(monkeypatch):
     monkeypatch.setattr(main, "gather", lambda namespace, actuator=None: evidence(
         replicas=5, pods=list(HEALTHY)))
-    assert main.handle_resolved()["result"] == "resolved"
+    assert main.handle_resolved()["result"] == "ignored: no active incident"
     assert main.actuator.calls == []
 
 
@@ -848,6 +848,41 @@ def test_resolved_before_rollout_is_rechecked_by_worker(monkeypatch):
     assert main.check_recovery()["result"] == "resolved"
     assert main._resolved_pending is False
     assert any("подтверждённого восстановления" in message for message, _ in main.notifier.messages)
+
+
+def test_late_resolved_does_not_reopen_a_closed_incident_without_metrics(monkeypatch):
+    main._broke_at = main.time.time() - 10
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: evidence(pods=list(HEALTHY)))
+    assert main.handle_resolved()["result"] == "resolved"
+    history = main._last_recovery.copy()
+    events = list(main.get_store().document["events"])
+
+    def unavailable(*args, **kwargs):
+        raise RuntimeError("Метрики временно недоступны")
+
+    monkeypatch.setattr(main, "gather", unavailable)
+    body = client.post("/webhook", json={"alerts": [alert(status="resolved")]}).json()["results"][0]
+    assert body["result"] == "ignored: no active incident"
+    assert main._resolved_pending is False and main._broke_at is None
+    assert main._last_recovery == history
+    assert main.get_store().document["events"] == events
+    assert main.actuator.calls == []
+
+
+@pytest.mark.parametrize("key,value", [
+    ("_broke_at", 1000), ("_fixed_at", 1001), ("_applied_at", 1001),
+    ("_recovery_pending", True), ("_recovery_targets", {"checkout"}),
+    ("_actions", 1), ("_closed", {"redis"}), ("_escalated", True),
+    ("_acted_alert", "CheckoutSlow"), ("_cooldown_until", 1002),
+    ("_scaled_by_healer", True), ("_scale_down_pending", True),
+])
+def test_resolved_keeps_unfinished_work_when_metrics_are_unavailable(monkeypatch, key, value):
+    monkeypatch.setattr(main, key, value)
+    monkeypatch.setattr(main, "gather", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("Нет метрик")))
+    assert main.handle_resolved()["result"] == "ignored: evidence failed"
+    assert main._resolved_pending is True
+    assert getattr(main, key) == value
+    assert main._last_recovery is None and main.actuator.calls == []
 
 
 def test_recovery_worker_starts_without_telegram():

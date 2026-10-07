@@ -857,11 +857,23 @@ def recovery_ready(evidence, limits) -> bool:
     return all(actor.deployment_ready(TARGET_NAMESPACE, name) for name in _recovery_targets | {"checkout"})
 
 
+def incident_active() -> bool:
+    """История закрытого инцидента и одиночный resolved не создают новую работу."""
+    return bool(_broke_at is not None or _fixed_at is not None or _applied_at is not None
+                or _recovery_pending or _recovery_targets or _pending is not None or _actions
+                or _closed or _escalated or _acted_alert is not None or _cooldown_until
+                or _scaled_by_healer or _scale_down_pending or _uncertain or _action_intent)
+
+
 @state_transaction
 def check_recovery():
-    global _busy
+    global _busy, _resolved_pending
     with _lock:
-        if _busy or _uncertain or _action_intent or (_broke_at is None and not (_recovery_pending or _resolved_pending)):
+        if _busy or _uncertain or _action_intent:
+            return None
+        if not incident_active():
+            # Исправляет сохраненный флаг от позднего resolved без выдуманного восстановления.
+            _resolved_pending = False
             return None
         _busy = True
     try:
@@ -1008,10 +1020,14 @@ def handle_resolved(evidence=None) -> dict:
 def _handle_resolved(evidence=None, resolved_received=True) -> dict:
     global _actions, _pending, _escalated, _acted_alert, _cooldown_until, _scale_down_pending
     global _applied_at, _recovery_pending, _resolved_pending
+    if _uncertain or _action_intent:
+        _resolved_pending = _resolved_pending or resolved_received
+        return {"result": "ignored: operation unknown"}
+    if not incident_active():
+        _resolved_pending = False
+        return {"result": "ignored: no active incident"}
     limits = get_rules()
     _resolved_pending = _resolved_pending or resolved_received
-    if _uncertain or _action_intent:
-        return {"result": "ignored: operation unknown"}
     try:
         if evidence is None:
             evidence = gather(TARGET_NAMESPACE, actuator=get_actuator())
