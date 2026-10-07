@@ -105,3 +105,95 @@ def test_old_down_or_partial_pod_telemetry_is_rejected(failure):
         return rows
 
     assert gather("demo", Actor(), query)["telemetry_complete"] is False
+
+
+def test_collection_deadline_stops_queries_and_prevents_action_and_recovery(monkeypatch):
+    from app import main
+    from app.diagnose import decide
+
+    clock, evaluations = [1000.0], []
+    monkeypatch.setattr(module.time, "time", lambda: clock[0])
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
+
+    def slow_query(expression, evaluation_time=None):
+        evaluations.append(evaluation_time)
+        clock[0] += 4
+        rows = query_complete(expression)
+        if expression.startswith("histogram_quantile") or "container_cpu" in expression:
+            return [(labels, .5) for labels, value in rows]
+        return rows
+
+    monkeypatch.setattr(module, "query_prometheus", slow_query)
+    result = gather("demo", Actor())
+    limits = main.load_rules()
+    assert not result["telemetry_complete"] and "истек" in result["error"]
+    assert evaluations == [1000] * 5 and clock[0] == 1020
+    assert decide(result, limits).action == "none"
+    assert not main._healthy(result, limits)
+
+
+@pytest.mark.parametrize("old_series", ["pods", "synthetic"])
+def test_samples_that_expire_during_collection_are_rejected(monkeypatch, old_series):
+    clock = [0.0]
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
+
+    def aging_query(expression):
+        clock[0] += .1
+        rows = query_complete(expression)
+        if old_series == "pods" and expression.startswith("max by(pod)"):
+            return [(labels, 44) for labels, value in rows]
+        if old_series == "synthetic" and expression.startswith("max(time()"):
+            return [({}, 44)]
+        return rows
+
+    result = gather("demo", Actor(), aging_query)
+    assert clock[0] < module.MAX_COLLECTION_SECONDS
+    assert not result["telemetry_complete"] and "устарели" in result["error"]
+
+
+def test_final_ages_include_query_and_kubernetes_read_time(monkeypatch):
+    clock, expressions = [0.0], []
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
+
+    class SlowActor(Actor):
+        def ready(self, *args):
+            clock[0] += 1
+            return True
+
+    def query(expression):
+        expressions.append(expression)
+        clock[0] += .1
+        return query_complete(expression)
+
+    result = gather("demo", SlowActor(), query)
+    duration = len(expressions) * .1 + 2
+    assert result["telemetry_complete"]
+    assert result["collection_seconds"] == pytest.approx(duration)
+    assert result["telemetry_age_seconds"] == pytest.approx(5 + duration)
+    assert result["synthetic_age_seconds"] == pytest.approx(5 + duration)
+
+
+def test_late_kubernetes_read_prevents_remaining_reads(monkeypatch):
+    clock, calls = [0.0], []
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
+
+    class SlowActor(Actor):
+        def revision_age_seconds(self, *args):
+            clock[0] = 21
+            return 5000
+
+        def replicas(self, *args):
+            calls.append("replicas")
+            return 2
+
+    result = gather("demo", SlowActor(), query_complete)
+    assert not result["telemetry_complete"] and calls == []
+
+
+@pytest.mark.parametrize("missing", ["success", "age"])
+def test_missing_synthetic_series_is_not_a_complete_snapshot(missing):
+    def query(expression):
+        prefix = "min(probe_success" if missing == "success" else "max(time()"
+        return [] if expression.startswith(prefix) else query_complete(expression)
+
+    assert not gather("demo", Actor(), query)["telemetry_complete"]

@@ -10,6 +10,10 @@ import httpx
 from app.k8s import K8sActuator
 
 
+MAX_COLLECTION_SECONDS = 20
+MAX_SAMPLE_AGE_SECONDS = 45
+
+
 class EvidenceError(Exception):
     pass
 
@@ -77,10 +81,30 @@ def _ratio(part, whole):
 
 
 def gather(namespace, actuator=None, query=None):
-    actor = actuator or K8sActuator()
-    ask = query or partial(query_prometheus, evaluation_time=time.time())
+    started = time.monotonic()
+    evaluation_time = time.time()
+
+    def elapsed():
+        duration = time.monotonic() - started
+        if not 0 <= duration < MAX_COLLECTION_SECONDS:
+            raise EvidenceError("Срок сбора телеметрии истек")
+        return duration
+
+    def bounded(call, *args):
+        # Просроченный ответ не допускается к решению, даже если запрос завершился успешно.
+        elapsed()
+        result = call(*args)
+        elapsed()
+        return result
+
+    raw_query = query or partial(query_prometheus, evaluation_time=evaluation_time)
+
+    def ask(expression):
+        return bounded(raw_query, expression)
+
     try:
-        current = actor.telemetry_pods(namespace, "checkout")
+        actor = bounded(lambda: actuator or K8sActuator())
+        current = bounded(actor.telemetry_pods, namespace, "checkout")
         if not current:
             raise EvidenceError("Нет рабочих подов текущей ревизии checkout")
         selector = (f'namespace={json.dumps(namespace)},job="checkout",'
@@ -94,7 +118,7 @@ def gather(namespace, actuator=None, query=None):
 
         up = per_pod(f'up{{{selector},endpoint="metrics"}}')
         ages = per_pod(f'max by(pod)(time() - timestamp(http_requests_total{{{selector},path="/work"}}))')
-        if any(value != 1 for value in up.values()) or any(not 0 <= age <= 45 for age in ages.values()):
+        if any(value != 1 for value in up.values()) or any(not 0 <= age <= MAX_SAMPLE_AGE_SECONDS for age in ages.values()):
             raise EvidenceError("Метрики checkout недоступны или устарели")
         p95 = _by_label(
             ask(
@@ -142,10 +166,18 @@ def gather(namespace, actuator=None, query=None):
         probe = f'service="checkout",target_namespace={json.dumps(namespace)}'
         synthetic_success = _scalar(ask(f'min(probe_success{{{probe}}})'))
         synthetic_age = _scalar(ask(f'max(time() - timestamp(probe_success{{{probe}}}))'))
-        revision_age = actor.revision_age_seconds(namespace, "checkout")
-        replicas = actor.replicas(namespace, "checkout")
-        redis_ready = actor.ready(namespace, "redis")
-        payment_ready = actor.ready(namespace, "payment")
+        revision_age = bounded(actor.revision_age_seconds, namespace, "checkout")
+        replicas = bounded(actor.replicas, namespace, "checkout")
+        redis_ready = bounded(actor.ready, namespace, "redis")
+        payment_ready = bounded(actor.ready, namespace, "payment")
+        collection_seconds = elapsed()
+        telemetry_age = max(ages.values()) + collection_seconds
+        if (telemetry_age > MAX_SAMPLE_AGE_SECONDS
+                or synthetic_success not in (0, 1)
+                or synthetic_age is None or not 0 <= synthetic_age <= MAX_SAMPLE_AGE_SECONDS
+                or synthetic_age + collection_seconds > MAX_SAMPLE_AGE_SECONDS):
+            raise EvidenceError("К окончанию сбора метрики или синтетическая проверка устарели")
+        synthetic_age += collection_seconds
     except Exception as exc:
         return {"error": str(exc), "telemetry_complete": False, "request_rate": None,
                 "error_ratio": None, "p95": None, "pods": []}
@@ -171,7 +203,8 @@ def gather(namespace, actuator=None, query=None):
         "synthetic_success": synthetic_success,
         "synthetic_age_seconds": synthetic_age,
         "telemetry_complete": True,
-        "telemetry_age_seconds": max(ages.values()),
+        "telemetry_age_seconds": telemetry_age,
+        "collection_seconds": collection_seconds,
         "redis_ready": redis_ready,
         "payment_ready": payment_ready,
         "pods": pods,
