@@ -1,1 +1,0 @@
-{"passed": true, "dry_run_preserves_replicas": true, "unguarded_downscale_rejected": true, "stale_replica_count_rejected": true, "original_replicas_restored": true, "errors": [], "cleanup_errors": [], "conflicts": {"dry_run": 0, "apply": 0, "cleanup": 0}, "max_attempts_per_phase": 3}

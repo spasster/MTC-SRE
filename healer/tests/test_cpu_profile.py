@@ -125,7 +125,7 @@ def test_partial_warmup_window_is_visible_and_cannot_define_a_profile():
 
 
 def failed_ci_grid():
-    path = Path(__file__).resolve().parents[2] / "docs/results/iteration-6/ci-f5-spike-failure/cpu-capacity.json"
+    path = Path(__file__).resolve().parents[1] / "tests/fixtures/cpu-capacity-ci-gap.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 

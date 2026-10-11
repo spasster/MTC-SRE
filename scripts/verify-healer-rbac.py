@@ -13,7 +13,7 @@ from experiment import cmd
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
-    parser.add_argument("--output", default="docs/results/healer-rbac.json")
+    parser.add_argument("--output", default=".runtime/healer-rbac.json")
     args = parser.parse_args()
     cmd("sh", "scripts/require-context.sh", args.cluster)
     checks = [

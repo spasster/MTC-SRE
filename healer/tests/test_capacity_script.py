@@ -283,7 +283,7 @@ def test_capacity_failed_baseline_keeps_precondition_samples(monkeypatch):
 
 
 def refinement_grid():
-    path = Path(__file__).resolve().parents[2] / "docs/results/iteration-6/ci-f5-spike-failure/cpu-capacity.json"
+    path = Path(__file__).resolve().parents[1] / "tests/fixtures/cpu-capacity-ci-gap.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 

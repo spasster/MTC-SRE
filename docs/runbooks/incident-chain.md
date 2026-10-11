@@ -16,8 +16,6 @@ histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{
 {namespace="demo"} | json | trace_id="<trace_id из exemplar>"
 ```
 
-В [браузерной проверке CPU-инцидента](../results/iteration-4/grafana-browser.json) подтверждены [exemplar](../results/iteration-4/grafana-exemplar-browser.jpg) и [трейс](../results/iteration-4/grafana-trace-browser.jpg). Запрос 166dcbd876005501ab900de21fa91559 выполнен 7 октября 2026 в 07:39:28 по Москве; длительность span checkout 301.43 мс.
-
-Исходная ссылка дала [только payment](../results/iteration-4/grafana-logs-narrow-browser.jpg): правая граница 07:39:28.455, а журнал checkout поступил в 07:39:28.470943768. Одно ручное расширение времени показало [обе строки](../results/iteration-4/grafana-logs-expanded-browser.jpg). Этот первоначальный обход сохранен как доказательство дефекта. В 20aa4f1 добавлены spanStartTimeShift=-2s и spanEndTimeShift=2s; точный trace_id сохраняется. [Повтор перехода через настоящую ссылку](../results/iteration-6/grafana-fixed-browser.json) показал оба сервиса без ручного расширения, [снимок](../results/iteration-6/grafana-logs-fixed.jpg) сохранен. Причина и поля описаны в [документации Grafana](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/).
+Окно логов вокруг span расширено на 2 секунды в обе стороны, поэтому в Loki попадают строки и checkout, и payment с тем же trace_id. Поля перехода описаны в [документации Grafana](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/).
 
 Для MTTR используются три последовательных измерения перекрывающихся минутных окон с интервалом около 5 секунд. Они не означают три независимые здоровые минуты. Момент приема API, подтверждение SLO healer и внешний конец MTTR следует различать.

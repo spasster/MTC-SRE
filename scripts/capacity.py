@@ -184,7 +184,7 @@ def main():
     parser.add_argument("--continue-after-failure", action="store_true", help="Проверить все ступени для калибровки CPU-демо")
     parser.add_argument("--refine-cpu-profile", action="store_true", help="Измерить до трех промежуточных RPS, если исходная сетка не дала CPU-профиль")
     parser.add_argument("--duration", type=int, default=120)
-    parser.add_argument("--output", default="docs/results/capacity.json")
+    parser.add_argument("--output", default=".runtime/capacity.json")
     args = parser.parse_args()
     rates = [int(item) for item in args.rates.split(",")]
     replica_counts = [int(item) for item in args.replicas.split(",")]

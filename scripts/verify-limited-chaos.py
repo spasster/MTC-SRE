@@ -110,7 +110,7 @@ def network_mesh_proven(case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
-    parser.add_argument("--output", default="docs/results/limited-chaos.json")
+    parser.add_argument("--output", default=".runtime/limited-chaos.json")
     parser.add_argument("--faults", nargs="+", choices=list(KINDS), default=list(KINDS))
     args = parser.parse_args()
     os.environ["CLUSTER"] = args.cluster

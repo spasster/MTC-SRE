@@ -8,7 +8,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ROOT = Path("docs/results")
+ROOT = Path(".runtime")
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 11, "axes.unicode_minus": False})
 
 
@@ -79,6 +79,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--iteration-dir", type=Path)
     args = parser.parse_args()
+    ROOT.mkdir(parents=True, exist_ok=True)
     if args.iteration_dir:
         plot_iteration(args.iteration_dir)
         return

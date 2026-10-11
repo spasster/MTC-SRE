@@ -73,7 +73,7 @@ def stop_forward(forward, errors):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default="mtc")
-    parser.add_argument("--output", default="docs/results/scenarios.json")
+    parser.add_argument("--output", default=".runtime/scenarios.json")
     args = parser.parse_args()
     os.environ["CLUSTER"] = args.cluster
     cmd("sh", "scripts/require-context.sh", args.cluster)

@@ -1,5 +1,7 @@
 # Системные журналы Ubuntu
 
+Сборщик логов подов описан в `observability/alloy-values.yaml`, журналов машины — в `observability/alloy-host.alloy`. Зачем Alloy в контуре: [architecture.md](architecture.md).
+
 `make logs-linux` устанавливает Loki, запускает Ansible для текущего Ubuntu-хоста и подключает Alloy к `/var/log/syslog` и `/var/log/audit/audit.log`. Команда требует sudo и ядро с поддержкой audit. WSL подходит для проверки Kubernetes, но наличие audit в его ядре нужно проверить отдельно: отсутствие события audit не считается успешной проверкой.
 
 ```sh

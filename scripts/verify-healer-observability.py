@@ -120,7 +120,7 @@ def close_test_incident(payload, token, report):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
-    parser.add_argument("--output", default="docs/results/healer-observability.json")
+    parser.add_argument("--output", default=".runtime/healer-observability.json")
     args = parser.parse_args()
     cmd("sh", "scripts/require-context.sh", args.cluster)
     report = {"checked_at": datetime.now(timezone.utc).isoformat(), "passed": False,

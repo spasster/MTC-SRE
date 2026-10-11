@@ -32,8 +32,8 @@ except Exception as error:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default="mtc")
-    parser.add_argument("--dataset", default="docs/results/iteration-2/llm-cases.json")
-    parser.add_argument("--output", default="docs/results/llm-quality.json")
+    parser.add_argument("--dataset", default="scripts/llm-cases.json")
+    parser.add_argument("--output", default=".runtime/llm-quality.json")
     args = parser.parse_args()
     cmd("sh", "scripts/require-context.sh", args.cluster)
     dataset = json.loads(Path(args.dataset).read_text(encoding="utf-8"))

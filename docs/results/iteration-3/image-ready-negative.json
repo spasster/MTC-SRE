@@ -1,8 +1,0 @@
-{
-  "checked_at": "2026-10-07T01:59:15.927865+00:00",
-  "passed": false,
-  "components": {},
-  "verifier_sha256": "bf269b1b84b1b37b321a280c0a3b161c0fa54bf62bf44565c4732cca8efd1568",
-  "error_type": "RuntimeError",
-  "error": "Рабочий Deployment заменен или изменен после применения"
-}

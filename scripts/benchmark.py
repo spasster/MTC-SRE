@@ -23,7 +23,7 @@ def main():
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
     parser.add_argument("--pairs", type=int, default=5)
     parser.add_argument("--seed", type=int, default=20261007)
-    parser.add_argument("--output-dir", default="docs/results/repeated-mttr")
+    parser.add_argument("--output-dir", default=".runtime/repeated-mttr")
     args = parser.parse_args()
     if args.pairs < 5:
         parser.error("Для этой серии требуется не менее пяти пар")

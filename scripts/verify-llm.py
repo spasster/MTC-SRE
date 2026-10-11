@@ -16,7 +16,7 @@ from experiment import cmd
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default="mtc")
-    parser.add_argument("--output", default="docs/results/llm.json")
+    parser.add_argument("--output", default=".runtime/llm.json")
     parser.add_argument("--kind", choices=["report", "postmortem"], default="report")
     args = parser.parse_args()
     cmd("sh", "scripts/require-context.sh", args.cluster)

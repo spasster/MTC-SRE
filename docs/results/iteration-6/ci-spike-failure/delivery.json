@@ -1,8 +1,0 @@
-{
-  "artifact_id": 11469826378,
-  "declared_digest": "sha256:0ccd25b56c3c878fdac627f867ef3ae2e09af7a003dfe1ddbde01202f0815e74",
-  "downloaded_digest": "sha256:0ccd25b56c3c878fdac627f867ef3ae2e09af7a003dfe1ddbde01202f0815e74",
-  "digest_verified": true,
-  "incomplete_json_count": 0,
-  "scope": "Полученный ZIP проверен по опубликованному SHA-256; разрешенные JSON сохранены без изменения исходных байтов."
-}

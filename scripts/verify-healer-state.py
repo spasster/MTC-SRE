@@ -67,7 +67,7 @@ def diagnostic_evidence():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cluster", default=os.getenv("CLUSTER", "mtc"))
-    parser.add_argument("--output", default="docs/results/healer-state.json")
+    parser.add_argument("--output", default=".runtime/healer-state.json")
     args = parser.parse_args()
     os.environ["CLUSTER"] = args.cluster
     cmd("sh", "scripts/require-context.sh", args.cluster)
