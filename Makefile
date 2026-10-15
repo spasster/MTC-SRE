@@ -74,14 +74,24 @@ apps:
 	kubectl apply -f k8s/k6-background.yaml
 
 repos:
-	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
-	helm repo add grafana https://grafana.github.io/helm-charts --force-update
-	helm repo add chaos-mesh https://charts.chaos-mesh.org --force-update
-	helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
+	-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+	-helm repo add grafana https://grafana.github.io/helm-charts --force-update
+	-helm repo add chaos-mesh https://charts.chaos-mesh.org --force-update
+	-helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
 	@if ! helm repo update; then \
 		echo "Предупреждение: не удалось обновить один из Helm-репозиториев; проверяю локальный кеш." >&2; \
-		helm search repo istio/base --version $(ISTIO_VERSION) >/dev/null || \
-		{ echo "Не найден Istio chart $(ISTIO_VERSION) в локальном кеше; повторите запуск при доступной сети." >&2; exit 1; }; \
+		missing=0; \
+		for chart_version in \
+			"prometheus-community/kube-prometheus-stack:$(PROM_STACK_VERSION)" \
+			"prometheus-community/prometheus-blackbox-exporter:$(BLACKBOX_CHART_VERSION)" \
+			"grafana/loki:$(LOKI_CHART_VERSION)" \
+			"grafana/alloy:$(ALLOY_CHART_VERSION)" \
+			"chaos-mesh/chaos-mesh:$(CHAOS_CHART_VERSION)" \
+			"istio/base:$(ISTIO_VERSION)"; do \
+			chart=$${chart_version%%:*}; version=$${chart_version##*:}; \
+			helm search repo "$$chart" --version "$$version" >/dev/null || { echo "Не найден chart $$chart $$version в локальном кеше." >&2; missing=1; }; \
+		done; \
+		test "$$missing" -eq 0 || { echo "Повторите запуск при доступной сети." >&2; exit 1; }; \
 	fi
 
 mesh: repos
