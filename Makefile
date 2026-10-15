@@ -78,7 +78,11 @@ repos:
 	helm repo add grafana https://grafana.github.io/helm-charts --force-update
 	helm repo add chaos-mesh https://charts.chaos-mesh.org --force-update
 	helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
-	helm repo update
+	@if ! helm repo update; then \
+		echo "Предупреждение: не удалось обновить один из Helm-репозиториев; проверяю локальный кеш." >&2; \
+		helm search repo istio/base --version $(ISTIO_VERSION) >/dev/null || \
+		{ echo "Не найден Istio chart $(ISTIO_VERSION) в локальном кеше; повторите запуск при доступной сети." >&2; exit 1; }; \
+	fi
 
 mesh: repos
 	helm upgrade --install istio-base istio/base -n istio-system --create-namespace \
