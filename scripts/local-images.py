@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 import re
+import tarfile
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -53,12 +55,29 @@ def hash_command(expected):
             + "; print(json.dumps({p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}))")
 
 
+def image_config_identity(name):
+    """Return the config digest reported by containerd for a local image."""
+    with tempfile.TemporaryDirectory(prefix="mtc-image-") as directory:
+        archive = Path(directory) / "image.tar"
+        cmd("docker", "save", name + ":dev", "-o", str(archive), timeout=60)
+        try:
+            with tarfile.open(archive, "r") as bundle:
+                manifest = json.loads(bundle.extractfile("manifest.json").read())
+                if len(manifest) != 1 or not manifest[0].get("Config"):
+                    raise ValueError("архив содержит неоднозначный образ")
+                config_path = manifest[0]["Config"]
+                config = bundle.extractfile(config_path).read()
+        except (KeyError, TypeError, ValueError, tarfile.TarError, json.JSONDecodeError):
+            raise RuntimeError("Docker не вернул однозначный конфиг образа") from None
+    return "sha256:" + hashlib.sha256(config).hexdigest()
+
+
 def image(component, expected):
     name = "healer" if component == "assistant" else component
-    identity = cmd("docker", "image", "inspect", name + ":dev", "--format", "{{.Id}}", timeout=20).strip()
+    identity = image_config_identity(name)
     if not re.fullmatch(r"sha256:[0-9a-f]{64}", identity):
-        raise RuntimeError("Docker не вернул однозначный SHA-256 образа")
-    observed = json.loads(cmd("docker", "run", "--rm", "--entrypoint", "python", identity,
+        raise RuntimeError("Docker не вернул однозначный SHA-256 конфига образа")
+    observed = json.loads(cmd("docker", "run", "--rm", "--entrypoint", "python", name + ":dev",
                               "-c", hash_command(expected), timeout=30))
     if observed != expected:
         raise RuntimeError("Собранный образ не соответствует исходникам; сначала выполните make images")
@@ -198,7 +217,8 @@ def refresh(component, cluster, verify_only=False):
         raise RuntimeError("Манифест не определяет единственный ожидаемый Deployment")
     desired = selected[0]
     container(desired, container_name)["image"] = tag
-    cmd("docker", "tag", identity, tag, timeout=20)
+    source_image = "healer" if component == "assistant" else component
+    cmd("docker", "tag", source_image + ":dev", tag, timeout=20)
     cmd("k3d", "image", "import", tag, "-c", cluster, "--mode", "direct", timeout=180)
     for row in manifests:
         if row and row is not desired:
