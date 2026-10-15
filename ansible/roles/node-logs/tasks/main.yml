@@ -1,10 +1,14 @@
+- name: Получить сведения об установленных пакетах
+  ansible.builtin.package_facts:
+    manager: auto
+
 - name: Установить rsyslog и auditd
   ansible.builtin.apt:
     name:
       - rsyslog
       - auditd
     state: present
-    update_cache: true
+    update_cache: "{{ 'rsyslog' not in ansible_facts.packages or 'auditd' not in ansible_facts.packages }}"
 
 - name: Включить rsyslog
   ansible.builtin.service:
