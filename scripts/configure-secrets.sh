@@ -21,7 +21,7 @@ if ! kubectl get secret grafana-admin -n obs >/dev/null 2>&1; then
 fi
 if kubectl get secret healer-webhook -n heal >/dev/null 2>&1; then
   kubectl get secret healer-webhook -n heal -o jsonpath='{.data.token}' > "$tmp/encoded"
-  base64 -d "$tmp/encoded" > "$tmp/token"
+  base64 -d < "$tmp/encoded" > "$tmp/token"
 else
   python3 -c 'import secrets; print(secrets.token_urlsafe(32), end="")' > "$tmp/token"
 fi

@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 import re
+import subprocess
+import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -53,16 +55,97 @@ def hash_command(expected):
             + "; print(json.dumps({p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}))")
 
 
+def walk_manifests(index, blobs, seen):
+    for item in index.get("manifests") or []:
+        digest = item.get("digest") or ""
+        if str(item.get("mediaType") or "").endswith("image.index.v1+json"):
+            key = digest.split("sha256:", 1)[-1]
+            if key in seen:
+                continue
+            seen.add(key)
+            yield from walk_manifests(json.loads(blobs[key]), blobs, seen)
+        else:
+            yield item
+
+
+def select_config_digest(index, blobs, os_name, architecture):
+    """Kubelet пишет digest конфига. Docker со store containerd в Id отдаёт манифест или индекс."""
+    chosen = []
+    try:
+        manifests = list(walk_manifests(index, blobs, set()))
+    except (KeyError, TypeError, json.JSONDecodeError):
+        raise RuntimeError("Docker не вернул однозначный SHA-256 образа") from None
+    for item in manifests:
+        annotations = item.get("annotations") or {}
+        if annotations.get("vnd.docker.reference.type") == "attestation-manifest":
+            continue
+        platform = item.get("platform") or {}
+        if platform.get("os") == "unknown" or platform.get("architecture") == "unknown":
+            continue
+        if platform and os_name and architecture and (platform.get("os") != os_name or platform.get("architecture") != architecture):
+            continue
+        chosen.append(item)
+    if len(chosen) != 1:
+        raise RuntimeError("Docker не вернул однозначный SHA-256 образа")
+    annotations = chosen[0].get("annotations") or {}
+    digest = annotations.get("config.digest")
+    if not digest:
+        try:
+            manifest = json.loads(blobs[chosen[0]["digest"].split("sha256:", 1)[-1]])
+            digest = manifest["config"]["digest"]
+        except (KeyError, TypeError, json.JSONDecodeError):
+            raise RuntimeError("Docker не вернул однозначный SHA-256 образа") from None
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest or ""):
+        raise RuntimeError("Docker не вернул однозначный SHA-256 образа")
+    return digest
+
+
+def saved_image(reference):
+    proc = subprocess.Popen(["docker", "save", reference], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    blobs, index = {}, None
+    try:
+        with tarfile.open(fileobj=proc.stdout, mode="r|") as archive:
+            for member in archive:
+                handle = archive.extractfile(member)
+                if handle is None:
+                    continue
+                if member.size > 262144:
+                    remaining = member.size
+                    while remaining:
+                        chunk = handle.read(min(1024 * 1024, remaining))
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                    continue
+                payload = handle.read()
+                if member.name == "index.json":
+                    index = json.loads(payload)
+                elif member.name.startswith("blobs/sha256/"):
+                    blobs[member.name.rsplit("/", 1)[-1]] = payload
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+        proc.wait(timeout=30)
+    if not isinstance(index, dict):
+        raise RuntimeError("Docker не вернул однозначный SHA-256 образа")
+    return index, blobs
+
+
 def image(component, expected):
     name = "healer" if component == "assistant" else component
-    identity = cmd("docker", "image", "inspect", name + ":dev", "--format", "{{.Id}}", timeout=20).strip()
-    if not re.fullmatch(r"sha256:[0-9a-f]{64}", identity):
+    reference = name + ":dev"
+    inspected = json.loads(cmd("docker", "image", "inspect", reference, timeout=20))
+    if len(inspected) != 1 or not re.fullmatch(r"sha256:[0-9a-f]{64}", inspected[0].get("Id", "")):
         raise RuntimeError("Docker не вернул однозначный SHA-256 образа")
-    observed = json.loads(cmd("docker", "run", "--rm", "--entrypoint", "python", identity,
+    docker_id = inspected[0]["Id"]
+    media = (inspected[0].get("Descriptor") or {}).get("mediaType") or ""
+    identity = docker_id if not media else select_config_digest(
+        *saved_image(reference), inspected[0].get("Os") or "", inspected[0].get("Architecture") or "")
+    observed = json.loads(cmd("docker", "run", "--rm", "--entrypoint", "python", docker_id,
                               "-c", hash_command(expected), timeout=30))
     if observed != expected:
         raise RuntimeError("Собранный образ не соответствует исходникам; сначала выполните make images")
-    return identity, name + ":local-" + identity.removeprefix("sha256:")
+    return identity, docker_id, name + ":local-" + identity.removeprefix("sha256:")
 
 
 def container(obj, name):
@@ -181,7 +264,7 @@ def verify_runtime(component, accepted, identity, tag, expected):
 def refresh(component, cluster, verify_only=False):
     name, namespace, container_name, _, file_name = COMPONENTS[component]
     expected = hashes(component)
-    identity, tag = image(component, expected)
+    identity, docker_id, tag = image(component, expected)
     original = read_deployment(name, namespace)
     if verify_only:
         if original is None:
@@ -198,7 +281,7 @@ def refresh(component, cluster, verify_only=False):
         raise RuntimeError("Манифест не определяет единственный ожидаемый Deployment")
     desired = selected[0]
     container(desired, container_name)["image"] = tag
-    cmd("docker", "tag", identity, tag, timeout=20)
+    cmd("docker", "tag", docker_id, tag, timeout=20)
     cmd("k3d", "image", "import", tag, "-c", cluster, "--mode", "direct", timeout=180)
     for row in manifests:
         if row and row is not desired:

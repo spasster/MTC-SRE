@@ -111,6 +111,28 @@ def test_ready_old_or_replaced_pod_does_not_pass(monkeypatch, option):
         images.verify_runtime("payment", accepted, IDENTITY, TAG, {"app/main.py": "expected-sha"})
 
 
+def test_config_digest_skips_attestation_and_uses_platform_manifest():
+    config = "sha256:" + "b" * 64
+    manifest_digest, index_digest = "a" * 64, "c" * 64
+    inner = {"manifests": [
+        {"mediaType": "application/vnd.oci.image.manifest.v1+json", "digest": "sha256:" + manifest_digest,
+         "platform": {"os": "linux", "architecture": "arm64"}},
+        {"mediaType": "application/vnd.oci.image.manifest.v1+json", "digest": "sha256:" + "d" * 64,
+         "annotations": {"vnd.docker.reference.type": "attestation-manifest"},
+         "platform": {"os": "unknown", "architecture": "unknown"}},
+    ]}
+    outer = {"manifests": [{"mediaType": "application/vnd.oci.image.index.v1+json", "digest": "sha256:" + index_digest}]}
+    blobs = {index_digest: json.dumps(inner).encode(), manifest_digest: json.dumps({"config": {"digest": config}}).encode()}
+    assert images.select_config_digest(outer, blobs, "linux", "arm64") == config
+
+
+def test_config_digest_reads_save_annotation_without_manifest_blob():
+    config = "sha256:" + "e" * 64
+    outer = {"manifests": [{"mediaType": "application/vnd.docker.distribution.manifest.v2+json", "digest": "sha256:" + "f" * 64,
+                            "annotations": {"config.digest": config}}]}
+    assert images.select_config_digest(outer, {}, "linux", "arm64") == config
+
+
 def test_all_replicas_require_image_and_source_identity(monkeypatch):
     accepted = runtime(monkeypatch)
     result = images.verify_runtime("payment", accepted, IDENTITY, TAG, {"app/main.py": "expected-sha"})

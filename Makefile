@@ -48,6 +48,8 @@ cluster:
 	docker context use colima
 	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
 		k3d cluster create $(CLUSTER) --agents 0 --image $(K3S_IMAGE) --wait --timeout 180s; \
+	else \
+		k3d cluster start $(CLUSTER); \
 	fi
 	kubectl config use-context k3d-$(CLUSTER)
 
@@ -55,6 +57,8 @@ cluster-linux:
 	@docker info >/dev/null 2>&1 || { echo "Docker не запущен. Пакеты и группа docker описаны в README, раздел Ubuntu."; exit 1; }
 	@if ! k3d cluster list | awk 'NR>1 {print $$1}' | grep -qx '$(CLUSTER)'; then \
 		k3d cluster create $(CLUSTER) --agents 0 --image $(K3S_IMAGE) --wait --timeout 180s; \
+	else \
+		k3d cluster start $(CLUSTER); \
 	fi
 	kubectl config use-context k3d-$(CLUSTER)
 
