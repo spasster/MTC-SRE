@@ -166,6 +166,7 @@ chaos: repos
 		--version $(CHAOS_CHART_VERSION) --wait --timeout 5m \
 		--set chaosDaemon.runtime=containerd \
 		--set chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock \
+		--set controllerManager.replicaCount=1 \
 		--set dashboard.securityMode=false
 
 llm:
