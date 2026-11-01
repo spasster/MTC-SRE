@@ -13,5 +13,5 @@
 |---|---|
 | Нелин Данила | [architecture.md](architecture.md), пороги в `healer/rules.yaml`, границы в [requirements.md](requirements.md) |
 | Захаров Максим | `apps/checkout`, `apps/payment`, дашборды `observability/dashboards/`, промпты `healer/prompts/` |
-| Шестаков Данила | `chaos/`, `k6/`, `scripts/experiment.py`, `scripts/capacity.py`, [demo.md](demo.md) |
+| Шестаков Данила | `chaos/`, `k6/`, `scripts/experiment.py`, `scripts/capacity.py` |
 | Митрюшкина Жанна | `k8s/`, `ansible/`, `healer/`, `.github/workflows/`, [runbooks](runbooks/) |
